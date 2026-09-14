@@ -1,8 +1,8 @@
-# Los scripts del gate corren en WSL2: CRLF provoca `bad interpreter: ^M`.
-*.sh text eol=lf
-*.md text
-*.json text
-*.cpp text
-*.hpp text
-*.cmake text
-CMakeLists.txt text
+# LF en todas partes, tambien en la copia de trabajo de Windows.
+# Motivos: (1) los scripts del gate corren en WSL2 y CRLF provoca
+# `bad interpreter: ^M`; (2) `scripts/docs_meta.sh` compara `wc -c` de la copia
+# de trabajo contra el `size_bytes` commiteado, y CRLF haria divergir el conteo.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.db binary
