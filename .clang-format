@@ -1,0 +1,33 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: c++20
+ColumnLimit: 100
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+PointerAlignment: Left
+ReferenceAlignment: Left
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+BreakBeforeBraces: Attach
+BinPackArguments: false
+BinPackParameters: false
+IndentCaseLabels: true
+SeparateDefinitionBlocks: Always
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<engine/'
+    Priority: 2
+  - Regex: '^<snake/'
+    Priority: 3
+  - Regex: '^<catch2/|^<benchmark/|^<nlohmann/|^<httplib'
+    Priority: 4
+  - Regex: '^<'
+    Priority: 1
+  - Regex: '.*'
+    Priority: 5
