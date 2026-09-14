@@ -1,0 +1,27 @@
+{
+  "_comment": "1:1 con snake::Params (snake/include/snake/params.hpp). tests/test_ruleset_parse.cpp falla si divergen. Los margenes de tiempo son normativos: cambiarlos exige aprobacion humana y un ADR.",
+  "time": {
+    "network_margin_ms": 100,
+    "safety_margin_ms": 50,
+    "max_compute_ms": 350
+  },
+  "food": {
+    "seek_below": 50,
+    "seek_below_in_hazard": 75,
+    "free_food_distance": 2,
+    "weight": 6.0
+  },
+  "space": {
+    "min_space_ratio": 1.0,
+    "weight": 100.0,
+    "tail_escape": true
+  },
+  "head": {
+    "avoid_equal_or_longer": 80.0,
+    "prefer_shorter": 8.0
+  },
+  "hazard": {
+    "weight": 20.0,
+    "low_health_multiplier": 4.0
+  }
+}
