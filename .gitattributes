@@ -1,0 +1,8 @@
+# Los scripts del gate corren en WSL2: CRLF provoca `bad interpreter: ^M`.
+*.sh text eol=lf
+*.md text
+*.json text
+*.cpp text
+*.hpp text
+*.cmake text
+CMakeLists.txt text

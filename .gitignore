@@ -1,0 +1,14 @@
+build/
+build-*/
+.cache/
+compile_commands.json
+*.o
+*.a
+*.so
+*.log
+!.loop/**/*.log
+_deps/
+docs/results/*.html
+docs/results/*.db
+tmp/
+.venv/
