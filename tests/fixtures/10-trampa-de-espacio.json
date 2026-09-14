@@ -1,0 +1,184 @@
+{
+  "_name": "10-trampa-de-espacio.json",
+  "_comment": "Bolsillo de 6 casillas abajo a la izquierda, cerrado por nuestro propio cuerpo en (0,3) y por el muro de la rival en la columna x=2, cuya cola esta apilada en (2,0) y por tanto no se libera. Bajar es meterse en un hueco menor que nuestra longitud (7): el flood fill debe rechazarlo.",
+  "game": {
+    "id": "fixture-game",
+    "ruleset": {
+      "name": "royale",
+      "version": "cli",
+      "settings": {
+        "foodSpawnChance": 15,
+        "minimumFood": 1,
+        "hazardDamagePerTurn": 14,
+        "royale": {
+          "shrinkEveryNTurns": 25
+        },
+        "squad": {
+          "allowBodyCollisions": false,
+          "sharedElimination": false,
+          "sharedHealth": false,
+          "sharedLength": false
+        }
+      }
+    },
+    "map": "royale",
+    "timeout": 500,
+    "source": "league"
+  },
+  "turn": 100,
+  "board": {
+    "height": 11,
+    "width": 11,
+    "food": [
+      {
+        "x": 10,
+        "y": 10
+      }
+    ],
+    "hazards": [],
+    "snakes": [
+      {
+        "id": "you",
+        "name": "nuestra",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 1,
+            "y": 3
+          },
+          {
+            "x": 0,
+            "y": 3
+          },
+          {
+            "x": 0,
+            "y": 4
+          },
+          {
+            "x": 0,
+            "y": 5
+          },
+          {
+            "x": 0,
+            "y": 6
+          },
+          {
+            "x": 0,
+            "y": 7
+          },
+          {
+            "x": 0,
+            "y": 8
+          }
+        ],
+        "head": {
+          "x": 1,
+          "y": 3
+        },
+        "length": 7,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "b",
+        "name": "rival-b",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 2,
+            "y": 3
+          },
+          {
+            "x": 2,
+            "y": 2
+          },
+          {
+            "x": 2,
+            "y": 1
+          },
+          {
+            "x": 2,
+            "y": 0
+          },
+          {
+            "x": 2,
+            "y": 0
+          }
+        ],
+        "head": {
+          "x": 2,
+          "y": 3
+        },
+        "length": 5,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      }
+    ]
+  },
+  "you": {
+    "id": "you",
+    "name": "nuestra",
+    "latency": "1",
+    "health": 100,
+    "body": [
+      {
+        "x": 1,
+        "y": 3
+      },
+      {
+        "x": 0,
+        "y": 3
+      },
+      {
+        "x": 0,
+        "y": 4
+      },
+      {
+        "x": 0,
+        "y": 5
+      },
+      {
+        "x": 0,
+        "y": 6
+      },
+      {
+        "x": 0,
+        "y": 7
+      },
+      {
+        "x": 0,
+        "y": 8
+      }
+    ],
+    "head": {
+      "x": 1,
+      "y": 3
+    },
+    "length": 7,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+      "color": "#1b5e20",
+      "head": "beluga",
+      "tail": "bolt"
+    }
+  },
+  "_expect_not": [
+    "down"
+  ],
+  "_expect_any": [
+    "up"
+  ]
+}

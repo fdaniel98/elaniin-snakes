@@ -1,0 +1,143 @@
+{
+  "_name": "03-cola-que-avanza.json",
+  "_comment": "La rival no ha comido: su cola en (5,7) se libera este turno, asi que bajar es legal. Es el contraejemplo de 02.",
+  "game": {
+    "id": "fixture-game",
+    "ruleset": {
+      "name": "royale",
+      "version": "cli",
+      "settings": {
+        "foodSpawnChance": 15,
+        "minimumFood": 1,
+        "hazardDamagePerTurn": 14,
+        "royale": {
+          "shrinkEveryNTurns": 25
+        },
+        "squad": {
+          "allowBodyCollisions": false,
+          "sharedElimination": false,
+          "sharedHealth": false,
+          "sharedLength": false
+        }
+      }
+    },
+    "map": "royale",
+    "timeout": 500,
+    "source": "league"
+  },
+  "turn": 30,
+  "board": {
+    "height": 11,
+    "width": 11,
+    "food": [
+      {
+        "x": 0,
+        "y": 0
+      }
+    ],
+    "hazards": [],
+    "snakes": [
+      {
+        "id": "you",
+        "name": "nuestra",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 5,
+            "y": 9
+          },
+          {
+            "x": 6,
+            "y": 9
+          },
+          {
+            "x": 7,
+            "y": 9
+          }
+        ],
+        "head": {
+          "x": 5,
+          "y": 9
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "b",
+        "name": "rival-b",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 5,
+            "y": 5
+          },
+          {
+            "x": 5,
+            "y": 6
+          },
+          {
+            "x": 5,
+            "y": 7
+          }
+        ],
+        "head": {
+          "x": 5,
+          "y": 5
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      }
+    ]
+  },
+  "you": {
+    "id": "you",
+    "name": "nuestra",
+    "latency": "1",
+    "health": 100,
+    "body": [
+      {
+        "x": 5,
+        "y": 9
+      },
+      {
+        "x": 6,
+        "y": 9
+      },
+      {
+        "x": 7,
+        "y": 9
+      }
+    ],
+    "head": {
+      "x": 5,
+      "y": 9
+    },
+    "length": 3,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+      "color": "#1b5e20",
+      "head": "beluga",
+      "tail": "bolt"
+    }
+  },
+  "_expect_any": [
+    "down",
+    "left",
+    "up"
+  ]
+}

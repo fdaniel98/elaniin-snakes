@@ -1,0 +1,149 @@
+{
+  "_name": "05-zona-de-cabeza-mas-larga.json",
+  "_comment": "La rival es mas larga y su cabeza esta en (7,5): las casillas adyacentes a ella son una apuesta perdida. Ir a (6,5) es entrar en su zona de cabeza.",
+  "game": {
+    "id": "fixture-game",
+    "ruleset": {
+      "name": "royale",
+      "version": "cli",
+      "settings": {
+        "foodSpawnChance": 15,
+        "minimumFood": 1,
+        "hazardDamagePerTurn": 14,
+        "royale": {
+          "shrinkEveryNTurns": 25
+        },
+        "squad": {
+          "allowBodyCollisions": false,
+          "sharedElimination": false,
+          "sharedHealth": false,
+          "sharedLength": false
+        }
+      }
+    },
+    "map": "royale",
+    "timeout": 500,
+    "source": "league"
+  },
+  "turn": 50,
+  "board": {
+    "height": 11,
+    "width": 11,
+    "food": [
+      {
+        "x": 0,
+        "y": 10
+      }
+    ],
+    "hazards": [],
+    "snakes": [
+      {
+        "id": "you",
+        "name": "nuestra",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 5,
+            "y": 5
+          },
+          {
+            "x": 4,
+            "y": 5
+          },
+          {
+            "x": 3,
+            "y": 5
+          }
+        ],
+        "head": {
+          "x": 5,
+          "y": 5
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "b",
+        "name": "rival-b",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 7,
+            "y": 5
+          },
+          {
+            "x": 8,
+            "y": 5
+          },
+          {
+            "x": 9,
+            "y": 5
+          },
+          {
+            "x": 9,
+            "y": 6
+          },
+          {
+            "x": 9,
+            "y": 7
+          }
+        ],
+        "head": {
+          "x": 7,
+          "y": 5
+        },
+        "length": 5,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      }
+    ]
+  },
+  "you": {
+    "id": "you",
+    "name": "nuestra",
+    "latency": "1",
+    "health": 100,
+    "body": [
+      {
+        "x": 5,
+        "y": 5
+      },
+      {
+        "x": 4,
+        "y": 5
+      },
+      {
+        "x": 3,
+        "y": 5
+      }
+    ],
+    "head": {
+      "x": 5,
+      "y": 5
+    },
+    "length": 3,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+      "color": "#1b5e20",
+      "head": "beluga",
+      "tail": "bolt"
+    }
+  },
+  "_expect_not": [
+    "right"
+  ]
+}

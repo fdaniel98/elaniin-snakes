@@ -1,0 +1,226 @@
+{
+  "_name": "01-spawn-turno0-apilado.json",
+  "_comment": "Turno 0: los 3 segmentos de cada serpiente estan apilados, asi que ninguna cola se libera. Nuestra serpiente esta en (1,1): abajo e izquierda son pared.",
+  "game": {
+    "id": "fixture-game",
+    "ruleset": {
+      "name": "royale",
+      "version": "cli",
+      "settings": {
+        "foodSpawnChance": 15,
+        "minimumFood": 1,
+        "hazardDamagePerTurn": 14,
+        "royale": {
+          "shrinkEveryNTurns": 25
+        },
+        "squad": {
+          "allowBodyCollisions": false,
+          "sharedElimination": false,
+          "sharedHealth": false,
+          "sharedLength": false
+        }
+      }
+    },
+    "map": "royale",
+    "timeout": 500,
+    "source": "league"
+  },
+  "turn": 0,
+  "board": {
+    "height": 11,
+    "width": 11,
+    "food": [
+      {
+        "x": 2,
+        "y": 2
+      },
+      {
+        "x": 5,
+        "y": 5
+      },
+      {
+        "x": 8,
+        "y": 8
+      },
+      {
+        "x": 2,
+        "y": 8
+      },
+      {
+        "x": 8,
+        "y": 2
+      }
+    ],
+    "hazards": [],
+    "snakes": [
+      {
+        "id": "you",
+        "name": "nuestra",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 1
+          }
+        ],
+        "head": {
+          "x": 1,
+          "y": 1
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "b",
+        "name": "rival-b",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 9,
+            "y": 9
+          },
+          {
+            "x": 9,
+            "y": 9
+          },
+          {
+            "x": 9,
+            "y": 9
+          }
+        ],
+        "head": {
+          "x": 9,
+          "y": 9
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "c",
+        "name": "rival-c",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 1,
+            "y": 9
+          },
+          {
+            "x": 1,
+            "y": 9
+          },
+          {
+            "x": 1,
+            "y": 9
+          }
+        ],
+        "head": {
+          "x": 1,
+          "y": 9
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "d",
+        "name": "rival-d",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 9,
+            "y": 1
+          },
+          {
+            "x": 9,
+            "y": 1
+          },
+          {
+            "x": 9,
+            "y": 1
+          }
+        ],
+        "head": {
+          "x": 9,
+          "y": 1
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      }
+    ]
+  },
+  "you": {
+    "id": "you",
+    "name": "nuestra",
+    "latency": "1",
+    "health": 100,
+    "body": [
+      {
+        "x": 1,
+        "y": 1
+      },
+      {
+        "x": 1,
+        "y": 1
+      },
+      {
+        "x": 1,
+        "y": 1
+      }
+    ],
+    "head": {
+      "x": 1,
+      "y": 1
+    },
+    "length": 3,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+      "color": "#1b5e20",
+      "head": "beluga",
+      "tail": "bolt"
+    }
+  },
+  "_expect_any": [
+    "up",
+    "right"
+  ],
+  "_expect_not": [
+    "down",
+    "left"
+  ]
+}

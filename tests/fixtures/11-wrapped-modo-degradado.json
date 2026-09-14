@@ -1,0 +1,141 @@
+{
+  "_name": "11-wrapped-modo-degradado.json",
+  "_comment": "Ruleset wrapped: no lo soportamos con todas las heuristicas, asi que el cerebro entra en modo degradado y aun asi devuelve un movimiento legal.",
+  "game": {
+    "id": "fixture-game",
+    "ruleset": {
+      "name": "wrapped",
+      "version": "cli",
+      "settings": {
+        "foodSpawnChance": 15,
+        "minimumFood": 1,
+        "hazardDamagePerTurn": 14,
+        "royale": {
+          "shrinkEveryNTurns": 25
+        },
+        "squad": {
+          "allowBodyCollisions": false,
+          "sharedElimination": false,
+          "sharedHealth": false,
+          "sharedLength": false
+        }
+      }
+    },
+    "map": "standard",
+    "timeout": 500,
+    "source": "league"
+  },
+  "turn": 110,
+  "board": {
+    "height": 11,
+    "width": 11,
+    "food": [
+      {
+        "x": 5,
+        "y": 5
+      }
+    ],
+    "hazards": [],
+    "snakes": [
+      {
+        "id": "you",
+        "name": "nuestra",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 0,
+            "y": 5
+          },
+          {
+            "x": 1,
+            "y": 5
+          },
+          {
+            "x": 2,
+            "y": 5
+          }
+        ],
+        "head": {
+          "x": 0,
+          "y": 5
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "b",
+        "name": "rival-b",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 9,
+            "y": 9
+          },
+          {
+            "x": 9,
+            "y": 8
+          },
+          {
+            "x": 9,
+            "y": 7
+          }
+        ],
+        "head": {
+          "x": 9,
+          "y": 9
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      }
+    ]
+  },
+  "you": {
+    "id": "you",
+    "name": "nuestra",
+    "latency": "1",
+    "health": 100,
+    "body": [
+      {
+        "x": 0,
+        "y": 5
+      },
+      {
+        "x": 1,
+        "y": 5
+      },
+      {
+        "x": 2,
+        "y": 5
+      }
+    ],
+    "head": {
+      "x": 0,
+      "y": 5
+    },
+    "length": 3,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+      "color": "#1b5e20",
+      "head": "beluga",
+      "tail": "bolt"
+    }
+  },
+  "_expect_not": [
+    "right"
+  ]
+}

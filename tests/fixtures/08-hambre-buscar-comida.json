@@ -1,0 +1,141 @@
+{
+  "_name": "08-hambre-buscar-comida.json",
+  "_comment": "Salud 12: la comida de (5,7) esta a dos pasos hacia arriba y no hay riesgo. No comer aqui es morir de hambre.",
+  "game": {
+    "id": "fixture-game",
+    "ruleset": {
+      "name": "royale",
+      "version": "cli",
+      "settings": {
+        "foodSpawnChance": 15,
+        "minimumFood": 1,
+        "hazardDamagePerTurn": 14,
+        "royale": {
+          "shrinkEveryNTurns": 25
+        },
+        "squad": {
+          "allowBodyCollisions": false,
+          "sharedElimination": false,
+          "sharedHealth": false,
+          "sharedLength": false
+        }
+      }
+    },
+    "map": "royale",
+    "timeout": 500,
+    "source": "league"
+  },
+  "turn": 80,
+  "board": {
+    "height": 11,
+    "width": 11,
+    "food": [
+      {
+        "x": 5,
+        "y": 7
+      }
+    ],
+    "hazards": [],
+    "snakes": [
+      {
+        "id": "you",
+        "name": "nuestra",
+        "latency": "1",
+        "health": 12,
+        "body": [
+          {
+            "x": 5,
+            "y": 5
+          },
+          {
+            "x": 4,
+            "y": 5
+          },
+          {
+            "x": 3,
+            "y": 5
+          }
+        ],
+        "head": {
+          "x": 5,
+          "y": 5
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "b",
+        "name": "rival-b",
+        "latency": "1",
+        "health": 100,
+        "body": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 1,
+            "y": 0
+          },
+          {
+            "x": 2,
+            "y": 0
+          }
+        ],
+        "head": {
+          "x": 0,
+          "y": 0
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      }
+    ]
+  },
+  "you": {
+    "id": "you",
+    "name": "nuestra",
+    "latency": "1",
+    "health": 12,
+    "body": [
+      {
+        "x": 5,
+        "y": 5
+      },
+      {
+        "x": 4,
+        "y": 5
+      },
+      {
+        "x": 3,
+        "y": 5
+      }
+    ],
+    "head": {
+      "x": 5,
+      "y": 5
+    },
+    "length": 3,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+      "color": "#1b5e20",
+      "head": "beluga",
+      "tail": "bolt"
+    }
+  },
+  "_expect_any": [
+    "up"
+  ]
+}
