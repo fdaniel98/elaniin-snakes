@@ -30,13 +30,15 @@ if ! cmake --preset deploy -B "$BUILD_DIR" >"$BUILD_DIR/configure.log" 2>&1; the
     exit 2
 fi
 
+# El patron empieza por '-': SIEMPRE se pasa tras '--', o grep lo interpreta como
+# opcion (-m es max-count) y el check pasa sin comprobar nada.
 NATIVE_RE='-m(arch|tune|cpu)=native'
 
 echo "== flags efectivos =="
 if [[ -f "$BUILD_DIR/compile_commands.json" ]]; then
-    if grep -qE "$NATIVE_RE" "$BUILD_DIR/compile_commands.json"; then
+    if grep -qE -- "$NATIVE_RE" "$BUILD_DIR/compile_commands.json"; then
         fail "compile_commands.json del preset deploy contiene ISA nativa:"
-        grep -oE "$NATIVE_RE" "$BUILD_DIR/compile_commands.json" | sort -u
+        grep -oE -- "$NATIVE_RE" "$BUILD_DIR/compile_commands.json" | sort -u
     else
         echo "OK   compile_commands.json sin ISA nativa"
     fi
@@ -45,7 +47,7 @@ else
 fi
 
 if [[ -f "$BUILD_DIR/CMakeCache.txt" ]]; then
-    if grep -E '^CMAKE_CXX_FLAGS' "$BUILD_DIR/CMakeCache.txt" | grep -qE "$NATIVE_RE"; then
+    if grep -E '^CMAKE_CXX_FLAGS' "$BUILD_DIR/CMakeCache.txt" | grep -qE -- "$NATIVE_RE"; then
         fail "CMAKE_CXX_FLAGS* del preset deploy contiene ISA nativa:"
         grep -E '^CMAKE_CXX_FLAGS' "$BUILD_DIR/CMakeCache.txt"
         status=1
@@ -68,7 +70,7 @@ if [[ -f deploy/Dockerfile ]]; then
     else
         echo "OK   el Dockerfile no inyecta CXXFLAGS"
     fi
-    if grep -qE "$NATIVE_RE" deploy/Dockerfile; then
+    if grep -qE -- "$NATIVE_RE" deploy/Dockerfile; then
         fail "deploy/Dockerfile menciona ISA nativa"
     fi
 else
@@ -76,7 +78,7 @@ else
 fi
 
 echo "== grep textual (check redundante) =="
-if grep -rnE "$NATIVE_RE" deploy/ 2>/dev/null; then
+if grep -rnE -- "$NATIVE_RE" deploy/ 2>/dev/null; then
     fail "ISA nativa en deploy/"
 else
     echo "OK   deploy/ sin ISA nativa"
