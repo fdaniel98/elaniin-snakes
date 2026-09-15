@@ -186,7 +186,7 @@ POISONS=(
     "poison_6e|6|enlace a un anchor inexistente del mismo archivo"
     "poison_7|7|-march=native en un preset del que deploy hereda"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
-    "poison_9|9|ledger con solo dos iteraciones|iteraciones, minimo 3"
+    "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"
     "poison_9b|9|ledger con el encadenamiento de commits roto|commit_after(i) != commit_before(i+1)"
     "poison_10|10|runtime distroless sin libstdc++"
 )

@@ -3,7 +3,7 @@ title: Arquitectura y dependencias entre modulos
 read_when: "antes de mover codigo entre modulos o de añadir una dependencia"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2439
+size_bytes: 2610
 ---
 
 ## A-01 Grafo de dependencias {#a-01}
@@ -32,13 +32,15 @@ ningun A/B significaria nada.
 
 ## A-03 Donde vive el JSON {#a-03}
 
-`engine/` no depende de ninguna libreria de JSON. Todo el parseo del payload vive en
-`snake/src/config_loader.cpp`, unica frontera que conoce la forma del request (ver
-docs/rules-parametros.md#r-20). `engine/include/engine/ruleset.hpp` solo tiene el struct de
-parametros y sus fallbacks.
+`engine/` no depende de ninguna libreria de JSON. La **forma** del payload la conoce un solo
+archivo, `snake/src/config_loader.cpp` (ver docs/rules-parametros.md#r-20);
+`snake/src/server.cpp` tambien usa nlohmann/json, pero solo para parsear el cuerpo crudo y
+construir la respuesta, sin interpretar campos del juego.
+`engine/include/engine/ruleset.hpp` tiene el struct de parametros, sus fallbacks, el enum de
+variante y `is_supported`.
 
-Consecuencia practica: cambiar nlohmann/json por simdjson toca un archivo, y solo si el
-perfil demuestra que el parseo es un cuello de botella real.
+Consecuencia practica: cambiar nlohmann/json por simdjson toca esos dos archivos y ninguno
+mas, y solo si el perfil demuestra que el parseo es un cuello de botella real.
 
 ## A-04 Terceros {#a-04}
 

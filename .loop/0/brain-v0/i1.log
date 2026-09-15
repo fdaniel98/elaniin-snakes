@@ -15,3 +15,9 @@ Comprobacion propia: grep de fallback_level en snake/ y tests/ -> el unico 4 est
 server.cpp; los tests cubren 0, 1, 2 y 3.
 
 frontmatter_invalid=0 broken_anchors=2 orphan_anchors=59 duplicated_facts=18 size_bytes_mismatch=0
+
+NOTA DE CORRECCION (auditoria final): el ledger declaraba `agent: context-curator`
+para una iteracion de clase `correctness`, cuya agente asignada en config/loop.json es
+`rules-auditor`. El trabajo lo hizo context-curator sobre el contrato del cerebro; se
+corrige el campo y queda esta nota para que el ledger no diga que audito quien no
+audito. El check 9 verifica ahora el campo `agent`.

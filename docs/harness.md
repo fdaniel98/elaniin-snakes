@@ -3,7 +3,7 @@ title: Harness - gate, hooks, subagentes, comandos y loop
 read_when: "antes de tocar scripts/, .claude/ o config/loop.json"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 6039
+size_bytes: 6387
 ---
 
 Modificar `scripts/gate.sh`, `config/loop.json` o `.claude/settings.json` exige
@@ -41,8 +41,9 @@ ese mismo modo no haya construido.
 ## H-02 Autoprueba del gate {#h-02}
 
 `./scripts/gate-selftest.sh` aplica un veneno por cada check sobre una copia temporal y
-falla si el gate no falla **en ese check concreto**. Cubre los checks 0 a 10, con cuatro
-venenos distintos para el check 6 y dos para el 9. Sin esto, "el gate pasa en verde" es
+falla si el gate no falla **en ese check concreto**. Cubre los checks 0 a 10; el numero exacto
+de venenos por check lo fija la tabla `POISONS` del script, que hoy tiene varios para el 6 y
+dos para el 9, cada uno con el mensaje concreto que debe aparecer. Sin esto, "el gate pasa en verde" es
 una afirmacion, no un hecho.
 
 ## H-03 Hooks {#h-03}
@@ -95,11 +96,14 @@ umbral numerico y artefacto verificable.
 - Evidencia: `.loop/<fase>/<slug>.ledger.json`, mas `i<N>.log` crudo y sus metricas.
 - `scripts/loop.sh <n> <slug> [clase]` corre la parte determinista y deja el log; el
   subagente de la clase y la decision sobre los hallazgos los pone `/loop`.
-- Cierre: 3 clases cubiertas, las 2 ultimas iteraciones sin hallazgos y sobre el mismo
-  `commit_after`, y gate completo en verde.
-- Antifraude que verifica el check 9: encadenamiento de commits, `duration_ms` minimo por
-  clase, sha256 del log, `payload_sha256` no repetido, `checks_added` no vacio en toda
-  iteracion que produce commit, y prueba de mutantes si las tres primeras salen limpias.
+- Cierre: 3 clases distintas cubiertas **en todo el ledger** (no necesariamente en las tres
+  primeras iteraciones), las 2 ultimas iteraciones no anuladas sin hallazgos y sobre el mismo
+  `commit_after`, y gate completo en verde
+  (ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0044).
+- Antifraude que verifica el check 9: `commit_after(i)` ancestro o igual de
+  `commit_before(i+1)`, `duration_ms` minimo por clase, sha256 del log, `payload_sha256` no
+  repetido, `checks_added` no vacio en toda iteracion que produce commit, umbrales de la clase
+  sobre las metricas, y prueba de mutantes si las tres primeras salen limpias.
 
 Una iteracion en la que el gate falla queda **ANULADA**: sigue en el ledger, con
 `annulled: true` y `annulled_reason`, pero no cuenta para el minimo ni para los umbrales

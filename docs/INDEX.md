@@ -3,7 +3,7 @@ title: Mapa de lectura y presupuesto de bytes
 read_when: "al empezar cualquier sesion, para decidir que NO leer"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 3085
+size_bytes: 3189
 ---
 
 ## I-01 Que leer segun la tarea {#i-01}
@@ -14,6 +14,7 @@ context pack de la tarea. Los packs listan los archivos de codigo que hace falta
 | Ruta | read_when | authority |
 |---|---|---|
 | `docs/rules.md` | antes de tocar reglas, escribir un fixture o discutir mecanicas | canonical |
+| `docs/rules-parametros.md` | antes de parsear el request o de dar por cierto un default | canonical |
 | `docs/invariants.md` | antes de cambiar el motor o el cerebro | canonical |
 | `docs/glossary.md` | cuando aparece un termino del dominio que no reconoces | derived |
 | `docs/architecture.md` | antes de mover codigo entre modulos o añadir dependencias | canonical |

@@ -4,13 +4,13 @@ read_when: "antes de tocar engine/src/rules.cpp, de escribir un fixture o de dis
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-14
-size_bytes: 12211
+size_bytes: 12949
 ---
 
 Toda afirmacion de este archivo cita `archivo.go:linea` del SHA del front-matter. Lo no verificable
 contra esa fuente esta marcado como `speculative` y vive en las preguntas abiertas
 (ver docs/rules-parametros.md#r-99); esta
-prohibido implementar contra ello (regla de oro 9).
+prohibido implementar contra ello (regla de oro 1).
 
 ## R-01 Sistema de coordenadas {#r-01}
 
@@ -58,10 +58,17 @@ El contador de turno **no lo toca el ruleset**: lo incrementa el arbitro despues
 Todas las serpientes vivas se mueven **simultaneamente**: se antepone la nueva cabeza y se descarta
 el ultimo segmento (`standard.go:82-83`).
 
-Si la direccion recibida no es una de las cuatro literales (`up`, `down`, `left`, `right`), el motor
-aplica `getDefaultMove` (`standard.go:58-63`), que deriva la direccion **de la cabeza respecto del
-cuello** --es decir, repite el ultimo movimiento-- y cae a `up` si no puede (`standard.go:90-116`).
-Una respuesta ausente por timeout llega al motor como cadena vacia y entra por esa misma rama.
+Si la direccion recibida no es una de las cuatro literales (`up`, `down`, `left`, `right`), el
+motor aplica `getDefaultMove` (`standard.go:58-63`), que deriva la direccion **de la cabeza
+respecto del cuello** --es decir, repite el ultimo movimiento-- y cae a `up` si no puede
+(`standard.go:90-116`).
+
+**Importante para el test diferencial:** jugando con el CLI oficial esa rama es
+*inalcanzable*. El arbitro inicializa `LastMove` a `"up"` (`cli/commands/play.go:597`) y solo lo
+sobreescribe tras una respuesta valida (`cli/commands/play.go:510`); ante timeout, error HTTP,
+JSON invalido o direccion desconocida **reenvia el `LastMove` anterior**
+(`cli/commands/play.go:418`). El efecto observable coincide -repetir el ultimo movimiento- pero el
+mecanismo no: al reproducir un JSONL hay que inyectar el `LastMove` previo, no una cadena vacia.
 
 `apply()` de nuestro motor **no filtra** direcciones: acepta la inmediatamente mortal y reproduce
 `getDefaultMove`. Sin eso, el test diferencial de la Fase 1 no puede replicar los logs.
@@ -192,8 +199,11 @@ En busqueda, el spawn de comida se ignora (ver [invariants.md#inv-09](invariants
   puntos cardinales a distancia 1 del borde, barajadas (`board.go:170-216`).
 - Los 3 segmentos iniciales se apilan en la misma casilla (`board.go:217-223`), con salud 100
   (`board.go:174-177`).
-- La comida inicial se coloca a distancia diagonal 1 de cada cabeza, nunca en el centro ni en una
-  esquina, mas una en el centro (`board.go:378-440`).
+- La comida inicial se coloca a distancia diagonal 1 de cada cabeza **solo si hay 4 serpientes o
+  menos, o el tablero no es pequeño** (`board.go:390-393`), y ademas la casilla tiene que quedar
+  mas lejos del centro que la cabeza en al menos un eje (`board.go:425-438`) y no ser una esquina
+  (`board.go:441-443`). Aparte, se coloca una en el centro (`board.go:458-470`). Con nuestro
+  maximo de 4 serpientes la condicion se cumple siempre.
 
 ## R-12 Fin de partida y placements {#r-12}
 

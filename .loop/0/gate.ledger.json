@@ -1,7 +1,7 @@
 {
   "deliverable": "scripts/gate.sh",
   "phase": 0,
-  "status": "CLOSED",
+  "status": "BLOQUEADO",
   "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a",
   "iterations": [
     {
@@ -183,17 +183,34 @@
       "exit_code": 0,
       "started_at": "2026-09-15T19:25:43Z",
       "duration_ms": 129250,
-      "log_sha256": "1b1e5ba9a83a6328bead280a2b64ed3596a6486e0f268633e53ec5377da40137",
-      "payload_sha256": "1b1e5ba9a83a6328bead280a2b64ed3596a6486e0f268633e53ec5377da40137",
+      "log_sha256": "b37affb2e2cf855b57d0f25985489a5d62d3e3380b3020147a1c99ed22c6109a",
+      "payload_sha256": "b37affb2e2cf855b57d0f25985489a5d62d3e3380b3020147a1c99ed22c6109a",
       "metrics": {
         "frontmatter_invalid": 0,
         "broken_anchors": 0,
         "size_bytes_mismatch": 0,
-        "duplicated_facts": 0,
-        "poisons_caught": 5
+        "duplicated_facts": 13,
+        "poisons_caught": 5,
+        "duplicated_facts_source": "auditoria final de context-curator, 2026-09-15"
       },
       "checks_added": [],
-      "findings": [],
+      "findings": [
+        {
+          "id": "F-G06",
+          "sev": "mayor",
+          "cite": "docs/INDEX.md#i-04",
+          "desc": "13 hechos duplicados entre documentos (prohibiciones del hot path, generadores de la STL, ISA de deploy, presupuesto de latencia, contrato del fail-safe y otros). El umbral duplicated_facts_max de config/loop.json es 0.",
+          "estado": "ABIERTO"
+        },
+        {
+          "id": "F-G07",
+          "sev": "blocker",
+          "cite": "scripts/loop_verify.sh",
+          "desc": "verify_metrics no evaluaba duplicated_facts_max ni last_verified_max_age_days: dos umbrales declarados en config/loop.json que el check 9 nunca comprobaba, que es por lo que F-G06 pudo colarse en una iteracion de cierre.",
+          "estado": "REPARADO",
+          "fixed_in": "pendiente-de-commit"
+        }
+      ],
       "commands_run": [
         {
           "cmd": "./scripts/lint-docs.sh",
@@ -209,5 +226,6 @@
         }
       ]
     }
-  ]
+  ],
+  "blocked_reason": "techo de 6 iteraciones alcanzado con un hallazgo abierto (F-G06: 13 hechos duplicados frente a un umbral de 0). Escalado al humano: o se sigue deduplicando la documentacion, o se fija un umbral realista en config/loop.json con su ADR."
 }

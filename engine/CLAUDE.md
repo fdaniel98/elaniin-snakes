@@ -7,12 +7,10 @@ global y sin asignaciones en el hot path**. No incluyas nada de `snake/` aqui.
 
 - `GameState` es trivialmente copiable: ni punteros a heap, ni `string`, ni `vector`.
   La busqueda copia estados con `memcpy` (ver docs/invariants.md#inv-04).
-- Nada de `new`, `malloc`, `std::vector` ni `std::stable_sort` en funciones que corran por
-  nodo: `stable_sort` puede pedir memoria temporal (ver docs/invariants.md#inv-03).
-- Toda aleatoriedad recibe un `Rng&` explicito. `std::shuffle`,
-  `std::uniform_int_distribution`, `std::sample` y `std::random_device` estan prohibidos:
-  su algoritmo no esta especificado y difiere entre implementaciones de la STL
-  (ver docs/invariants.md#inv-08).
+- Cero asignaciones dinamicas en funciones que corran por nodo: ver docs/invariants.md#inv-03
+  (ahi esta la lista completa y el porque de `std::stable_sort`).
+- Toda aleatoriedad recibe un `Rng&` explicito, y los generadores de la STL estan prohibidos
+  aqui: ver docs/invariants.md#inv-08.
 - `apply()` **no filtra** direcciones: acepta la inmediatamente mortal y reproduce el
   movimiento por defecto del arbitro. `legal_moves()` es una ayuda para el cerebro, no una
   regla (ver docs/rules.md#r-03).

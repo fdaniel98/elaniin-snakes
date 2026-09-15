@@ -7,15 +7,15 @@
     {
       "n": 1,
       "class": "correctness",
-      "agent": "context-curator",
+      "agent": "rules-auditor",
       "commit_before": "61c962097c6971b20c62e857a2fc464f6e6d9c8b",
       "commit_after": "e19a7d3b58150c534f122526c2dc899484c9b953",
       "cmd": "subagente context-curator + revision del contrato del cerebro",
       "exit_code": 0,
       "started_at": "2026-09-15T18:40:00Z",
       "duration_ms": 309812,
-      "log_sha256": "cd52f2a766fca3effe85f5b62b68305f281aa03e8f0c4fb6530af3c4ad54bc72",
-      "payload_sha256": "a05eb9e23e5fa7d25851db383a3bc30555107a6479a2e281f8e68daf88c0812a",
+      "log_sha256": "2aa83dfd58d5b177a440138003c3952b0ee649a77524ba755a783dcbeabeebf2",
+      "payload_sha256": "988dce85321b35d99020c62feb1780ce65146439932d2fb02be76c9a1d3ac62d",
       "metrics": {
         "diverge": 0,
         "sin_verificar": 0,

@@ -13,6 +13,15 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
+FAST=0
+if [[ "${1:-}" == "--fast" ]]; then
+    FAST=1
+fi
+# El flag existe por simetria con gate.sh --fast. Este script nunca re-ejecuta
+# benchmarks: valida el ledger y los artefactos ya escritos, asi que --fast no omite
+# ninguna comprobacion. Se parsea para que no se cuele como argumento desconocido.
+readonly FAST
+
 CONFIG=config/loop.json
 STATE=STATE.md
 
@@ -72,7 +81,12 @@ verify_ledger() {
     [[ -n "$deliverable" ]] || fail "$slug: ledger sin campo deliverable"
     [[ "$deliverable" == "$file" ]] ||
         fail "$slug: el ledger apunta a '$deliverable' y STATE.md declara '$file'"
-    [[ "$ledger_status" == "CLOSED" ]] || fail "$slug: status='$ledger_status', se esperaba CLOSED"
+    if [[ "$ledger_status" == "BLOQUEADO" ]]; then
+        fail "$slug: ledger BLOQUEADO ($(jq -r '.blocked_reason // "sin razon declarada"' "$ledger"))"
+    else
+        [[ "$ledger_status" == "CLOSED" ]] ||
+            fail "$slug: status='$ledger_status', se esperaba CLOSED"
+    fi
 
     # 8. thresholds_sha256 == sha256 del config/loop.json del arbol.
     local sha
@@ -195,6 +209,19 @@ verify_ledger() {
             commands="$(jq -r ".iterations[$((n - 1))].commands_run // [] | length" "$ledger")"
             [[ "$commands" != "0" ]] ||
                 fail "$slug i$n: iteracion sin commit y sin commands_run (no es trabajo verificable)"
+        fi
+
+        # 7b. El agente declarado es el que config/loop.json asigna a la clase. Sin esto,
+        #     un ledger puede decir que audito quien no audito.
+        local declared_agent expected_agent
+        declared_agent="$(jq -r ".iterations[$((n - 1))].agent // empty" "$ledger")"
+        expected_agent="$(jq -r ".classes[\"$class\"].agent // empty" "$CONFIG")"
+        # `main` (el hilo principal) vale para cualquier clase: hay entregables, como el
+        # propio gate, donde no interviene ningun subagente especialista. Lo que el check
+        # impide es lo contrario: declarar que audito un especialista que no audito.
+        if [[ -n "$expected_agent" && "$declared_agent" != "$expected_agent" &&
+              "$declared_agent" != "main" ]]; then
+            fail "$slug i$n: agent='$declared_agent' pero la clase $class la audita '$expected_agent' (o 'main')"
         fi
 
         # 8. Umbrales de la clase sobre las metricas de la iteracion.
@@ -325,7 +352,14 @@ verify_metrics() {
               then "size_bytes_mismatch=\($m.size_bytes_mismatch)" else empty end,
             if $t.frontmatter_invalid_max != null and $m.frontmatter_invalid != null
                and $m.frontmatter_invalid > $t.frontmatter_invalid_max
-              then "frontmatter_invalid=\($m.frontmatter_invalid)" else empty end
+              then "frontmatter_invalid=\($m.frontmatter_invalid)" else empty end,
+            if $t.duplicated_facts_max != null and $m.duplicated_facts != null
+               and $m.duplicated_facts > $t.duplicated_facts_max
+              then "duplicated_facts=\($m.duplicated_facts) > \($t.duplicated_facts_max)"
+              else empty end,
+            if $t.last_verified_max_age_days != null and $m.last_verified_max_age_days != null
+               and $m.last_verified_max_age_days > $t.last_verified_max_age_days
+              then "last_verified_max_age_days=\($m.last_verified_max_age_days)" else empty end
           ] | join("; ")' "$ledger")"
     [[ -z "$result" ]] || fail "$slug i$n ($class): umbral incumplido -> $result"
 }

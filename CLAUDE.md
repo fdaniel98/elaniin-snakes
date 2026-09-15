@@ -62,12 +62,10 @@ Los que enuncian una **regla del juego** no la afirman aqui: enlazan a su anchor
 Los de **ingenieria** si se enuncian, porque no dependen de la fuente Go:
 
 - Battlesnake es de **movimientos simultaneos**: no razones como si fuera por turnos.
-- `-march=native` esta prohibido en el preset `deploy`.
-- Nada de `new` ni `malloc` dentro de `engine/` en el hot path.
+- ISA del preset `deploy` y que numeros se pueden publicar: ver docs/performance.md#p-02.
+- Nada de asignaciones dinamicas en el hot path: ver docs/invariants.md#inv-03.
 - El timeout del request **incluye** la latencia de red.
-- Ningun entregable se cierra sin su loop.
-- `std::shuffle`, `std::uniform_int_distribution`, `std::sample` y `std::random_device`
-  estan prohibidos bajo `engine/` y `arena/`: su algoritmo no esta especificado.
+- Generadores de la STL prohibidos bajo `engine/` y `arena/`: ver docs/invariants.md#inv-08.
 
 ## Donde escribir que
 

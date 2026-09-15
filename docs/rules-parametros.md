@@ -4,7 +4,7 @@ read_when: "antes de parsear el request, de tocar el config o de dar por cierto 
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-14
-size_bytes: 4394
+size_bytes: 4470
 ---
 
 Separado de `docs/rules.md` por presupuesto de bytes, no por tema: las mecanicas del
@@ -60,7 +60,8 @@ Buscar cualquiera de estas en el payload es un error de diseño: no estan ahi.
 
 ## R-99 Preguntas abiertas {#r-99}
 
-`authority: speculative` -- prohibido implementar contra esto (regla de oro 9).
+`authority: speculative` -- prohibido implementar contra esto (regla de oro 1: la fuente es el
+Go, y lo que no esta verificado contra el no se implementa).
 
 1. **Reproducibilidad del RNG.** El motor usa `math/rand` de Go (`rand.go:31-53`). No lo
    reproducimos desde C++ sin reimplementar `rngSource`. Impacto: el test diferencial de la Fase 1
