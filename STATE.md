@@ -4,7 +4,7 @@
 
 Fase: 0 (Setup) — PARCIAL: falta el check 10 y la partida contra el zoo, ambos con docker
 Gate: checks 0-9 en verde; el 10 no se pudo correr donde se cerro la fase (sin registro de imagenes)
-Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.) · scripts/gate.sh → CLOSED (8 it.)
+Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.)
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -30,8 +30,11 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 |---|---|---|
 | rules | engine/src/rules.cpp | correctness, robustness, perf |
 | brain-v0 | snake/src/brain_v0.cpp | correctness, robustness, perf |
-| gate | scripts/gate.sh | correctness, robustness, perf, context |
 <!-- END:loop-deliverables -->
+
+Que entra en esta tabla y que no lo decide el ambito del loop: ver
+docs/decisions/ADR-0008-ambito-del-loop.md#d-0071. El ledger de `scripts/gate.sh`, cerrado
+con 8 iteraciones, se conserva en `.loop/0/` como historia.
 
 ## Bloqueado / pendiente de decision humana
 

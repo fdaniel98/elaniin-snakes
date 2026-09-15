@@ -70,6 +70,20 @@ fail() {
     status=1
 }
 
+# 0. Ambito del loop. El ritual de tres clases y ledger encadenado se gana el sueldo
+#    donde un defecto cuesta partidas -el motor y el cerebro- y no donde cuesta una
+#    errata. Los entregables fuera de `closing.deliverable_scope` se verifican con el
+#    gate y sus venenos, sin ledger.
+#    ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071
+in_scope() {
+    local file="$1" prefix
+    while read -r prefix; do
+        [[ -z "$prefix" ]] && continue
+        [[ "$file" == "$prefix"* ]] && return 0
+    done < <(jq -r '.closing.deliverable_scope[]? // empty' "$CONFIG")
+    return 1
+}
+
 verify_ledger() {
     local slug="$1" file="$2" ledger="$3" dir="$4"
 
@@ -380,6 +394,11 @@ for row in "${DELIVERABLES[@]}"; do
     slug="$(awk -F'|' '{gsub(/ /,"",$2); print $2}' <<<"$row")"
     file="$(awk -F'|' '{gsub(/ /,"",$3); print $3}' <<<"$row")"
     [[ -z "$slug" ]] && continue
+
+    if ! in_scope "$file"; then
+        fail "$slug: '$file' esta fuera de closing.deliverable_scope y no lleva loop; quitalo del bloque loop-deliverables de STATE.md"
+        continue
+    fi
 
     ledger=".loop/${PHASE}/${slug}.ledger.json"
     dir=".loop/${PHASE}/${slug}"

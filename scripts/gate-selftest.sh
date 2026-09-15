@@ -216,6 +216,21 @@ with open(path, "w", encoding="utf-8", newline="\n") as fh:
 EOF
 }
 
+poison_9d() {
+    # Un entregable declarado fuera del ambito del loop. La regla vive en
+    # config/loop.json y el check 9 tiene que hacerla cumplir.
+    # ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071
+    python3 - <<'EOF'
+from pathlib import Path
+
+p = Path("STATE.md")
+s = p.read_text(encoding="utf-8")
+marca = "<!-- END:loop-deliverables -->"
+fila = "| harness | scripts/gate.sh | correctness |\n"
+p.write_text(s.replace(marca, fila + marca, 1), encoding="utf-8")
+EOF
+}
+
 poison_10() {
     sed -i 's|^FROM gcr.io/distroless/cc-debian12:nonroot|FROM gcr.io/distroless/static-debian12:nonroot|' \
         deploy/Dockerfile
@@ -245,6 +260,7 @@ POISONS=(
     "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"
     "poison_9b|9|ledger con el encadenamiento de commits roto|commit_after(i) != commit_before(i+1)"
     "poison_9c|9|ultima iteracion de una clase fuera de umbral|umbral incumplido"
+    "poison_9d|9|entregable declarado fuera del ambito del loop|fuera de closing.deliverable_scope"
     "poison_10|10|runtime distroless sin libstdc++"
 )
 

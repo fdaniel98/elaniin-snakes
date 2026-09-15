@@ -3,7 +3,7 @@ title: Harness - gate, hooks, subagentes, comandos y loop
 read_when: "antes de tocar scripts/, .claude/ o config/loop.json"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 6853
+size_bytes: 7164
 ---
 
 Modificar `scripts/gate.sh`, `config/loop.json` o `.claude/settings.json` exige
@@ -93,10 +93,15 @@ principal y al artefacto de la iteracion del loop.
 
 ## H-05 El loop de ingenieria {#h-05}
 
-Ningun entregable se declara hecho tras una sola pasada: sobre cada uno se ejecutan al
-menos 3 iteraciones de **clases distintas** (`correctness`, `robustness`, `perf`, mas
-`context` si el diff toca `docs/`, `.claude/` o un numero publicado), cada una con
-umbral numerico y artefacto verificable.
+Ningun entregable **dentro del ambito** se declara hecho tras una sola pasada: sobre cada
+uno se ejecutan al menos 3 iteraciones de **clases distintas** (`correctness`,
+`robustness`, `perf`, mas `context` si el diff toca `docs/`, `.claude/` o un numero
+publicado), cada una con umbral numerico y artefacto verificable.
+
+- Ambito: `closing.deliverable_scope` de `config/loop.json`, hoy `engine/` y `snake/`.
+  El harness y la documentacion los cubren el gate y sus venenos, sin ledger; declarar un
+  entregable fuera de ambito hace fallar el check 9
+  (ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071).
 
 - Umbrales: `config/loop.json`. Nunca hardcodeados en los scripts; el ledger copia el
   sha256 del archivo y el check 9 lo compara.

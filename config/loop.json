@@ -2,12 +2,25 @@
   "_comment": "Umbrales del loop de ingenieria. Ningun umbral vive hardcodeado en scripts/loop_verify.sh: el ledger copia el sha256 de ESTE archivo y el gate lo compara. Modificarlo exige aprobacion humana explicita y un ADR.",
   "version": 1,
   "closing": {
+    "deliverable_scope": [
+      "engine/",
+      "snake/"
+    ],
     "min_iterations": 3,
     "max_iterations": 8,
     "clean_tail_iterations": 2,
     "discarded_ratio_max": 0.3,
-    "mandatory_classes": ["correctness", "robustness", "perf"],
-    "context_required_when_touching": ["docs/", ".claude/", "STATE.md", "docs/performance.md"]
+    "mandatory_classes": [
+      "correctness",
+      "robustness",
+      "perf"
+    ],
+    "context_required_when_touching": [
+      "docs/",
+      ".claude/",
+      "STATE.md",
+      "docs/performance.md"
+    ]
   },
   "classes": {
     "correctness": {
