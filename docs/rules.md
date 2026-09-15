@@ -4,11 +4,12 @@ read_when: "antes de tocar engine/src/rules.cpp, de escribir un fixture o de dis
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-14
-size_bytes: 12089
+size_bytes: 12211
 ---
 
 Toda afirmacion de este archivo cita `archivo.go:linea` del SHA del front-matter. Lo no verificable
-contra esa fuente vive en [preguntas abiertas](#r-99) y esta marcado como `speculative`; esta
+contra esa fuente esta marcado como `speculative` y vive en las preguntas abiertas
+(ver docs/rules-parametros.md#r-99); esta
 prohibido implementar contra ello (regla de oro 9).
 
 ## R-01 Sistema de coordenadas {#r-01}
@@ -132,9 +133,10 @@ Consecuencias:
 
 - Una serpiente eliminada **por colision** este turno **sigue bloqueando** a las demas este turno,
   porque su eliminacion se aplica al final.
-- Una serpiente eliminada **por hambre o por salir del tablero** este turno **deja de bloquear**,
-  porque se elimina en el paso 2 y los bucles saltan a las eliminadas (`standard.go:241-243`,
-  `standard.go:262-264`).
+- Una serpiente eliminada **por hambre, por salir del tablero o por hazard** este turno
+  **deja de bloquear**: la de hazard muere ya en el stage 4 (`standard.go:162-164`) y las
+  otras dos en el paso 2, y todos los bucles de colision saltan a las eliminadas
+  (`standard.go:241-243`, `standard.go:262-264`).
 - **Cuello:** no es una regla especial. `snakeHasBodyCollided` salta el indice 0 y compara contra
   todos los demas segmentos (`standard.go:310-320`); el cuello es uno de ellos.
 - **Cabeza a cabeza:** pierde la serpiente con longitud **menor o igual** (`standard.go:322-327`).

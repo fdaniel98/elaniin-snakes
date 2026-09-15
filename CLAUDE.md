@@ -52,12 +52,12 @@ PORT=8080 ./build/release/bin/battlesnake-server
 
 Los que enuncian una **regla del juego** no la afirman aqui: enlazan a su anchor.
 
-- Cola: consulta docs/rules.md#r-04 antes de asumir que la casilla de cola esta libre.
-- Ejes: consulta docs/rules.md#r-01 antes de asumir el origen de coordenadas.
-- Hazards: consulta docs/rules.md#r-09 antes de asumir el lado del proximo shrink.
-- Orden del turno: consulta docs/rules.md#r-02 antes de asumir que el turno empieza
+- Cola: ver docs/rules.md#r-04 antes de asumir que la casilla de cola esta libre.
+- Ejes: ver docs/rules.md#r-01 antes de asumir el origen de coordenadas.
+- Hazards: ver docs/rules.md#r-09 antes de asumir el lado del proximo shrink.
+- Orden del turno: ver docs/rules.md#r-02 antes de asumir que el turno empieza
   moviendo.
-- Placements: consulta docs/rules.md#r-12 antes de desempatar muertes simultaneas.
+- Placements: ver docs/rules.md#r-12 antes de desempatar muertes simultaneas.
 
 Los de **ingenieria** si se enuncian, porque no dependen de la fuente Go:
 
@@ -71,11 +71,5 @@ Los de **ingenieria** si se enuncian, porque no dependen de la fuente Go:
 
 ## Donde escribir que
 
-| Que | Donde |
-|---|---|
-| Decisiones con alternativa descartada | `docs/decisions/ADR-*.md` |
-| Progreso entre sesiones | `STATE.md` |
-| Numeros medidos | `docs/performance.md` (unico dueño) |
-| Iteraciones del loop | `.loop/<fase>/` |
-| Reglas del juego verificadas | `docs/rules.md`, con cita `archivo.go:linea` |
-| Fuentes externas y sus SHA | `docs/SOURCES.md` |
+Un hecho, un lugar. La tabla de quien es dueño de que esta en un unico sitio:
+ver docs/INDEX.md#i-04.

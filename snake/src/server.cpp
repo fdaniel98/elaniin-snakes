@@ -174,8 +174,8 @@ int main() {
                             : snake::decide(state, deadline, params);
         } else {
             // Tablero no instanciado, payload invalido o serpiente propia ausente:
-            // fail-safe determinista, nunca 5xx. ver docs/rules.md#r-03
-            move = snake::Move{engine::Direction::up, 4, 0.0, 0};
+            // escalon 3, el ultimo del fail-safe; nunca 5xx. ver docs/rules.md#r-03
+            move = snake::Move{engine::Direction::up, 3, 0.0, 0};
             std::cerr << "WARN=payload_no_soportado\n";
         }
 

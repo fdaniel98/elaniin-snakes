@@ -11,6 +11,7 @@
 # Sintaxis fijada (docs/INDEX.md#i-03):
 #   definicion: ^#{2,4} .+ \{#([a-z0-9-]+)\}$
 #   cita:       (?:ver|see) (docs/[\w/.-]+\.md)#([a-z0-9-]+)
+#   enlace:     [texto](ruta.md#anchor) o [texto](#anchor) en el mismo archivo
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
@@ -73,6 +74,13 @@ while read -r file; do
         sed -E 's/^(ver|see) //' |
         while read -r citation; do
             echo "${file}|${citation}"
+        done
+    # Enlaces al mismo archivo, del tipo [texto](#anchor): antes pasaban invisibles
+    # porque la regex exigia un nombre de fichero.
+    grep -oE '\]\(#[a-z0-9-]+\)' "$file" 2>/dev/null |
+        sed -E 's/^\]\(//; s/\)$//' |
+        while read -r anchor; do
+            echo "${file}|${file}${anchor}" | sed 's#|\./#|#'
         done
     grep -oE '\]\(([A-Za-z0-9_./-]*\.md)#[a-z0-9-]+\)' "$file" 2>/dev/null |
         sed -E 's/^\]\(//; s/\)$//' |

@@ -30,7 +30,7 @@ tests usen exactamente el mismo `decide` que el servidor (ver docs/architecture.
 
 ## Variantes
 
-El cerebro declara soporte para `standard`, `royale` y `solo`. Cualquier otra entra en
+El cerebro declara soporte para `standard` y `royale`. Cualquier otra entra en
 **modo degradado seguro**: sin tail-escape ni modelo de hazards, solo filtro duro y flood
 fill conservador, con `WARN` en el log. En `constrictor` el tail-escape es directamente
 mortal porque la cola no avanza jamas (ver docs/rules.md#r-04).

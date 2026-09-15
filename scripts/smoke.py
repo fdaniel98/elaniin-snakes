@@ -5,7 +5,7 @@ Manda cada fixture a POST /move y exige:
   1. respuesta 200 con un movimiento de los cuatro literales;
   2. movimiento LEGAL, calculado aqui con una implementacion independiente de la del
      motor (si ambas coincidieran por compartir codigo, el check no probaria nada);
-  3. p99 y maximo dentro del presupuesto de latencia.
+  3. p99 y maximo dentro del presupuesto de latencia, leido de config/loop.json.
 
 La legalidad se define igual que en docs/rules.md#r-04: una casilla de cola solo queda
 libre si los dos ultimos segmentos NO estan apilados.
@@ -68,11 +68,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", default="http://127.0.0.1:8080")
     parser.add_argument("--fixtures", default="tests/fixtures")
-    parser.add_argument("--p99-ms", type=float, default=50.0)
-    parser.add_argument("--max-ms", type=float, default=150.0)
+    parser.add_argument("--config", default="config/loop.json")
+    parser.add_argument("--p99-ms", type=float, default=None)
+    parser.add_argument("--max-ms", type=float, default=None)
     parser.add_argument("--repeats", type=int, default=20)
     parser.add_argument("--json-out", default="")
     args = parser.parse_args()
+
+    # Los umbrales viven en config/loop.json, nunca en este script: el harness exige que
+    # ningun umbral este hardcodeado (docs/harness.md#h-05).
+    thresholds = json.loads(pathlib.Path(args.config).read_text(encoding="utf-8"))
+    perf = thresholds["classes"]["perf"]["thresholds"]
+    p99_budget = args.p99_ms if args.p99_ms is not None else float(perf["p99_move_ms_max"])
+    max_budget = args.max_ms if args.max_ms is not None else float(perf["max_move_ms_max"])
 
     fixtures = sorted(pathlib.Path(args.fixtures).glob("*.json"))
     if len(fixtures) < 10:
@@ -126,11 +134,11 @@ def main():
         print(f"FAIL {failure}")
     if failures:
         return 1
-    if p99 > args.p99_ms:
-        print(f"FAIL p99 {p99:.2f}ms > {args.p99_ms}ms")
+    if p99 > p99_budget:
+        print(f"FAIL p99 {p99:.2f}ms > {p99_budget}ms")
         return 1
-    if worst > args.max_ms:
-        print(f"FAIL maximo {worst:.2f}ms > {args.max_ms}ms")
+    if worst > max_budget:
+        print(f"FAIL maximo {worst:.2f}ms > {max_budget}ms")
         return 1
     print("OK   todos los movimientos legales y dentro del presupuesto")
     return 0

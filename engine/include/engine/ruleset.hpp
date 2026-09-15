@@ -24,9 +24,12 @@ enum class Variant : std::uint8_t {
 };
 
 /// Combinaciones que el cerebro soporta con todas sus heuristicas. El resto entra
-/// en modo degradado seguro. ver docs/rules-parametros.md#r-13
+/// en modo degradado seguro.
+///
+/// `solo` NO esta soportado a proposito: termina cuando no queda ninguna viva, mientras
+/// que `is_terminal` corta con una. ver docs/rules-parametros.md#r-13
 [[nodiscard]] constexpr bool is_supported(Variant v) noexcept {
-    return v == Variant::standard || v == Variant::royale || v == Variant::solo;
+    return v == Variant::standard || v == Variant::royale;
 }
 
 /// Que campos hubo que rellenar con el fallback en vez de leerlos del request.

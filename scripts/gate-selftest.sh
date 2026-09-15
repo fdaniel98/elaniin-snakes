@@ -92,6 +92,14 @@ poison_6d() {
     sed -i '/^last_verified:/d' docs/rules.md
 }
 
+poison_6e() {
+    # Enlace a un anchor del MISMO archivo que no existe: el caso que se colaba antes
+    # de que el lint mirara los enlaces sin nombre de fichero.
+    printf '
+Ver [preguntas abiertas](#no-existe-este-anchor).
+' >>docs/glossary.md
+}
+
 poison_7() {
     # -march=native en el preset del que deploy HEREDA: el grep textual sobre el bloque
     # `deploy` no lo ve; solo los flags efectivos lo delatan.
@@ -168,6 +176,7 @@ POISONS=(
     "poison_6b|6|cita a un anchor inexistente desde STATE.md"
     "poison_6c|6|size_bytes que no coincide con wc -c"
     "poison_6d|6|doc canonical sin last_verified"
+    "poison_6e|6|enlace a un anchor inexistente del mismo archivo"
     "poison_7|7|-march=native en un preset del que deploy hereda"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
     "poison_9|9|ledger con solo dos iteraciones"

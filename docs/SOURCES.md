@@ -1,51 +1,43 @@
 ---
 title: Fuentes externas verificadas
-read_when: "antes de afirmar cualquier cosa sobre reglas, CLI oficial o snake-zoo"
+read_when: "antes de afirmar algo sobre una herramienta externa o de re-verificar una regla"
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
-last_verified: 2026-09-14
-size_bytes: 5193
+last_verified: 2026-09-15
+size_bytes: 3163
 ---
 
-## Tabla de fuentes
+Este archivo lleva **fuentes**, no hechos: qué se consultó, en qué SHA, cuándo, y qué
+documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven en
+`docs/rules.md` y `docs/rules-parametros.md`, con su cita `archivo.go:linea`
+(ver docs/INDEX.md#i-04).
 
-| Fuente | SHA / versión | Fecha consulta | Qué se derivó |
-|---|---|---|---|
-| `github.com/BattlesnakeOfficial/rules` (Go) | `87e094e2e1c224e9dea67743fd3c2249137c4057` (clone `--depth 1` de la rama por defecto) | 2026-09-14 | Orden de stages, colisiones, hambre, hazards, feeding, spawn, movimiento por defecto, constantes del motor |
-| `github.com/BattlesnakeOfficial/rules` — `cli/commands/play.go` | mismo SHA | 2026-09-14 | Flags reales de `battlesnake play` y sus defaults |
-| `github.com/BattlesnakeOfficial/rules` — `client/models.go` | mismo SHA | 2026-09-14 | Rutas JSON exactas del payload de `/start`, `/move`, `/end` |
-| `github.com/BattlesnakeOfficial/snake-zoo` | `6c2edcdb6e35a5ccc03a9cdd80e4af74e9baf4a8` | 2026-09-14 | Formato de manifest TOML, requisito de toolchain Rust, argumentos reales de `docker run` |
+## S-01 Tabla de fuentes {#s-01}
 
-## Qué está verificado en esta sesión (Bloque A)
+| Fuente | SHA / version | Fecha | Que se derivo | Dueño de lo derivado |
+|---|---|---|---|---|
+| `github.com/BattlesnakeOfficial/rules` (Go) | `87e094e2e1c224e9dea67743fd3c2249137c4057` | 2026-09-14 | Orden de fases del turno, colisiones, hambre, hazards, alimentacion, colocacion inicial, fin de partida, movimiento por defecto | ver docs/rules.md#r-02 |
+| mismo repo, `maps/royale.go` | mismo SHA | 2026-09-14 | Modelo del shrink de royale y su RNG | ver docs/rules.md#r-09 |
+| mismo repo, `client/models.go` | mismo SHA | 2026-09-14 | Rutas JSON exactas del request | ver docs/rules-parametros.md#r-20 |
+| mismo repo, `constants.go` | mismo SHA | 2026-09-14 | Constantes del motor que no viajan en el payload | ver docs/rules-parametros.md#r-21 |
+| mismo repo, `cli/commands/play.go` | mismo SHA | 2026-09-14 | Flags y defaults del arbitro, verificados tambien con `battlesnake play --help` compilado | ver docs/rules-parametros.md#r-20 |
+| mismo repo, `cli/commands/output.go` | mismo SHA | 2026-09-14 | Formato del JSONL y ausencia de placements | ver docs/rules.md#r-12 |
+| mismo repo, `rand.go`, `settings.go` | mismo SHA | 2026-09-14 | El motor usa `math/rand` de Go: no reproducible desde C++ | ver docs/rules-parametros.md#r-99 |
+| `github.com/BattlesnakeOfficial/snake-zoo` | `6c2edcdb6e35a5ccc03a9cdd80e4af74e9baf4a8` | 2026-09-14 | Formato del manifest TOML, requisito de Rust, y que su runner lanza contenedores sin aislamiento (`src/docker.rs:80-91`) | `zoo/README.md` |
+| `cpp-httplib` | v0.18.7 (MIT) | 2026-09-15 | Cabecera unica vendorizada en `third_party/` | ver docs/decisions/ADR-0003-dependencias.md |
 
-Cada fila cita `archivo.go:línea` del SHA fijado arriba.
+## S-02 Ejecutado en esta maquina, no solo leido {#s-02}
 
-| Hecho | Cita | Nota |
+| Comprobacion | Cuando | Resultado |
 |---|---|---|
-| Orden de stages de Royale | `royale.go:7-15` | `game_over` → `movement` → `starvation` → `hazard_damage` → `feed_snakes` → `elimination` → `spawn_hazards.shrink_map` |
-| El primer stage del turno es `game_over`, no el movimiento | `ruleset.go:78-84`, `royale.go:8` | `NamedRuleset` antepone `StageGameOverStandard` y descarta el primer elemento de la lista de la variante |
-| Salud máxima 100, longitud inicial 3 | `constants.go:16-17` (`SnakeMaxHealth`, `SnakeStartSize`) | No viajan en el payload |
-| Comer restaura salud a 100 y añade un segmento duplicado en la cola | `standard.go:356-365` (`feedSnake`, `growSnake`) | El duplicado se apila sobre el último segmento |
-| Las serpientes nacen con sus 3 segmentos apilados en la misma casilla | `board.go:217-223` (`PlaceSnakesFixed`) | La cola no se libera en los primeros turnos |
-| Movimiento por defecto ante respuesta inválida/ausente | `standard.go:61-63`, `standard.go:90-116` (`getDefaultMove`) | Se deriva de cabeza vs cuello; si no hay cuello usable, `"up"` |
-| El daño de hazard **no** se aplica si hay comida en la casilla de la cabeza | `standard.go:143-152` | Excepción no obvia |
-| El daño de hazard es plano por casilla, pero se aplica una vez por cada entrada de `b.Hazards` que coincida | `standard.go:141-166` | En el mapa royale no hay duplicados generados |
-| El hazard se evalúa solo sobre la cabeza | `standard.go:140-142` | |
-| Cabeza a cabeza: pierde la **≤** en longitud (empate ⇒ mueren ambas) | `standard.go:322-327` (`snakeHasLostHeadToHead`) | |
-| Orden de evaluación de eliminación: hambre/fuera de tablero → autocolisión → cuerpo rival → cabeza-cabeza | `standard.go:190-278` | Las colisiones se **aplican** después de evaluarlas todas (`standard.go:280-289`) |
-| El cuello no es regla especial: es colisión con el propio cuerpo | `standard.go:310-320` (`snakeHasBodyCollided` salta `i == 0`) | |
-| Los hazards de royale se **recalculan desde cero** cada turno | `maps/royale.go:58-86` | `editor.ClearHazards()` y regeneración completa |
-| El lado de cada shrink sale de un RNG sembrado por la semilla de la partida, siempre re-sembrado en turno 0 | `maps/royale.go:61-78`, `settings.go:46-56` (`GetRand(0)`) | Secuencia fija por partida; con repetición de lado |
-| `shrinkEveryNTurns` default del motor: 20; del CLI: 25 | `maps/royale.go:49`; `cli/commands/play.go:117` | Divergencia real entre defaults |
-| Rutas JSON exactas: `game.ruleset.settings.hazardDamagePerTurn` y `game.ruleset.settings.royale.shrinkEveryNTurns` | `client/models.go` (`RulesetSettings`, `RoyaleSettings`) | El nombre interno del parámetro es `damagePerTurn` (`constants.go:52`), distinto del campo JSON |
-| Flags reales de `battlesnake play` y defaults | `cli/commands/play.go:97-117` | `--timeout` 500, `--foodSpawnChance` 15, `--minimumFood` 1, `--hazardDamagePerTurn` 14, `--shrinkEveryNTurns` 25, `--seed`, `--output` |
-| El JSONL del CLI es: 1 línea `game`, N líneas `SnakeRequest`, 1 línea `result` con `winnerId`/`isDraw` | `cli/commands/output.go:40-63` | No incluye placements ni `EliminatedOnTurn` |
-| El motor usa `math/rand` de Go para comida, colocación y shrink | `rand.go:31-53` | No reproducible bit a bit desde C++ sin reimplementar `rngSource` de Go |
-| snake-zoo requiere toolchain Rust (`cargo install --path .`) | `README.md` (Quick Start) | |
-| snake-zoo lanza contenedores sin flags de aislamiento y publica en todas las interfaces | `src/docker.rs:80-91` (`run -d --name … -p 0:<port>`) | Incompatible con §10.2 del prompt maestro: usaremos sus manifests, no su runner |
+| `battlesnake play --help` con el CLI compilado del SHA fijado | 2026-09-15 | Flags y defaults coinciden con `cli/commands/play.go:97-117` |
+| Partida completa `battlesnake play -g royale -m royale` contra nuestra v0 | 2026-09-15 | 11 turnos, JSONL en `docs/results/2026-09-15-v0-vs-dummy.jsonl` |
+| Payload literal de `/move` capturado del arbitro | 2026-09-15 | `tests/fixtures/13-payload-literal-del-cli.json` |
 
-## Pendiente de verificar en el Bloque B
+## S-03 Pendiente de verificar {#s-03}
 
-- Salida literal de `battlesnake play --help` (requiere compilar el CLI).
-- Payload literal emitido por el CLI contra un servidor real (fixture exigido por §5).
-- Referencia de API en `docs.battlesnake.com` (nombre exacto del campo de latencia para la DoD de la Fase 7).
+- Referencia de API en `docs.battlesnake.com`: nombre y unidad exactos del campo de
+  latencia que exige la DoD de la fase 7 (ver docs/rules-parametros.md#r-99).
+- Que ruta de hazards ejecuta realmente el CLI con `-g royale -m royale`: el stage del
+  pipeline y el hook del mapa calculan lo mismo, pero solo se ha verificado leyendo el
+  codigo, no instrumentando una partida.

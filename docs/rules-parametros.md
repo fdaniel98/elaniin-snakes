@@ -4,7 +4,7 @@ read_when: "antes de parsear el request, de tocar el config o de dar por cierto 
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-14
-size_bytes: 4110
+size_bytes: 4394
 ---
 
 Separado de `docs/rules.md` por presupuesto de bytes, no por tema: las mecanicas del
@@ -14,15 +14,16 @@ turno estan alli y estas son sus tablas de referencia. Misma fuente y mismo SHA.
 
 | Variante | Diferencia verificada | Cita |
 |---|---|---|
-| `standard` | Sin stage de hazards | `standard.go:8-15` |
+| `standard` | Aplica daño de hazard igual que royale (`standard.go:12`); lo que le falta es el stage que **genera** hazards | `standard.go:8-15` |
 | `wrapped` | El movimiento envuelve los bordes: fuera de rango salta al opuesto | `wrapped.go:12-40` |
 | `constrictor` | Se borra toda la comida y todas crecen cada turno; la cola nunca se libera | `constrictor.go:25-47` |
 | `wrapped_constrictor` | Suma de las dos anteriores | `constrictor.go:14-23` |
-| `solo` | Condicion de fin distinta | `ruleset.go:96` |
+| `solo` | Termina solo cuando **no queda ninguna** viva, no cuando queda una | `solo.go:12-19` |
 
-Nuestro cerebro declara soporte solo para `standard` y `royale`; el resto entra en modo degradado
-seguro (ver `snake/CLAUDE.md`). En `constrictor` el tail-escape es directamente mortal por
-[R-04](#r-04).
+Nuestro cerebro declara soporte para `standard` y `royale`; el resto, `solo` incluido, entra en
+modo degradado seguro (ver `snake/CLAUDE.md`). `solo` queda fuera a proposito: su condicion de
+fin es cero vivas y nuestro `is_terminal` corta con una. En `constrictor` el tail-escape es
+directamente mortal porque la cola nunca avanza (ver docs/rules.md#r-04).
 
 ## R-20 Parametros que viajan en el request {#r-20}
 
@@ -40,8 +41,8 @@ Ruta JSON exacta, verificada contra `client/models.go` en el SHA fijado. **Prohi
 | `game.ruleset.settings.royale.shrinkEveryNTurns` | int | 25 arbitro / 20 motor | `client/models.go:69-70`, `cli/commands/play.go:117`, `maps/royale.go:49` |
 | `board.width`, `board.height` | int | 11 | `client/models.go:24-25`, `cli/commands/play.go:97-98` |
 
-`settings` **no es plano**: `royale` es un objeto anidado (`client/models.go:63,68-70`). El nombre
-interno del parametro de hazard en el motor Go es `damagePerTurn` (`constants.go:52`), distinto del
+`settings` **no es plano**: `royale` es un objeto anidado (`client/models.go:64,68-70`). El nombre
+interno del parametro de hazard en el motor Go es `damagePerTurn` (`constants.go:54`), distinto del
 campo JSON `hazardDamagePerTurn`; solo importa al invocar el CLI, no al parsear el request.
 
 ## R-21 Constantes del motor que NO viajan en el request {#r-21}
@@ -67,5 +68,5 @@ Buscar cualquiera de estas en el payload es un error de diseño: no estan ahi.
 2. **Semilla 0.** Si la semilla es 0 el motor cae al RNG global no reproducible
    (`settings.go:50-52`). El Training Room debe pasar siempre una semilla distinta de 0.
 3. **Latencia reportada.** El campo que la DoD de la Fase 7 exige aparece como `you.latency`, un
-   string, en el payload (`client/models.go:36`), pero su unidad y su origen no estan verificados
+   string, en el payload (`client/models.go:35`), pero su unidad y su origen no estan verificados
    contra `docs.battlesnake.com`. Pendiente de la Fase 7.

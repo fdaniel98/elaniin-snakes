@@ -36,7 +36,7 @@ El toolchain vive en **WSL2 (Ubuntu 24.04)**; el repositorio se edita desde Wind
 cmake --preset release && cmake --build --preset release
 ctest --preset release
 ./scripts/bench.sh
-./snake/../build/release/snake/battlesnake-server   # servidor local en :8080
+PORT=8080 ./build/release/bin/battlesnake-server    # servidor local
 ```
 
 ## Estado

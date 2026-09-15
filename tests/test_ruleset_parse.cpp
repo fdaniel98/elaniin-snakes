@@ -85,8 +85,12 @@ TEST_CASE("ruleset: nombres de variante", "[ruleset][r-13]") {
     REQUIRE(snake::parse_variant("lo-que-sea") == engine::Variant::unknown);
 
     REQUIRE(engine::is_supported(engine::Variant::royale));
+    REQUIRE(engine::is_supported(engine::Variant::standard));
     REQUIRE_FALSE(engine::is_supported(engine::Variant::wrapped));
     REQUIRE_FALSE(engine::is_supported(engine::Variant::constrictor));
+    // `solo` NO esta soportado: termina cuando no queda NINGUNA viva (solo.go:12-19),
+    // mientras que nuestro is_terminal corta con una. ver docs/rules-parametros.md#r-13
+    REQUIRE_FALSE(engine::is_supported(engine::Variant::solo));
 }
 
 TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
