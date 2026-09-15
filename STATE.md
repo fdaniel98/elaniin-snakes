@@ -2,8 +2,8 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — PARCIAL: falta el check 10 y la partida contra el zoo, ambos con docker
-Gate: checks 0-9 en verde; el 10 no se pudo correr donde se cerro la fase (sin registro de imagenes)
+Fase: 0 (Setup) — PARCIAL: solo falta pegar la salida del gate completo y de la autoprueba
+Gate: checks 0-9 verificados; el 10 corre en la maquina de referencia, con docker
 Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.)
 Snake activa: v0-baseline
 
@@ -43,10 +43,10 @@ con 8 iteraciones, se conserva en `.loop/0/` como historia.
       check 10 (`docker build` mas contenedor respondiendo) ni su veneno se ejecutaron
       ahi. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que
       separa la fase de COMPLETA.
-- [ ] **Partida contra una snake del zoo** (criterio 5 de la DoD). Autorizada el
-      2026-09-15 y ya con su herramienta: `./scripts/zoo-game.sh eremetic-eric`. Queda
-      ejecutarla en una maquina con docker y acceso a registro. El primer build compila
-      un proyecto Rust entero y tarda; el JSONL sale en `docs/results/`.
+- [ ] **Pegar la ultima linea del gate completo y de la autoprueba.** Ambos se corrieron
+      en la maquina de referencia el 2026-09-15, pero el gate borra su directorio de logs
+      al salir, asi que no queda rastro que citar. Sin esa linea, los criterios 3 y 11 se
+      apoyan en una afirmacion, no en una salida.
 - [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
       dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
       (Docker Desktop, Settings, Resources, WSL integration).
@@ -77,6 +77,9 @@ Cada una con su ADR, que es donde vive el contenido:
       commit 8082d1d.
 - [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
       sentido en la arena (ver docs/rules.md#r-09).
+- [ ] El criterio 5 quedo cerrado: v0 gana su partida contra Eremetic Eric en 80 turnos
+      (`docs/results/2026-09-15-v0-vs-eremetic-eric.md`). El rival murio de hambre dentro
+      del hazard; una partida no es una medicion.
 
 ## Desviaciones del arbol de archivos
 
@@ -84,6 +87,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-En WSL2, con docker: `./scripts/gate.sh`, `./scripts/gate-selftest.sh` y
-`./scripts/zoo-game.sh eremetic-eric`. Con esos tres en verde la fase 0 pasa de PARCIAL a
-COMPLETA y se abre la fase 1 (reglas completas y test diferencial).
+Pegar la ultima linea de `./scripts/gate.sh` y de `./scripts/gate-selftest.sh` corridos en
+WSL2; con eso la fase 0 pasa a COMPLETA y se abre la fase 1 (reglas Royale completas y test
+diferencial contra >=500 partidas JSONL del CLI).
