@@ -9,9 +9,9 @@
 
 #include <stdexcept>
 
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/rules.hpp>
+
+#include <catch2/catch_test_macros.hpp>
 
 namespace {
 

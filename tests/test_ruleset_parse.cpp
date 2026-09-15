@@ -7,10 +7,10 @@
 #include <fstream>
 #include <string>
 
+#include <snake/config_loader.hpp>
+
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
-
-#include <snake/config_loader.hpp>
 
 using nlohmann::json;
 
@@ -50,8 +50,7 @@ TEST_CASE("ruleset: cada parametro se lee por su ruta exacta", "[ruleset][r-20]"
     REQUIRE_FALSE(rules.fallbacks.any());
 }
 
-TEST_CASE("ruleset: shrinkEveryNTurns esta anidado, no es un campo plano",
-          "[ruleset][r-20]") {
+TEST_CASE("ruleset: shrinkEveryNTurns esta anidado, no es un campo plano", "[ruleset][r-20]") {
     json game = full_game();
     // Se mueve el parametro al nivel plano: el parser NO debe encontrarlo ahi.
     game["ruleset"]["settings"].erase("royale");
@@ -81,8 +80,7 @@ TEST_CASE("ruleset: nombres de variante", "[ruleset][r-13]") {
     REQUIRE(snake::parse_variant("royale") == engine::Variant::royale);
     REQUIRE(snake::parse_variant("wrapped") == engine::Variant::wrapped);
     REQUIRE(snake::parse_variant("constrictor") == engine::Variant::constrictor);
-    REQUIRE(snake::parse_variant("wrapped_constrictor") ==
-            engine::Variant::wrapped_constrictor);
+    REQUIRE(snake::parse_variant("wrapped_constrictor") == engine::Variant::wrapped_constrictor);
     REQUIRE(snake::parse_variant("solo") == engine::Variant::solo);
     REQUIRE(snake::parse_variant("lo-que-sea") == engine::Variant::unknown);
 
@@ -128,7 +126,9 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     })");
 
     for (const auto& [group, keys] : doc.items()) {
-        if (group.rfind('_', 0) == 0) continue; // comentarios
+        if (group.rfind('_', 0) == 0) {
+            continue; // comentarios
+        }
         REQUIRE(expected_keys.contains(group));
         for (const auto& [key, value] : keys.items()) {
             const bool known =

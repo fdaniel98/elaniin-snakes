@@ -3,9 +3,9 @@
 /// verificada contra el codigo del arbitro; `settings` NO es plano.
 /// ver docs/rules-parametros.md#r-20
 
-#include <snake/config_loader.hpp>
-
 #include <fstream>
+
+#include <snake/config_loader.hpp>
 
 namespace snake {
 
@@ -54,7 +54,9 @@ const json& child(const json& node, const char* key) {
     static const json empty = json::object();
     if (node.is_object()) {
         const auto it = node.find(key);
-        if (it != node.end()) return *it;
+        if (it != node.end()) {
+            return *it;
+        }
     }
     return empty;
 }
@@ -62,12 +64,24 @@ const json& child(const json& node, const char* key) {
 } // namespace
 
 engine::Variant parse_variant(const std::string& name) {
-    if (name == "standard") return engine::Variant::standard;
-    if (name == "royale") return engine::Variant::royale;
-    if (name == "wrapped") return engine::Variant::wrapped;
-    if (name == "constrictor") return engine::Variant::constrictor;
-    if (name == "wrapped_constrictor") return engine::Variant::wrapped_constrictor;
-    if (name == "solo") return engine::Variant::solo;
+    if (name == "standard") {
+        return engine::Variant::standard;
+    }
+    if (name == "royale") {
+        return engine::Variant::royale;
+    }
+    if (name == "wrapped") {
+        return engine::Variant::wrapped;
+    }
+    if (name == "constrictor") {
+        return engine::Variant::constrictor;
+    }
+    if (name == "wrapped_constrictor") {
+        return engine::Variant::wrapped_constrictor;
+    }
+    if (name == "solo") {
+        return engine::Variant::solo;
+    }
     return engine::Variant::unknown;
 }
 
@@ -90,17 +104,19 @@ engine::Ruleset parse_ruleset(const json& game) {
     }
 
     const json& settings = child(ruleset, "settings");
-    rules.food_spawn_chance = read_int(settings, "foodSpawnChance", rules.food_spawn_chance,
-                                       rules.fallbacks.food_spawn_chance);
+    rules.food_spawn_chance = read_int(
+        settings, "foodSpawnChance", rules.food_spawn_chance, rules.fallbacks.food_spawn_chance);
     rules.minimum_food =
         read_int(settings, "minimumFood", rules.minimum_food, rules.fallbacks.minimum_food);
-    rules.hazard_damage_per_turn = read_int(settings, "hazardDamagePerTurn",
+    rules.hazard_damage_per_turn = read_int(settings,
+                                            "hazardDamagePerTurn",
                                             rules.hazard_damage_per_turn,
                                             rules.fallbacks.hazard_damage);
 
     // `royale` es un objeto anidado dentro de `settings`, no un campo plano.
     const json& royale = child(settings, "royale");
-    rules.shrink_every_n_turns = read_int(royale, "shrinkEveryNTurns",
+    rules.shrink_every_n_turns = read_int(royale,
+                                          "shrinkEveryNTurns",
                                           rules.shrink_every_n_turns,
                                           rules.fallbacks.shrink_every_n_turns);
 
@@ -111,8 +127,8 @@ Params parse_params(const json& doc) {
     Params params;
 
     const json& time = child(doc, "time");
-    params.time.network_margin_ms = read_plain_int(time, "network_margin_ms",
-                                                   params.time.network_margin_ms);
+    params.time.network_margin_ms =
+        read_plain_int(time, "network_margin_ms", params.time.network_margin_ms);
     params.time.safety_margin_ms =
         read_plain_int(time, "safety_margin_ms", params.time.safety_margin_ms);
     params.time.max_compute_ms = read_plain_int(time, "max_compute_ms", params.time.max_compute_ms);
@@ -126,7 +142,8 @@ Params parse_params(const json& doc) {
     params.food.weight = read_double(food, "weight", params.food.weight);
 
     const json& space = child(doc, "space");
-    params.space.min_space_ratio = read_double(space, "min_space_ratio", params.space.min_space_ratio);
+    params.space.min_space_ratio =
+        read_double(space, "min_space_ratio", params.space.min_space_ratio);
     params.space.weight = read_double(space, "weight", params.space.weight);
     params.space.tail_escape = read_bool(space, "tail_escape", params.space.tail_escape);
 
@@ -145,19 +162,31 @@ Params parse_params(const json& doc) {
 
 Params load_params(const std::string& path) {
     std::ifstream file(path);
-    if (!file.is_open()) return Params{};
-    json doc = json::parse(file, nullptr, false);
-    if (doc.is_discarded()) return Params{};
+    if (!file.is_open()) {
+        return Params{};
+    }
+    const json doc = json::parse(file, nullptr, false);
+    if (doc.is_discarded()) {
+        return Params{};
+    }
     return parse_params(doc);
 }
 
 bool parse_state(const json& request, engine::State11& out) {
-    if (!request.is_object()) return false;
+    if (!request.is_object()) {
+        return false;
+    }
 
     const json& board = child(request, "board");
-    if (!board.is_object()) return false;
-    if (read_plain_int(board, "width", 0) != engine::State11::width) return false;
-    if (read_plain_int(board, "height", 0) != engine::State11::height) return false;
+    if (!board.is_object()) {
+        return false;
+    }
+    if (read_plain_int(board, "width", 0) != engine::State11::width) {
+        return false;
+    }
+    if (read_plain_int(board, "height", 0) != engine::State11::height) {
+        return false;
+    }
 
     out = engine::State11{};
     out.turn = read_plain_int(request, "turn", 0);
@@ -169,7 +198,9 @@ bool parse_state(const json& request, engine::State11& out) {
             const int x = read_plain_int(point, "x", -1);
             const int y = read_plain_int(point, "y", -1);
             const engine::Coord coord{static_cast<std::int8_t>(x), static_cast<std::int8_t>(y)};
-            if (engine::State11::Board::in_bounds(coord)) out.food.set(coord);
+            if (engine::State11::Board::in_bounds(coord)) {
+                out.food.set(coord);
+            }
         }
     }
 
@@ -179,13 +210,19 @@ bool parse_state(const json& request, engine::State11& out) {
             const int x = read_plain_int(point, "x", -1);
             const int y = read_plain_int(point, "y", -1);
             const engine::Coord coord{static_cast<std::int8_t>(x), static_cast<std::int8_t>(y)};
-            if (engine::State11::Board::in_bounds(coord)) out.hazards.set(coord);
+            if (engine::State11::Board::in_bounds(coord)) {
+                out.hazards.set(coord);
+            }
         }
     }
 
     const json& snakes = child(board, "snakes");
-    if (!snakes.is_array() || snakes.empty()) return false;
-    if (snakes.size() > static_cast<std::size_t>(engine::State11::max_snakes)) return false;
+    if (!snakes.is_array() || snakes.empty()) {
+        return false;
+    }
+    if (snakes.size() > static_cast<std::size_t>(engine::State11::max_snakes)) {
+        return false;
+    }
 
     std::string my_id;
     const json& you = child(request, "you");
@@ -197,8 +234,12 @@ bool parse_state(const json& request, engine::State11& out) {
     bool found_me = false;
     for (const auto& snake_json : snakes) {
         const json& body = child(snake_json, "body");
-        if (!body.is_array() || body.empty()) return false;
-        if (body.size() > static_cast<std::size_t>(engine::State11::body_capacity)) return false;
+        if (!body.is_array() || body.empty()) {
+            return false;
+        }
+        if (body.size() > static_cast<std::size_t>(engine::State11::body_capacity)) {
+            return false;
+        }
 
         auto& snake = out.snakes[static_cast<unsigned>(index)];
         snake.head_slot = 0;
@@ -212,9 +253,11 @@ bool parse_state(const json& request, engine::State11& out) {
             const int x = read_plain_int(point, "x", -1);
             const int y = read_plain_int(point, "y", -1);
             const engine::Coord coord{static_cast<std::int8_t>(x), static_cast<std::int8_t>(y)};
-            if (!engine::State11::Board::in_bounds(coord)) return false;
-            snake.cells[segment] = static_cast<std::uint16_t>(
-                engine::State11::Board::index_of(coord));
+            if (!engine::State11::Board::in_bounds(coord)) {
+                return false;
+            }
+            snake.cells[segment] =
+                static_cast<std::uint16_t>(engine::State11::Board::index_of(coord));
             ++segment;
         }
 

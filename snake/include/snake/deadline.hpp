@@ -20,13 +20,18 @@ public:
     explicit Deadline(Clock::time_point end) noexcept : end_(end) {}
 
     /// Deadline derivado del timeout del request y de los margenes del config.
-    static Deadline from_timeout(std::int32_t timeout_ms, const TimeParams& time,
+    static Deadline from_timeout(std::int32_t timeout_ms,
+                                 const TimeParams& time,
                                  Clock::time_point start = Clock::now()) noexcept {
         std::int32_t budget = timeout_ms - time.network_margin_ms - time.safety_margin_ms;
-        if (budget > time.max_compute_ms) budget = time.max_compute_ms;
+        if (budget > time.max_compute_ms) {
+            budget = time.max_compute_ms;
+        }
         // Un timeout absurdamente bajo no debe producir un deadline en el pasado: el
         // cerebro necesita al menos un barrido de las 4 direcciones.
-        if (budget < 1) budget = 1;
+        if (budget < 1) {
+            budget = 1;
+        }
         return Deadline(start + std::chrono::milliseconds(budget));
     }
 

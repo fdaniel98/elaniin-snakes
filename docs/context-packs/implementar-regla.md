@@ -3,7 +3,7 @@ title: Pack: implementar o corregir una regla
 read_when: "antes de tocar engine/src/rules.cpp o de añadir un fixture de reglas"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1772
+size_bytes: 1824
 ---
 
 
@@ -14,13 +14,14 @@ size_bytes: 1772
 |---|---|---|
 | 1 | `docs/rules.md` | la regla y su cita `archivo.go:linea`; es la unica fuente |
 | 2 | `docs/invariants.md` | que no puedes romper al tocar el motor |
-| 3 | `engine/include/engine/state.hpp` | como se representa el cuerpo y la cola |
-| 4 | `engine/src/rules.cpp` | donde vive el orden de fases del turno |
+| 3 | `engine/src/rules.cpp` | donde vive el orden de fases del turno |
 <!-- END:pack-load -->
 
 No abras `snake/` para esto: una regla del juego no depende del cerebro.
-El archivo de tests de reglas se abre al escribir el caso, no antes: es grande y no
-cabe en el presupuesto de arranque de la tarea (ver docs/INDEX.md#i-02).
+Dos archivos se abren mas tarde, no al arrancar, porque no caben en el presupuesto de
+la tarea (ver docs/INDEX.md#i-02): la representacion del cuerpo, en
+engine/include/engine/state.hpp, cuando necesites tocar el ring buffer; y el archivo de
+tests de reglas, cuando vayas a escribir el caso.
 
 ## CP-02 Como se hace {#cp-02}
 

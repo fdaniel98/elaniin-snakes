@@ -12,14 +12,14 @@
 #include <string>
 #include <vector>
 
-#include <catch2/catch_test_macros.hpp>
-#include <nlohmann/json.hpp>
-
 #include <engine/rng.hpp>
 #include <engine/rules.hpp>
 
 #include <snake/brain.hpp>
 #include <snake/config_loader.hpp>
+
+#include <catch2/catch_test_macros.hpp>
+#include <nlohmann/json.hpp>
 
 using nlohmann::json;
 
@@ -33,14 +33,19 @@ struct Fixture {
 std::vector<Fixture> load_fixtures() {
     std::vector<Fixture> fixtures;
     for (const auto& entry : std::filesystem::directory_iterator(BSR_FIXTURES_DIR)) {
-        if (entry.path().extension() != ".json") continue;
+        if (entry.path().extension() != ".json") {
+            continue;
+        }
         std::ifstream file(entry.path());
         json doc = json::parse(file, nullptr, false);
-        if (doc.is_discarded()) continue;
+        if (doc.is_discarded()) {
+            continue;
+        }
         fixtures.push_back(Fixture{entry.path().filename().string(), std::move(doc)});
     }
-    std::sort(fixtures.begin(), fixtures.end(),
-              [](const Fixture& a, const Fixture& b) { return a.name < b.name; });
+    std::sort(fixtures.begin(), fixtures.end(), [](const Fixture& a, const Fixture& b) {
+        return a.name < b.name;
+    });
     return fixtures;
 }
 
@@ -75,9 +80,15 @@ TEST_CASE("fixtures: hay al menos 10 y cubren los casos obligatorios", "[brain][
         const int turn = fixture.doc.value("turn", -1);
         const std::string ruleset =
             fixture.doc["game"]["ruleset"].value("name", std::string("standard"));
-        if (turn <= 2) ++stacked_early;
-        if (ruleset == "wrapped") ++wrapped;
-        if (ruleset == "constrictor") ++constrictor;
+        if (turn <= 2) {
+            ++stacked_early;
+        }
+        if (ruleset == "wrapped") {
+            ++wrapped;
+        }
+        if (ruleset == "constrictor") {
+            ++constrictor;
+        }
 
         INFO("fixture sin comentario: " << fixture.name);
         REQUIRE(fixture.doc.contains("_comment"));
@@ -169,8 +180,7 @@ TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {
         const snake::Deadline past(snake::Deadline::Clock::now() - std::chrono::seconds(1));
         const snake::Move move = snake::decide(open_board, past, params);
         REQUIRE(move.fallback_level == 1);
-        REQUIRE(engine::mask_has(engine::legal_moves(open_board, open_board.you),
-                                 move.direction));
+        REQUIRE(engine::mask_has(engine::legal_moves(open_board, open_board.you), move.direction));
     }
 
     SECTION("escalon 2: sin movimiento seguro, pero dentro del tablero") {
@@ -221,13 +231,16 @@ TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {
     }
 }
 
-TEST_CASE("brain_v0: variantes no soportadas entran en modo degradado",
-          "[brain][r-13]") {
+TEST_CASE("brain_v0: variantes no soportadas entran en modo degradado", "[brain][r-13]") {
     const snake::Params params;
     for (const auto& fixture : load_fixtures()) {
         engine::State11 state;
-        if (!snake::parse_state(fixture.doc, state)) continue;
-        if (engine::is_supported(state.rules.variant)) continue;
+        if (!snake::parse_state(fixture.doc, state)) {
+            continue;
+        }
+        if (engine::is_supported(state.rules.variant)) {
+            continue;
+        }
 
         INFO("fixture degradado: " << fixture.name);
         const snake::Move move = snake::decide(state, generous(), params);
@@ -260,7 +273,9 @@ engine::State11 random_state(engine::Rng& rng) {
         snake.status = engine::Elimination::alive;
 
         for (int seg = 0; seg < length; ++seg) {
-            if (!Board::in_bounds(cursor) || taken.test(Board::index_of(cursor))) break;
+            if (!Board::in_bounds(cursor) || taken.test(Board::index_of(cursor))) {
+                break;
+            }
             taken.set(Board::index_of(cursor));
             snake.cells[static_cast<unsigned>(seg)] =
                 static_cast<std::uint16_t>(Board::index_of(cursor));
@@ -306,7 +321,9 @@ TEST_CASE("fuzz: 10000 estados aleatorios sin movimiento ilegal ni deadline exce
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                                  snake::Deadline::Clock::now() - started)
                                  .count();
-        if (elapsed > 5) ++deadline_violations;
+        if (elapsed > 5) {
+            ++deadline_violations;
+        }
 
         const engine::MoveMask legal = engine::legal_moves(state, state.you);
         if (legal != engine::move_mask_none && !engine::mask_has(legal, move.direction)) {

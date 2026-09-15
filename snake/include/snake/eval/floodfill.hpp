@@ -25,20 +25,28 @@ struct Reach {
 /// como libre si se llega a ella en al menos los turnos que tarda en liberarse.
 /// ver docs/rules.md#r-04
 template <int W, int H>
-[[nodiscard]] Reach flood(const engine::Bitboard<W, H>& free_cells, int start, int target = -1,
+[[nodiscard]] Reach flood(const engine::Bitboard<W, H>& free_cells,
+                          int start,
+                          int target = -1,
                           int max_turns = W * H) noexcept {
     using Board = engine::Bitboard<W, H>;
     Reach result;
-    if (start < 0 || !free_cells.test(start)) return result;
+    if (start < 0 || !free_cells.test(start)) {
+        return result;
+    }
 
     Board frontier;
     frontier.set(start);
     Board seen = frontier;
-    if (target == start) result.turns_to_target = 0;
+    if (target == start) {
+        result.turns_to_target = 0;
+    }
 
     for (int turn = 1; turn <= max_turns; ++turn) {
         const Board next = (frontier.expand() & free_cells).without(seen);
-        if (next.none()) break;
+        if (next.none()) {
+            break;
+        }
         if (result.turns_to_target < 0 && target >= 0 && next.test(target)) {
             result.turns_to_target = turn;
         }

@@ -2,15 +2,18 @@
 /// El bitboard se instancia en 7x7, 11x11 y 19x19 porque el motor debe compilar y
 /// pasar en los tres tamaños. ver docs/invariants.md#inv-05
 
+#include <engine/bitboard.hpp>
+
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include <engine/bitboard.hpp>
-
 using engine::Coord;
 
-TEMPLATE_TEST_CASE("bitboard: indices y coordenadas son inversos", "[bitboard]",
-                   engine::Board7, engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: indices y coordenadas son inversos",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     for (int y = 0; y < Board::height; ++y) {
         for (int x = 0; x < Board::width; ++x) {
@@ -22,8 +25,11 @@ TEMPLATE_TEST_CASE("bitboard: indices y coordenadas son inversos", "[bitboard]",
     }
 }
 
-TEMPLATE_TEST_CASE("bitboard: set/test/reset y conteo", "[bitboard]", engine::Board7,
-                   engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: set/test/reset y conteo",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     Board b;
     REQUIRE(b.none());
@@ -41,8 +47,11 @@ TEMPLATE_TEST_CASE("bitboard: set/test/reset y conteo", "[bitboard]", engine::Bo
     REQUIRE(b.count() == 1);
 }
 
-TEMPLATE_TEST_CASE("bitboard: el complemento no cuenta bits fuera del tablero", "[bitboard]",
-                   engine::Board7, engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: el complemento no cuenta bits fuera del tablero",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     const Board empty;
     REQUIRE((~empty).count() == Board::cells);
@@ -50,8 +59,11 @@ TEMPLATE_TEST_CASE("bitboard: el complemento no cuenta bits fuera del tablero", 
     REQUIRE((~Board::full()).count() == 0);
 }
 
-TEMPLATE_TEST_CASE("bitboard: los desplazamientos no envuelven por los bordes", "[bitboard]",
-                   engine::Board7, engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: los desplazamientos no envuelven por los bordes",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     constexpr auto last_x = static_cast<std::int8_t>(Board::width - 1);
     constexpr auto last_y = static_cast<std::int8_t>(Board::height - 1);
@@ -77,8 +89,11 @@ TEMPLATE_TEST_CASE("bitboard: los desplazamientos no envuelven por los bordes", 
     REQUIRE(bottom_edge.north().test(Coord{2, 1}));
 }
 
-TEMPLATE_TEST_CASE("bitboard: expand da la casilla y sus vecinas ortogonales", "[bitboard]",
-                   engine::Board7, engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: expand da la casilla y sus vecinas ortogonales",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     Board center;
     center.set(Coord{3, 3});
@@ -95,8 +110,11 @@ TEMPLATE_TEST_CASE("bitboard: expand da la casilla y sus vecinas ortogonales", "
     REQUIRE(corner.expand().count() == 3);
 }
 
-TEMPLATE_TEST_CASE("bitboard: flood fill completo de un tablero vacio", "[bitboard]",
-                   engine::Board7, engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: flood fill completo de un tablero vacio",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     Board reachable;
     reachable.set(Coord{0, 0});
@@ -104,14 +122,19 @@ TEMPLATE_TEST_CASE("bitboard: flood fill completo de un tablero vacio", "[bitboa
 
     for (int i = 0; i < Board::cells; ++i) {
         const Board next = reachable.expand() & free_cells;
-        if (next == reachable) break;
+        if (next == reachable) {
+            break;
+        }
         reachable = next;
     }
     REQUIRE(reachable.count() == Board::cells);
 }
 
-TEMPLATE_TEST_CASE("bitboard: una pared parte el tablero en dos regiones", "[bitboard]",
-                   engine::Board7, engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: una pared parte el tablero en dos regiones",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     constexpr int wall_x = Board::width / 2;
     const Board free_cells = Board::full().without(Board::column(wall_x));
@@ -120,7 +143,9 @@ TEMPLATE_TEST_CASE("bitboard: una pared parte el tablero en dos regiones", "[bit
     reachable.set(Coord{0, 0});
     for (int i = 0; i < Board::cells; ++i) {
         const Board next = reachable.expand() & free_cells;
-        if (next == reachable) break;
+        if (next == reachable) {
+            break;
+        }
         reachable = next;
     }
     REQUIRE(reachable.count() == wall_x * Board::height);
@@ -128,8 +153,11 @@ TEMPLATE_TEST_CASE("bitboard: una pared parte el tablero en dos regiones", "[bit
         Coord{static_cast<std::int8_t>(Board::width - 1), static_cast<std::int8_t>(0)}));
 }
 
-TEMPLATE_TEST_CASE("bitboard: rect recorta al tablero", "[bitboard]", engine::Board7,
-                   engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: rect recorta al tablero",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     const Board full = Board::rect(-5, -5, Board::width + 5, Board::height + 5);
     REQUIRE(full.count() == Board::cells);
@@ -139,8 +167,11 @@ TEMPLATE_TEST_CASE("bitboard: rect recorta al tablero", "[bitboard]", engine::Bo
     REQUIRE_FALSE(inner.test(Coord{0, 0}));
 }
 
-TEMPLATE_TEST_CASE("bitboard: pop_first recorre en orden creciente", "[bitboard]", engine::Board7,
-                   engine::Board11, engine::Board19) {
+TEMPLATE_TEST_CASE("bitboard: pop_first recorre en orden creciente",
+                   "[bitboard]",
+                   engine::Board7,
+                   engine::Board11,
+                   engine::Board19) {
     using Board = TestType;
     Board b;
     b.set(Coord{1, 0});

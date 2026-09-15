@@ -8,9 +8,9 @@
 #include <array>
 #include <cstdint>
 
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/rng.hpp>
+
+#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("rng: vectores de referencia con estado {1,2,3,4}", "[rng]") {
     engine::Rng rng(1, 2, 3, 4);
@@ -47,7 +47,7 @@ TEST_CASE("rng: bounded respeta el rango y cubre todos los valores", "[rng]") {
     REQUIRE(rng.bounded(1) == 0);
 
     constexpr std::uint64_t bound = 6;
-    std::array<int, bound> hits{};
+    std::array<int, static_cast<std::size_t>(bound)> hits{};
     for (int i = 0; i < 20000; ++i) {
         const std::uint64_t v = rng.bounded(bound);
         REQUIRE(v < bound);

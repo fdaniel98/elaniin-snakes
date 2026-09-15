@@ -4,14 +4,13 @@
 ///
 /// Cada punto de la especificacion del baseline tiene su fixture en tests/fixtures.
 
-#include <snake/brain.hpp>
-
 #include <algorithm>
 #include <array>
 #include <exception>
 
 #include <engine/rules.hpp>
 
+#include <snake/brain.hpp>
 #include <snake/eval/floodfill.hpp>
 
 namespace snake {
@@ -36,10 +35,14 @@ Board blocked_cells(const State& state) noexcept {
     Board blocked;
     for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {
         const auto& other = state.snakes[static_cast<unsigned>(i)];
-        if (!engine::is_alive(other.status)) continue;
+        if (!engine::is_alive(other.status)) {
+            continue;
+        }
         const int last = static_cast<int>(other.length) - 1;
         for (int seg = 0; seg <= last; ++seg) {
-            if (seg == last && !other.tail_is_stacked()) continue;
+            if (seg == last && !other.tail_is_stacked()) {
+                continue;
+            }
             blocked.set(other.segment(seg));
         }
     }
@@ -47,18 +50,28 @@ Board blocked_cells(const State& state) noexcept {
 }
 
 /// Distancia en turnos a la comida mas cercana alcanzable, o -1.
-int nearest_food_distance(const Board& free_cells, int start, const Board& food,
+int nearest_food_distance(const Board& free_cells,
+                          int start,
+                          const Board& food,
                           int max_turns) noexcept {
-    if (start < 0) return -1;
-    if (food.test(start)) return 0;
+    if (start < 0) {
+        return -1;
+    }
+    if (food.test(start)) {
+        return 0;
+    }
 
     Board frontier;
     frontier.set(start);
     Board seen = frontier;
     for (int turn = 1; turn <= max_turns; ++turn) {
         const Board next = (frontier.expand() & free_cells).without(seen);
-        if (next.none()) return -1;
-        if ((next & food).any()) return turn;
+        if (next.none()) {
+            return -1;
+        }
+        if ((next & food).any()) {
+            return turn;
+        }
         seen |= next;
         frontier = next;
     }
@@ -83,8 +96,11 @@ struct Candidate {
 
 /// Puntuacion de un movimiento ya filtrado. Todos los pesos salen del config:
 /// ninguna constante magica vive aqui.
-double score_candidate(const State& state, const Params& params, const Candidate& candidate,
-                       const Board& free_cells, bool degraded) noexcept {
+double score_candidate(const State& state,
+                       const Params& params,
+                       const Candidate& candidate,
+                       const Board& free_cells,
+                       bool degraded) noexcept {
     const auto& me = state.snake(state.you);
     const auto my_length = static_cast<int>(me.length);
     double score = 0.0;
@@ -96,10 +112,16 @@ double score_candidate(const State& state, const Params& params, const Candidate
     // 2. Zona de cabeza: se evitan las casillas adyacentes a cabezas iguales o mas
     //    largas y se prefieren las adyacentes a cabezas estrictamente mas cortas.
     for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {
-        if (i == static_cast<int>(state.you)) continue;
+        if (i == static_cast<int>(state.you)) {
+            continue;
+        }
         const auto& other = state.snakes[static_cast<unsigned>(i)];
-        if (!engine::is_alive(other.status)) continue;
-        if (!head_zone(state, i).test(candidate.cell)) continue;
+        if (!engine::is_alive(other.status)) {
+            continue;
+        }
+        if (!head_zone(state, i).test(candidate.cell)) {
+            continue;
+        }
 
         if (static_cast<int>(other.length) >= my_length) {
             score -= params.head.avoid_equal_or_longer;
@@ -108,7 +130,9 @@ double score_candidate(const State& state, const Params& params, const Candidate
         }
     }
 
-    if (degraded) return score;
+    if (degraded) {
+        return score;
+    }
 
     // 3. Hazards: terminar el turno dentro cuesta salud extra. La penalizacion sube
     //    cuando la salud no cubre varios turnos de daño. ver docs/rules.md#r-06
@@ -141,7 +165,9 @@ double score_candidate(const State& state, const Params& params, const Candidate
     return score;
 }
 
-Move decide_impl(const State& state, Deadline deadline, const Params& params,
+Move decide_impl(const State& state,
+                 Deadline deadline,
+                 const Params& params,
                  bool degraded) noexcept {
     // Escalon 3: estado imposible de razonar (serpiente propia ausente o de longitud
     // cero). Se devuelve el movimiento determinista documentado, nunca una excepcion.
@@ -164,15 +190,19 @@ Move decide_impl(const State& state, Deadline deadline, const Params& params,
         free_cells.set(me.tail());
     }
 
-    std::array<Candidate, direction_count> candidates{};
+    std::array<Candidate, static_cast<std::size_t>(direction_count)> candidates{};
     int safe_count = 0;
     for (int d = 0; d < direction_count; ++d) {
         auto& candidate = candidates[static_cast<unsigned>(d)];
         candidate.direction = static_cast<Direction>(d);
         const Coord next = step(head, candidate.direction);
-        if (!Board::in_bounds(next)) continue;
+        if (!Board::in_bounds(next)) {
+            continue;
+        }
         candidate.cell = Board::index_of(next);
-        if (blocked.test(candidate.cell)) continue;
+        if (blocked.test(candidate.cell)) {
+            continue;
+        }
         candidate.safe = true;
         ++safe_count;
     }
@@ -190,7 +220,9 @@ Move decide_impl(const State& state, Deadline deadline, const Params& params,
     }
 
     for (auto& candidate : candidates) {
-        if (!candidate.safe) continue;
+        if (!candidate.safe) {
+            continue;
+        }
         Board reachable = free_cells;
         reachable.set(candidate.cell);
         candidate.space = eval::flood(reachable, candidate.cell).cells;
@@ -201,8 +233,12 @@ Move decide_impl(const State& state, Deadline deadline, const Params& params,
     if (deadline.expired()) {
         const Candidate* roomiest = nullptr;
         for (const auto& candidate : candidates) {
-            if (!candidate.safe) continue;
-            if (roomiest == nullptr || candidate.space > roomiest->space) roomiest = &candidate;
+            if (!candidate.safe) {
+                continue;
+            }
+            if (roomiest == nullptr || candidate.space > roomiest->space) {
+                roomiest = &candidate;
+            }
         }
         if (roomiest != nullptr) {
             return Move{roomiest->direction, 1, 0.0, safe_count};
@@ -211,32 +247,44 @@ Move decide_impl(const State& state, Deadline deadline, const Params& params,
 
     // Se rechaza el movimiento cuyo espacio alcanzable sea menor que la longitud
     // propia, salvo que todas las opciones lo sean: entonces se juega la mayor.
-    const int min_space = static_cast<int>(static_cast<double>(my_length) *
-                                           params.space.min_space_ratio);
+    const int min_space =
+        static_cast<int>(static_cast<double>(my_length) * params.space.min_space_ratio);
     int roomy_count = 0;
     for (const auto& candidate : candidates) {
-        if (candidate.safe && candidate.space >= min_space) ++roomy_count;
+        if (candidate.safe && candidate.space >= min_space) {
+            ++roomy_count;
+        }
     }
 
     const Candidate* best = nullptr;
     for (auto& candidate : candidates) {
-        if (!candidate.safe) continue;
-        if (roomy_count > 0 && candidate.space < min_space) continue;
+        if (!candidate.safe) {
+            continue;
+        }
+        if (roomy_count > 0 && candidate.space < min_space) {
+            continue;
+        }
         candidate.score = score_candidate(state, params, candidate, free_cells, degraded);
         if (best == nullptr || candidate.score > best->score) {
             best = &candidate;
         }
         // El deadline se comprueba entre candidatos: siempre hay un mejor movimiento
         // conocido que devolver. ver docs/invariants.md#inv-11
-        if (deadline.expired()) break;
+        if (deadline.expired()) {
+            break;
+        }
     }
 
     if (best == nullptr) {
         // Defensa: el bucle anterior siempre deja un mejor candidato cuando hay alguno
         // seguro, pero si eso cambiara, el escalon 1 sigue siendo mejor que rendirse.
         for (const auto& candidate : candidates) {
-            if (!candidate.safe) continue;
-            if (best == nullptr || candidate.space > best->space) best = &candidate;
+            if (!candidate.safe) {
+                continue;
+            }
+            if (best == nullptr || candidate.space > best->space) {
+                best = &candidate;
+            }
         }
         if (best != nullptr) {
             return Move{best->direction, 1, 0.0, safe_count};

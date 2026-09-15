@@ -9,6 +9,7 @@
 /// `apply()` muta la copia. ver docs/invariants.md#inv-04
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 
 #include <engine/bitboard.hpp>
@@ -19,10 +20,9 @@ namespace engine {
 
 /// Serpiente con cuerpo en ring buffer. El segmento logico 0 es la cabeza y el
 /// `length - 1` la cola.
-template <int Capacity>
-struct SnakeBody {
+template <int Capacity> struct SnakeBody {
     /// Indices de casilla (`y * W + x`), no coordenadas: la conversion la hace el bitboard.
-    std::array<std::uint16_t, Capacity> cells{};
+    std::array<std::uint16_t, static_cast<std::size_t>(Capacity)> cells{};
     /// Posicion de la cabeza dentro del ring.
     std::uint16_t head_slot{};
     std::uint16_t length{};
@@ -44,35 +44,37 @@ struct SnakeBody {
 
     [[nodiscard]] constexpr int head() const noexcept { return segment(0); }
 
-    [[nodiscard]] constexpr int tail() const noexcept { return segment(static_cast<int>(length) - 1); }
+    [[nodiscard]] constexpr int tail() const noexcept {
+        return segment(static_cast<int>(length) - 1);
+    }
 
     /// Cuello: segundo segmento. Con la serpiente recien nacida coincide con la cabeza.
     /// ver docs/rules.md#r-04
-    [[nodiscard]] constexpr int neck() const noexcept {
-        return length >= 2 ? segment(1) : head();
-    }
+    [[nodiscard]] constexpr int neck() const noexcept { return length >= 2 ? segment(1) : head(); }
 
     /// La casilla de la cola NO se libera si los dos ultimos segmentos estan apilados.
     /// Se deriva del propio cuerpo, nunca de un flag "comio el turno anterior":
     /// en el spawn los tres segmentos estan apilados y en constrictor la cola nunca avanza.
     /// ver docs/rules.md#r-04
     [[nodiscard]] constexpr bool tail_is_stacked() const noexcept {
-        return length >= 2 && segment(static_cast<int>(length) - 1) ==
-                                  segment(static_cast<int>(length) - 2);
+        return length >= 2 &&
+               segment(static_cast<int>(length) - 1) == segment(static_cast<int>(length) - 2);
     }
 
     /// Antepone una cabeza nueva y descarta la cola (movimiento estandar).
     /// ver docs/rules.md#r-03
     constexpr void advance(int new_head_cell) noexcept {
-        head_slot = static_cast<std::uint16_t>((static_cast<int>(head_slot) + Capacity - 1) %
-                                               Capacity);
+        head_slot =
+            static_cast<std::uint16_t>((static_cast<int>(head_slot) + Capacity - 1) % Capacity);
         cells[head_slot] = static_cast<std::uint16_t>(new_head_cell);
     }
 
     /// Duplica el ultimo segmento y sube la longitud, como `growSnake`.
     /// ver docs/rules.md#r-07
     constexpr void grow() noexcept {
-        if (length == 0 || static_cast<int>(length) >= Capacity) return;
+        if (length == 0 || static_cast<int>(length) >= Capacity) {
+            return;
+        }
         const int last = segment(static_cast<int>(length) - 1);
         const int next_slot = slot_of(static_cast<int>(length));
         cells[static_cast<unsigned>(next_slot)] = static_cast<std::uint16_t>(last);
@@ -93,8 +95,7 @@ struct SnakeBody {
 };
 
 /// Estado completo de una partida.
-template <int W, int H, int MaxSnakes = 4>
-struct GameState {
+template <int W, int H, int MaxSnakes = 4> struct GameState {
     using Board = Bitboard<W, H>;
     static constexpr int width = W;
     static constexpr int height = H;
@@ -110,7 +111,7 @@ struct GameState {
     /// Indice de nuestra serpiente dentro de `snakes`.
     SnakeId you{};
 
-    std::array<Snake, MaxSnakes> snakes{};
+    std::array<Snake, static_cast<std::size_t>(MaxSnakes)> snakes{};
 
     Board food{};
     Board hazards{};
@@ -131,7 +132,9 @@ struct GameState {
     [[nodiscard]] constexpr int alive_count() const noexcept {
         int n = 0;
         for (int i = 0; i < static_cast<int>(snake_count); ++i) {
-            if (is_alive(snakes[static_cast<unsigned>(i)].status)) ++n;
+            if (is_alive(snakes[static_cast<unsigned>(i)].status)) {
+                ++n;
+            }
         }
         return n;
     }
@@ -141,7 +144,9 @@ struct GameState {
         bodies.clear();
         for (int i = 0; i < static_cast<int>(snake_count); ++i) {
             const Snake& s = snakes[static_cast<unsigned>(i)];
-            if (!is_alive(s.status)) continue;
+            if (!is_alive(s.status)) {
+                continue;
+            }
             for (int seg = 0; seg < static_cast<int>(s.length); ++seg) {
                 bodies.set(s.segment(seg));
             }

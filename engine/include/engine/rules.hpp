@@ -7,6 +7,7 @@
 /// Instanciado explicitamente para 7x7, 11x11 y 19x19 en `engine/src/rules.cpp`.
 
 #include <array>
+#include <cstddef>
 #include <span>
 
 #include <engine/state.hpp>
@@ -18,9 +19,8 @@ namespace engine {
 /// **rango promediado** (dos simultaneas en 3o/4o dan 3.5 a ambas): el motor oficial
 /// no les asigna orden, asi que desempatar por indice o por asiento seria inventarlo.
 /// ver docs/rules.md#r-12
-template <int MaxSnakes>
-struct PlacementsT {
-    std::array<float, MaxSnakes> rank{};
+template <int MaxSnakes> struct PlacementsT {
+    std::array<float, static_cast<std::size_t>(MaxSnakes)> rank{};
     int count{};
 };
 
@@ -69,8 +69,7 @@ template <int W, int H, int MaxSnakes>
 /// la semilla, asi que en partida real el lado del proximo shrink no es conocible.
 /// ver docs/rules.md#r-09
 template <int W, int H>
-[[nodiscard]] Bitboard<W, H> royale_hazards(std::uint64_t seed, int turn,
-                                            int shrink_every_n_turns);
+[[nodiscard]] Bitboard<W, H> royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_turns);
 
 extern template Direction default_move<7, 7, 4>(const GameState<7, 7, 4>&, SnakeId) noexcept;
 extern template Direction default_move<11, 11, 4>(const GameState<11, 11, 4>&, SnakeId) noexcept;

@@ -2,12 +2,12 @@
 /// Implementacion de las reglas. Cada bloque cita el anchor de docs/rules.md del que
 /// deriva. Ninguna funcion asigna memoria. ver docs/invariants.md#inv-03
 
-#include <engine/rules.hpp>
-
 #include <algorithm>
 #include <cstddef>
 #include <limits>
 #include <stdexcept>
+
+#include <engine/rules.hpp>
 
 namespace engine {
 
@@ -16,9 +16,8 @@ namespace {
 /// Indices de las serpientes ordenados por longitud descendente. El motor oficial
 /// hace lo mismo para atribuir la eliminacion a la mas larga en colisiones multiples.
 /// ver docs/rules.md#r-08
-template <int MaxSnakes>
-struct ByLength {
-    std::array<std::uint8_t, MaxSnakes> order{};
+template <int MaxSnakes> struct ByLength {
+    std::array<std::uint8_t, static_cast<std::size_t>(MaxSnakes)> order{};
     int count{};
 };
 
@@ -46,11 +45,12 @@ ByLength<MaxSnakes> order_by_length(const GameState<W, H, MaxSnakes>& s) noexcep
 
 /// Cierto si la cabeza de `snake` cae sobre un segmento de `other` que no sea su cabeza.
 /// El cuello entra por aqui: no es una regla especial. ver docs/rules.md#r-08
-template <typename Snake>
-bool head_hits_body(const Snake& snake, const Snake& other) noexcept {
+template <typename Snake> bool head_hits_body(const Snake& snake, const Snake& other) noexcept {
     const int head = snake.head();
     for (int i = 1; i < static_cast<int>(other.length); ++i) {
-        if (other.segment(i) == head) return true;
+        if (other.segment(i) == head) {
+            return true;
+        }
     }
     return false;
 }
@@ -61,10 +61,14 @@ template <int W, int H, int MaxSnakes>
 Direction default_move(const GameState<W, H, MaxSnakes>& s, SnakeId id) noexcept {
     using Board = typename GameState<W, H, MaxSnakes>::Board;
     const auto& snake = s.snake(id);
-    if (snake.length < 2) return Direction::up;
+    if (snake.length < 2) {
+        return Direction::up;
+    }
     const Coord head = Board::coord_of(snake.head());
     const Coord neck = Board::coord_of(snake.neck());
-    if (head == neck) return Direction::up;
+    if (head == neck) {
+        return Direction::up;
+    }
     return direction_between(neck, head);
 }
 
@@ -72,17 +76,23 @@ template <int W, int H, int MaxSnakes>
 MoveMask legal_moves(const GameState<W, H, MaxSnakes>& s, SnakeId id) noexcept {
     using Board = typename GameState<W, H, MaxSnakes>::Board;
     const auto& me = s.snake(id);
-    if (!is_alive(me.status)) return move_mask_none;
+    if (!is_alive(me.status)) {
+        return move_mask_none;
+    }
 
     // Casillas que seguiran ocupadas el proximo turno: todos los cuerpos vivos menos
     // las colas que avanzan. Una cola apilada NO se libera. ver docs/rules.md#r-04
     Board blocked;
     for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
         const auto& other = s.snakes[static_cast<unsigned>(i)];
-        if (!is_alive(other.status)) continue;
+        if (!is_alive(other.status)) {
+            continue;
+        }
         const int last = static_cast<int>(other.length) - 1;
         for (int seg = 0; seg <= last; ++seg) {
-            if (seg == last && !other.tail_is_stacked()) continue;
+            if (seg == last && !other.tail_is_stacked()) {
+                continue;
+            }
             blocked.set(other.segment(seg));
         }
     }
@@ -92,8 +102,12 @@ MoveMask legal_moves(const GameState<W, H, MaxSnakes>& s, SnakeId id) noexcept {
     for (int d = 0; d < direction_count; ++d) {
         const auto dir = static_cast<Direction>(d);
         const Coord next = step(head, dir);
-        if (!Board::in_bounds(next)) continue;
-        if (blocked.test(Board::index_of(next))) continue;
+        if (!Board::in_bounds(next)) {
+            continue;
+        }
+        if (blocked.test(Board::index_of(next))) {
+            continue;
+        }
         mask = static_cast<MoveMask>(mask | to_mask(dir));
     }
     return mask;
@@ -111,16 +125,22 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
 
     // Fase 1: fin de partida. Se evalua ANTES del movimiento, como el pipeline oficial.
     // ver docs/rules.md#r-02
-    if (is_terminal(s)) return Status::game_over;
+    if (is_terminal(s)) {
+        return Status::game_over;
+    }
 
     const int n = static_cast<int>(s.snake_count);
-    std::array<bool, MaxSnakes> out_of_bounds{};
+    std::array<bool, static_cast<std::size_t>(MaxSnakes)> out_of_bounds{};
 
     // Fase 2: movimiento simultaneo. ver docs/rules.md#r-03
     for (int i = 0; i < n; ++i) {
         auto& snake = s.snakes[static_cast<unsigned>(i)];
-        if (!is_alive(snake.status)) continue;
-        if (snake.length == 0) return Status::error;
+        if (!is_alive(snake.status)) {
+            continue;
+        }
+        if (snake.length == 0) {
+            return Status::error;
+        }
 
         const Direction dir = (static_cast<std::size_t>(i) < moves.size())
                                   ? moves[static_cast<std::size_t>(i)]
@@ -139,7 +159,9 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
     // Fase 3: hambre. ver docs/rules.md#r-05
     for (int i = 0; i < n; ++i) {
         auto& snake = s.snakes[static_cast<unsigned>(i)];
-        if (!is_alive(snake.status)) continue;
+        if (!is_alive(snake.status)) {
+            continue;
+        }
         snake.health = static_cast<std::uint8_t>(
             std::max(0, static_cast<int>(snake.health) - health_loss_per_turn));
     }
@@ -148,11 +170,19 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
     // casilla. ver docs/rules.md#r-06
     for (int i = 0; i < n; ++i) {
         auto& snake = s.snakes[static_cast<unsigned>(i)];
-        if (!is_alive(snake.status)) continue;
-        if (out_of_bounds[static_cast<unsigned>(i)]) continue;
+        if (!is_alive(snake.status)) {
+            continue;
+        }
+        if (out_of_bounds[static_cast<unsigned>(i)]) {
+            continue;
+        }
         const int head = snake.head();
-        if (!s.hazards.test(head)) continue;
-        if (s.food.test(head)) continue;
+        if (!s.hazards.test(head)) {
+            continue;
+        }
+        if (s.food.test(head)) {
+            continue;
+        }
 
         const int health = static_cast<int>(snake.health) - s.rules.hazard_damage_per_turn;
         snake.health = static_cast<std::uint8_t>(std::clamp(health, 0, max_health));
@@ -167,10 +197,16 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
     Board eaten;
     for (int i = 0; i < n; ++i) {
         auto& snake = s.snakes[static_cast<unsigned>(i)];
-        if (!is_alive(snake.status)) continue;
-        if (out_of_bounds[static_cast<unsigned>(i)]) continue;
+        if (!is_alive(snake.status)) {
+            continue;
+        }
+        if (out_of_bounds[static_cast<unsigned>(i)]) {
+            continue;
+        }
         const int head = snake.head();
-        if (!s.food.test(head)) continue;
+        if (!s.food.test(head)) {
+            continue;
+        }
         snake.grow();
         snake.health = static_cast<std::uint8_t>(max_health);
         eaten.set(head);
@@ -181,7 +217,9 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
     // 6a. Hambre y fuera de tablero se aplican YA: dejan de bloquear este mismo turno.
     for (int i = 0; i < n; ++i) {
         auto& snake = s.snakes[static_cast<unsigned>(i)];
-        if (!is_alive(snake.status)) continue;
+        if (!is_alive(snake.status)) {
+            continue;
+        }
         if (snake.health == 0) {
             snake.status = Elimination::out_of_health;
             snake.eliminated_on_turn = s.turn + 1;
@@ -196,12 +234,16 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
     // 6b. Colisiones: se recolectan sin aplicar, para que una serpiente muerta por
     // colision siga bloqueando a las demas este turno.
     const auto by_length = order_by_length(s);
-    std::array<Elimination, MaxSnakes> pending{};
-    for (auto& cause : pending) cause = Elimination::alive;
+    std::array<Elimination, static_cast<std::size_t>(MaxSnakes)> pending{};
+    for (auto& cause : pending) {
+        cause = Elimination::alive;
+    }
 
     for (int i = 0; i < n; ++i) {
         const auto& snake = s.snakes[static_cast<unsigned>(i)];
-        if (!is_alive(snake.status)) continue;
+        if (!is_alive(snake.status)) {
+            continue;
+        }
 
         if (head_hits_body(snake, snake)) {
             pending[static_cast<unsigned>(i)] = Elimination::self_collision;
@@ -211,24 +253,34 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
         bool collided = false;
         for (int k = 0; k < by_length.count; ++k) {
             const int j = static_cast<int>(by_length.order[static_cast<unsigned>(k)]);
-            if (j == i) continue;
+            if (j == i) {
+                continue;
+            }
             const auto& other = s.snakes[static_cast<unsigned>(j)];
-            if (!is_alive(other.status)) continue;
+            if (!is_alive(other.status)) {
+                continue;
+            }
             if (head_hits_body(snake, other)) {
                 pending[static_cast<unsigned>(i)] = Elimination::snake_collision;
                 collided = true;
                 break;
             }
         }
-        if (collided) continue;
+        if (collided) {
+            continue;
+        }
 
         // Cabeza a cabeza: pierde la de longitud MENOR O IGUAL, asi que con longitudes
         // iguales mueren las dos. ver docs/rules.md#r-08
         for (int k = 0; k < by_length.count; ++k) {
             const int j = static_cast<int>(by_length.order[static_cast<unsigned>(k)]);
-            if (j == i) continue;
+            if (j == i) {
+                continue;
+            }
             const auto& other = s.snakes[static_cast<unsigned>(j)];
-            if (!is_alive(other.status)) continue;
+            if (!is_alive(other.status)) {
+                continue;
+            }
             if (other.head() == snake.head() && snake.length <= other.length) {
                 pending[static_cast<unsigned>(i)] = Elimination::head_collision;
                 break;
@@ -237,7 +289,9 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
     }
 
     for (int i = 0; i < n; ++i) {
-        if (pending[static_cast<unsigned>(i)] == Elimination::alive) continue;
+        if (pending[static_cast<unsigned>(i)] == Elimination::alive) {
+            continue;
+        }
         auto& snake = s.snakes[static_cast<unsigned>(i)];
         snake.status = pending[static_cast<unsigned>(i)];
         snake.eliminated_on_turn = s.turn + 1;

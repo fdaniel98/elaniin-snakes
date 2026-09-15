@@ -72,10 +72,18 @@ struct Coord {
 /// Devuelve `up` si no lo son: es el fallback del motor oficial.
 /// ver docs/rules.md#r-03
 [[nodiscard]] constexpr Direction direction_between(Coord from, Coord to) noexcept {
-    if (to.x == from.x + 1) return Direction::right;
-    if (to.x == from.x - 1) return Direction::left;
-    if (to.y == from.y + 1) return Direction::up;
-    if (to.y == from.y - 1) return Direction::down;
+    if (to.x == from.x + 1) {
+        return Direction::right;
+    }
+    if (to.x == from.x - 1) {
+        return Direction::left;
+    }
+    if (to.y == from.y + 1) {
+        return Direction::up;
+    }
+    if (to.y == from.y - 1) {
+        return Direction::down;
+    }
     return Direction::up;
 }
 

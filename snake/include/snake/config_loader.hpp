@@ -11,12 +11,12 @@
 
 #include <string>
 
-#include <nlohmann/json.hpp>
-
 #include <engine/ruleset.hpp>
 #include <engine/state.hpp>
 
 #include <snake/params.hpp>
+
+#include <nlohmann/json.hpp>
 
 namespace snake {
 

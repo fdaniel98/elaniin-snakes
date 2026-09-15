@@ -9,6 +9,7 @@
 /// ver docs/strategy.md#s-v1
 
 #include <array>
+#include <cstddef>
 #include <stdexcept>
 
 #include <engine/state.hpp>
@@ -16,9 +17,8 @@
 namespace snake::eval {
 
 /// Casillas que cada serpiente alcanza antes que las demas.
-template <int MaxSnakes>
-struct Territory {
-    std::array<int, MaxSnakes> cells{};
+template <int MaxSnakes> struct Territory {
+    std::array<int, static_cast<std::size_t>(MaxSnakes)> cells{};
     int contested{0};
 };
 

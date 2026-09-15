@@ -7,10 +7,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/rules.hpp>
 #include <engine/state.hpp>
+
+#include <catch2/catch_test_macros.hpp>
 
 using engine::Coord;
 using engine::Direction;
@@ -22,7 +22,9 @@ namespace {
 using State = engine::State11;
 using Board = State::Board;
 
-constexpr int cell(int x, int y) { return Board::index_of(x, y); }
+constexpr int cell(int x, int y) {
+    return Board::index_of(x, y);
+}
 
 /// Coloca una serpiente con su cuerpo explicito: `body[0]` es la cabeza.
 void put_snake(State& s, engine::SnakeId id, std::span<const Coord> body, int health) {
@@ -154,8 +156,7 @@ TEST_CASE("apply: chocar con el propio cuello es autocolision", "[rules][r-08]")
     REQUIRE(s.snake(0).status == Elimination::self_collision);
 }
 
-TEST_CASE("apply: seguir una cola que avanza es legal; una apilada, mortal",
-          "[rules][r-04]") {
+TEST_CASE("apply: seguir una cola que avanza es legal; una apilada, mortal", "[rules][r-04]") {
     SECTION("cola que avanza: la casilla queda libre") {
         State s;
         const std::array<Coord, 3> mine{Coord{5, 4}, Coord{4, 4}, Coord{3, 4}};
@@ -204,8 +205,7 @@ TEST_CASE("apply: chocar contra el cuerpo rival mata con snake_collision", "[rul
     REQUIRE(s.snake(1).status == Elimination::alive);
 }
 
-TEST_CASE("apply: una serpiente muerta de hambre deja de bloquear ese turno",
-          "[rules][r-08]") {
+TEST_CASE("apply: una serpiente muerta de hambre deja de bloquear ese turno", "[rules][r-08]") {
     State s;
     const std::array<Coord, 3> starving{Coord{4, 5}, Coord{4, 4}, Coord{4, 3}};
     put_snake(s, 0, starving, 1);
@@ -218,8 +218,7 @@ TEST_CASE("apply: una serpiente muerta de hambre deja de bloquear ese turno",
     REQUIRE(s.snake(1).head() == cell(4, 5));
 }
 
-TEST_CASE("apply: cabeza a cabeza, pierde la mas corta y empatan las iguales",
-          "[rules][r-08]") {
+TEST_CASE("apply: cabeza a cabeza, pierde la mas corta y empatan las iguales", "[rules][r-08]") {
     SECTION("longitudes distintas") {
         State s;
         const std::array<Coord, 4> big{Coord{4, 5}, Coord{3, 5}, Coord{2, 5}, Coord{1, 5}};
@@ -260,8 +259,7 @@ TEST_CASE("placements: empate de 2 serpientes comparte rango promediado",
     REQUIRE(p.rank[1] == 1.5F);
 }
 
-TEST_CASE("placements: empate de 3 serpientes en el mismo turno",
-          "[rules][r-12][empates]") {
+TEST_CASE("placements: empate de 3 serpientes en el mismo turno", "[rules][r-12][empates]") {
     State s;
     // Tres cabezas convergen en (5,5) con la misma longitud: mueren las tres.
     const std::array<Coord, 3> a{Coord{4, 5}, Coord{3, 5}, Coord{2, 5}};
@@ -286,8 +284,7 @@ TEST_CASE("placements: empate de 3 serpientes en el mismo turno",
     REQUIRE(p.rank[2] == 3.0F);
 }
 
-TEST_CASE("placements: empate de 4 serpientes da rango 2.5 a todas",
-          "[rules][r-12][empates]") {
+TEST_CASE("placements: empate de 4 serpientes da rango 2.5 a todas", "[rules][r-12][empates]") {
     State s;
     const std::array<Coord, 3> a{Coord{4, 5}, Coord{3, 5}, Coord{2, 5}};
     put_snake(s, 0, a, 100);
@@ -327,8 +324,7 @@ TEST_CASE("placements: quien muere antes queda por detras", "[rules][r-12]") {
     REQUIRE(p.rank[0] == 3.0F);
 }
 
-TEST_CASE("legal_moves: no es una regla, apply acepta el movimiento mortal",
-          "[rules][r-03]") {
+TEST_CASE("legal_moves: no es una regla, apply acepta el movimiento mortal", "[rules][r-03]") {
     State s;
     const std::array<Coord, 3> body{Coord{0, 0}, Coord{1, 0}, Coord{2, 0}};
     put_snake(s, 0, body, 100);
@@ -345,8 +341,7 @@ TEST_CASE("legal_moves: no es una regla, apply acepta el movimiento mortal",
     REQUIRE(s.snake(0).status == Elimination::wall_collision);
 }
 
-TEST_CASE("default_move: repite el ultimo movimiento y cae a up sin cuello",
-          "[rules][r-03]") {
+TEST_CASE("default_move: repite el ultimo movimiento y cae a up sin cuello", "[rules][r-03]") {
     State s;
     const std::array<Coord, 3> body{Coord{5, 5}, Coord{4, 5}, Coord{3, 5}};
     put_snake(s, 0, body, 100);

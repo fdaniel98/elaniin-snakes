@@ -58,17 +58,20 @@ public:
     /// Entero uniforme en [0, bound) por reduccion de Lemire con rechazo.
     /// Sesgo cero y una sola division en el caso peor.
     constexpr std::uint64_t bounded(std::uint64_t bound) noexcept {
-        if (bound <= 1) return 0;
+        if (bound <= 1) {
+            return 0;
+        }
         const std::uint64_t threshold = (~bound + 1U) % bound; // 2^64 mod bound
         while (true) {
             const std::uint64_t r = next();
-            if (r >= threshold) return r % bound;
+            if (r >= threshold) {
+                return r % bound;
+            }
         }
     }
 
     /// Baraja de Fisher-Yates hacia atras, determinista y sin dependencias de la STL.
-    template <typename T>
-    constexpr void shuffle(T* data, std::size_t count) noexcept {
+    template <typename T> constexpr void shuffle(T* data, std::size_t count) noexcept {
         for (std::size_t i = count; i > 1; --i) {
             const std::size_t j = static_cast<std::size_t>(bounded(i));
             T tmp = data[i - 1];

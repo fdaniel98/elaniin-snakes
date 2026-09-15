@@ -8,11 +8,9 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <string>
-
-#include <httplib.h>
-#include <nlohmann/json.hpp>
 
 #include <engine/state.hpp>
 
@@ -20,11 +18,14 @@
 #include <snake/config_loader.hpp>
 #include <snake/deadline.hpp>
 
+#include <httplib.h>
+#include <nlohmann/json.hpp>
+
 namespace {
 
 using nlohmann::json;
 
-constexpr std::size_t max_payload_bytes = 256U * 1024U;
+constexpr std::size_t max_payload_bytes = std::size_t{256} * 1024;
 constexpr int default_port = 8080;
 constexpr time_t socket_timeout_seconds = 5;
 
@@ -64,30 +65,49 @@ const char* variant_name(engine::Variant v) {
 
 int port_from_env() {
     const char* raw = std::getenv("PORT");
-    if (raw == nullptr) return default_port;
+    if (raw == nullptr) {
+        return default_port;
+    }
     try {
         const int value = std::stoi(raw);
-        if (value > 0 && value < 65536) return value;
-    } catch (...) {
-        // Un PORT invalido no debe tumbar el proceso.
+        if (value > 0 && value < 65536) {
+            return value;
+        }
+    } catch (const std::exception& error) {
+        // Un PORT invalido no debe tumbar el proceso, pero tampoco callarse.
+        std::cerr << "WARN=PORT_invalido valor=" << raw << " motivo=" << error.what() << "\n";
     }
     return default_port;
 }
 
 /// Linea de log por movimiento, parseable y de una sola linea.
-void log_move(int turn, engine::Variant variant, const snake::Move& move, long long micros,
-              bool degraded, const engine::Ruleset& rules) {
+void log_move(int turn,
+              engine::Variant variant,
+              const snake::Move& move,
+              long long micros,
+              bool degraded,
+              const engine::Ruleset& rules) {
     std::cout << "move turn=" << turn << " ruleset=" << variant_name(variant)
               << " degraded=" << (degraded ? 1 : 0) << " move=" << direction_name(move.direction)
               << " fallback=" << move.fallback_level << " candidates=" << move.considered
               << " score=" << move.score << " us=" << micros;
     if (rules.fallbacks.any()) {
         std::cout << " WARN=fallback_ruleset";
-        if (rules.fallbacks.timeout) std::cout << ",timeout";
-        if (rules.fallbacks.hazard_damage) std::cout << ",hazardDamagePerTurn";
-        if (rules.fallbacks.shrink_every_n_turns) std::cout << ",shrinkEveryNTurns";
-        if (rules.fallbacks.variant) std::cout << ",name";
-        if (rules.fallbacks.map_name) std::cout << ",map";
+        if (rules.fallbacks.timeout) {
+            std::cout << ",timeout";
+        }
+        if (rules.fallbacks.hazard_damage) {
+            std::cout << ",hazardDamagePerTurn";
+        }
+        if (rules.fallbacks.shrink_every_n_turns) {
+            std::cout << ",shrinkEveryNTurns";
+        }
+        if (rules.fallbacks.variant) {
+            std::cout << ",name";
+        }
+        if (rules.fallbacks.map_name) {
+            std::cout << ",map";
+        }
     }
     std::cout << '\n' << std::flush;
 }
@@ -115,13 +135,14 @@ int main() {
     // La sonda NO invoca el cerebro: el GET / de personalizacion lo consume el motor y
     // no sirve como health check.
     server.Get("/health", [](const httplib::Request&, httplib::Response& res) {
-        res.set_content("{\"status\":\"ok\"}", "application/json");
+        res.set_content(R"({"status":"ok"})", "application/json");
     });
 
     server.Post("/start", [](const httplib::Request& req, httplib::Response& res) {
         const json request = json::parse(req.body, nullptr, false);
         if (!request.is_discarded()) {
-            const engine::Ruleset rules = snake::parse_ruleset(request.value("game", json::object()));
+            const engine::Ruleset rules =
+                snake::parse_ruleset(request.value("game", json::object()));
             std::cerr << "start ruleset=" << variant_name(rules.variant)
                       << " timeout=" << rules.timeout_ms
                       << " hazard=" << rules.hazard_damage_per_turn
@@ -173,7 +194,7 @@ int main() {
 
     // Rutas desconocidas: 404 sin tocar el cuerpo.
     server.set_error_handler([](const httplib::Request&, httplib::Response& res) {
-        res.set_content("{\"error\":\"not found\"}", "application/json");
+        res.set_content(R"({"error":"not found"})", "application/json");
     });
 
     const int port = port_from_env();

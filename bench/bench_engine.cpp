@@ -11,12 +11,12 @@
 #include <chrono>
 #include <vector>
 
-#include <benchmark/benchmark.h>
-
 #include <engine/rules.hpp>
 #include <engine/state.hpp>
 
 #include <snake/brain.hpp>
+
+#include <benchmark/benchmark.h>
 
 namespace {
 
@@ -62,8 +62,8 @@ State midgame() {
 
 void bm_apply(benchmark::State& bench) {
     const State base = midgame();
-    const std::array<Direction, 4> moves{Direction::up, Direction::left, Direction::down,
-                                         Direction::right};
+    const std::array<Direction, 4> moves{
+        Direction::up, Direction::left, Direction::down, Direction::right};
     for (auto _ : bench) {
         State copy = base; // copy-make: el estado es trivialmente copiable
         benchmark::DoNotOptimize(engine::apply(copy, std::span<const Direction>(moves)));

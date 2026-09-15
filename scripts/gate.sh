@@ -125,8 +125,12 @@ check_tidy() {
 
     # Generadores de la STL cuyo algoritmo no esta especificado: romperian la
     # reproducibilidad de la arena entre libstdc++ y libc++. ver docs/invariants.md#inv-08
+    #
+    # Solo se miran .cpp y .hpp, y se descartan las lineas de comentario: la doc y los
+    # CLAUDE.md tienen que poder NOMBRAR lo que esta prohibido sin romper el gate.
     local forbidden='std::(uniform_int_distribution|shuffle|sample|random_device)'
-    if grep -rnE "$forbidden" engine arena 2>/dev/null | grep -v '^\s*//'; then
+    if grep -rnE --include='*.cpp' --include='*.hpp' "$forbidden" engine arena 2>/dev/null |
+        grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|/\*|\*)'; then
         echo "FAIL generador de la STL prohibido bajo engine/ o arena/"
         status=1
     else

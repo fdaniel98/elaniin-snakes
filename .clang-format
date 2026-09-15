@@ -14,6 +14,9 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 BreakBeforeBraces: Attach
+# clang-tidy exige llaves en todo statement (readability-braces-around-statements);
+# que las ponga el formateador evita 87 avisos escritos a mano.
+InsertBraces: true
 BinPackArguments: false
 BinPackParameters: false
 IndentCaseLabels: true
