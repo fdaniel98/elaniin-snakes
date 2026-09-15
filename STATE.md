@@ -2,8 +2,9 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — PARCIAL: solo falta pegar la salida del gate completo y de la autoprueba
-Gate: checks 0-9 verificados; el 10 corre en la maquina de referencia, con docker
+Fase: 0 (Setup) — PARCIAL: falta una corrida limpia del gate y la autoprueba tras arreglar git
+Gate: el check 10 (deploy real) PASA en la maquina de referencia en 41 s; los checks 6, 8 y 9
+      fallaron por dos causas ya reparadas (ver docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0080)
 Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.)
 Snake activa: v0-baseline
 
@@ -43,10 +44,12 @@ con 8 iteraciones, se conserva en `.loop/0/` como historia.
       check 10 (`docker build` mas contenedor respondiendo) ni su veneno se ejecutaron
       ahi. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que
       separa la fase de COMPLETA.
-- [ ] **Pegar la ultima linea del gate completo y de la autoprueba.** Ambos se corrieron
-      en la maquina de referencia el 2026-09-15, pero el gate borra su directorio de logs
-      al salir, asi que no queda rastro que citar. Sin esa linea, los criterios 3 y 11 se
-      apoyan en una afirmacion, no en una salida.
+- [ ] **Configurar git una vez y volver a correr el gate y la autoprueba.** En la maquina
+      de referencia git rechaza el repo por `dubious ownership` y eso tumbaba tres checks
+      y los 22 venenos. Primero:
+      `git config --global --add safe.directory '/mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding'`
+      y despues `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que falta
+      para los criterios 3 y 11.
 - [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
       dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
       (Docker Desktop, Settings, Resources, WSL integration).
@@ -75,6 +78,9 @@ Cada una con su ADR, que es donde vive el contenido:
       (ver docs/performance.md#p-03). El cierre del loop se hizo en otra, de 2 nucleos, y
       por eso no se publico ninguna medicion nueva: la tabla canonica sigue siendo la del
       commit 8082d1d.
+- [ ] `cold_start_ms_max` es un umbral nuevo sin veneno propio en `gate-selftest.sh`: el
+      veneno del check 8 cubre el movimiento ilegal, no el arranque en frio. Deuda
+      declarada en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
 - [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
       sentido en la arena (ver docs/rules.md#r-09).
 - [ ] El criterio 5 quedo cerrado: v0 gana su partida contra Eremetic Eric en 80 turnos
@@ -87,6 +93,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Pegar la ultima linea de `./scripts/gate.sh` y de `./scripts/gate-selftest.sh` corridos en
-WSL2; con eso la fase 0 pasa a COMPLETA y se abre la fase 1 (reglas Royale completas y test
-diferencial contra >=500 partidas JSONL del CLI).
+Correr en WSL2 el `git config --global --add safe.directory` del bloque de arriba y luego
+`./scripts/gate.sh` y `./scripts/gate-selftest.sh`; con los dos en verde la fase 0 pasa a
+COMPLETA y se abre la fase 1 (reglas Royale completas y test diferencial contra >=500
+partidas JSONL del CLI).

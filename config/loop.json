@@ -52,6 +52,7 @@
       "thresholds": {
         "p99_move_ms_max": 50,
         "max_move_ms_max": 150,
+        "cold_start_ms_max": 500,
         "timeouts_max": 0,
         "regression_pct": 5.0,
         "hot_path_allocs_max": 0

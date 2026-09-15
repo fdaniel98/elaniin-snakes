@@ -14,6 +14,18 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 REPO="$PWD"
 
+# Guard de entorno. Media docena de checks llaman a git (ls-files, cat-file, archive,
+# merge-base). Si git rechaza el repositorio -lo normal al trabajar desde /mnt/c, donde
+# el propietario de los archivos no es quien ejecuta- todos ellos fallan y el gate acusa
+# al codigo de cosas que no pasan. Eso es un error de ENTORNO: salida 2, no 1.
+if ! git rev-parse HEAD >/dev/null 2>&1; then
+    echo "ERROR de entorno: git no puede leer este repositorio." >&2
+    git rev-parse HEAD 2>&1 | sed 's/^/  /' >&2
+    echo "  Si el mensaje habla de 'dubious ownership', ejecuta una vez:" >&2
+    printf "    git config --global --add safe.directory '%s'\n" "$PWD" >&2
+    exit 2
+fi
+
 ONLY="${1:-}"
 FAST_ONLY=0
 [[ "$ONLY" == "--fast" ]] && {

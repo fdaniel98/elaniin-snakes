@@ -1,0 +1,89 @@
+== gate (completo) ==
+CHECK 0 higiene-scripts PASS 0
+CHECK 1 build-release PASS 1
+CHECK 2 build-debug PASS 0
+CHECK 3 tests-release PASS 2
+CHECK 3 tests-debug PASS 3
+CHECK 4 clang-format PASS 1
+CHECK 5 clang-tidy PASS 91
+CHECK 6 lint-docs FAIL 6
+--- salida del check 6 (lint-docs) ---
+FAIL hechos duplicados por encima del umbral
+--- contexto (cola del log) ---
+== anchors ==
+OK   191 citas resueltas
+INFO 65 anchors huerfanos de 110
+== duplicados ==
+Traceback (most recent call last):
+  File "/mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/scripts/lint_dupes.py", line 150, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/scripts/lint_dupes.py", line 106, in main
+    files = tracked_markdown(root)
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/scripts/lint_dupes.py", line 81, in tracked_markdown
+    files = subprocess.run(
+            ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['git', 'ls-files', '*.md']' returned non-zero exit status 128.
+FAIL hechos duplicados por encima del umbral
+== STATE.md ==
+OK   perf-snapshot de STATE.md sincronizado con docs/performance.md
+--- fin del check 6 ---
+CHECK 7 lint-deploy PASS 1
+CHECK 8 smoke-e2e FAIL 1
+--- salida del check 8 (smoke-e2e) ---
+FAIL maximo 179.77ms > 150.0ms
+--- contexto (cola del log) ---
+fixtures=14 peticiones=280 p50=0.45ms p99=0.98ms max=179.77ms
+FAIL maximo 179.77ms > 150.0ms
+--- fin del check 8 ---
+CHECK 9 lint-loop FAIL 2
+--- salida del check 9 (lint-loop) ---
+FAIL rules: commit_after(i) != commit_before(i+1) (ni es ancestro suyo): e19a7d3b58150c534f122526c2dc899484c9b953 -> e19a7d3b58150c534f122526c2dc899484c9b953
+FAIL rules: commit_after(i) != commit_before(i+1) (ni es ancestro suyo): 0b44b0a4d3cfe585b2a6fff40624e24449829e86 -> 0b44b0a4d3cfe585b2a6fff40624e24449829e86
+FAIL rules: commit_after(i) != commit_before(i+1) (ni es ancestro suyo): 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 -> 8082d1df9b4d7484b8def14c249bcd2071e5bdd3
+FAIL rules: commit_after(i) != commit_before(i+1) (ni es ancestro suyo): 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 -> 8082d1df9b4d7484b8def14c249bcd2071e5bdd3
+FAIL rules: el commit 61c962097c6971b20c62e857a2fc464f6e6d9c8b no existe en la historia
+FAIL rules: el commit e19a7d3b58150c534f122526c2dc899484c9b953 no existe en la historia
+FAIL rules: el commit e19a7d3b58150c534f122526c2dc899484c9b953 no existe en la historia
+FAIL rules: el commit 0b44b0a4d3cfe585b2a6fff40624e24449829e86 no existe en la historia
+FAIL rules: el commit 0b44b0a4d3cfe585b2a6fff40624e24449829e86 no existe en la historia
+FAIL rules: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL rules: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL rules: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL rules: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL rules: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/rules.md'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'engine/include/engine/ruleset.hpp'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/rules-parametros.md'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/rules-parametros.md'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/SOURCES.md'
+FAIL rules: 0b44b0a4d3cfe585b2a6fff40624e24449829e86 no toca ningun archivo citado en 'scripts/mutants.sh'
+--- contexto (cola del log) ---
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/rules.md'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'engine/include/engine/ruleset.hpp'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/rules-parametros.md'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/rules-parametros.md'
+FAIL rules: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'docs/SOURCES.md'
+FAIL rules: 0b44b0a4d3cfe585b2a6fff40624e24449829e86 no toca ningun archivo citado en 'scripts/mutants.sh'
+FAIL rules: 0b44b0a4d3cfe585b2a6fff40624e24449829e86 no toca ningun archivo citado en 'tests/test_rules.cpp:120'
+FAIL rules: 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no toca ningun archivo citado en 'tests/test_rules.cpp'
+FAIL brain-v0: commit_after(i) != commit_before(i+1) (ni es ancestro suyo): e19a7d3b58150c534f122526c2dc899484c9b953 -> 8082d1df9b4d7484b8def14c249bcd2071e5bdd3
+FAIL brain-v0: commit_after(i) != commit_before(i+1) (ni es ancestro suyo): 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 -> 8082d1df9b4d7484b8def14c249bcd2071e5bdd3
+FAIL brain-v0: el commit 61c962097c6971b20c62e857a2fc464f6e6d9c8b no existe en la historia
+FAIL brain-v0: el commit e19a7d3b58150c534f122526c2dc899484c9b953 no existe en la historia
+FAIL brain-v0: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL brain-v0: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL brain-v0: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL brain-v0: el commit 8082d1df9b4d7484b8def14c249bcd2071e5bdd3 no existe en la historia
+FAIL brain-v0: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'snake/src/server.cpp'
+FAIL brain-v0: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'scripts/smoke.py'
+FAIL brain-v0: 2103f0c8d4256d225a5214c5525e9806f9e7f8be no toca ningun archivo citado en 'README.md'
+check 9 FAIL
+--- fin del check 9 ---
+CHECK 10 deploy-real PASS 41
+
+9 checks PASS, 3 tests PENDIENTES
+checks fallidos: 6 lint-docs 8 smoke-e2e 9 lint-loop

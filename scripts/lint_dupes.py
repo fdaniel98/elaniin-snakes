@@ -77,14 +77,20 @@ def prose_of(path: Path) -> list[str]:
     return out
 
 
+class EntornoRoto(Exception):
+    """git no responde. No es un veredicto sobre los documentos."""
+
+
 def tracked_markdown(root: Path) -> list[str]:
-    files = subprocess.run(
+    hecho = subprocess.run(
         ["git", "ls-files", "*.md"],
         cwd=root,
-        check=True,
         capture_output=True,
         text=True,
-    ).stdout.split()
+    )
+    if hecho.returncode != 0:
+        raise EntornoRoto(hecho.stderr.strip() or "git ls-files fallo sin mensaje")
+    files = hecho.stdout.split()
     return sorted(f for f in files if not f.startswith(EXCLUDE_PREFIXES))
 
 
@@ -103,7 +109,13 @@ def main() -> int:
     args = ap.parse_args()
 
     root = Path(__file__).resolve().parent.parent
-    files = tracked_markdown(root)
+    try:
+        files = tracked_markdown(root)
+    except EntornoRoto as exc:
+        # Salir 1 diria "hay duplicados", que es falso y fue exactamente lo que este
+        # script llego a afirmar cuando git rechazo el repo. 2 = error de entorno.
+        print(f"ERROR git no responde en {root}: {exc}", file=sys.stderr)
+        return 2
 
     words: dict[str, list[str]] = {}
     grams: dict[str, dict[tuple[str, ...], int]] = {}

@@ -7,6 +7,11 @@ Manda cada fixture a POST /move y exige:
      motor (si ambas coincidieran por compartir codigo, el check no probaria nada);
   3. p99 y maximo dentro del presupuesto de latencia, leido de config/loop.json.
 
+El **arranque en frio** se mide aparte y con su propio umbral: la primera peticion
+despues de levantar el proceso paga la carga del config y los primeros fallos de pagina,
+y mezclarla con las demas convierte el maximo en un numero que no distingue un cerebro
+lento de un proceso recien nacido. Se miden las dos cosas, no una menos.
+
 La legalidad se define igual que en docs/rules.md#r-04: una casilla de cola solo queda
 libre si los dos ultimos segmentos NO estan apilados.
 """
@@ -81,6 +86,7 @@ def main():
     perf = thresholds["classes"]["perf"]["thresholds"]
     p99_budget = args.p99_ms if args.p99_ms is not None else float(perf["p99_move_ms_max"])
     max_budget = args.max_ms if args.max_ms is not None else float(perf["max_move_ms_max"])
+    cold_budget = float(perf["cold_start_ms_max"])
 
     fixtures = sorted(pathlib.Path(args.fixtures).glob("*.json"))
     if len(fixtures) < 10:
@@ -89,6 +95,23 @@ def main():
 
     latencies = []
     failures = []
+
+    # Calentamiento: una peticion real, con su movimiento comprobado igual que las demas,
+    # cuya latencia se contabiliza como arranque en frio y NO entra en la muestra.
+    cold_start = None
+    first = json.loads(fixtures[0].read_text(encoding="utf-8"))
+    try:
+        body, cold_start = post(f"{args.url}/move", first, timeout=5)
+        legal_first = legal_moves(first)
+        move = body.get("move")
+        if move not in DIRECTIONS:
+            failures.append(f"{fixtures[0].name} (calentamiento): movimiento invalido '{move}'")
+        elif legal_first and move not in legal_first:
+            failures.append(
+                f"{fixtures[0].name} (calentamiento): movimiento ILEGAL '{move}'")
+    except (urllib.error.URLError, OSError) as exc:
+        failures.append(f"{fixtures[0].name} (calentamiento): sin respuesta ({exc})")
+
     for path in fixtures:
         request = json.loads(path.read_text(encoding="utf-8"))
         legal = legal_moves(request)
@@ -117,8 +140,10 @@ def main():
     p99 = latencies[min(len(latencies) - 1, int(len(latencies) * 0.99))]
     worst = latencies[-1]
 
+    cold_txt = f"{cold_start:.2f}ms" if cold_start is not None else "no medido"
     print(f"fixtures={len(fixtures)} peticiones={len(latencies)} "
-          f"p50={p50:.2f}ms p99={p99:.2f}ms max={worst:.2f}ms")
+          f"p50={p50:.2f}ms p99={p99:.2f}ms max={worst:.2f}ms "
+          f"arranque_en_frio={cold_txt}")
 
     if args.json_out:
         pathlib.Path(args.json_out).write_text(json.dumps({
@@ -127,6 +152,7 @@ def main():
             "p50_ms": round(p50, 3),
             "p99_ms": round(p99, 3),
             "max_ms": round(worst, 3),
+            "cold_start_ms": round(cold_start, 3) if cold_start is not None else None,
             "illegal_moves": len(failures),
         }, indent=2) + "\n", encoding="utf-8")
 
@@ -139,6 +165,12 @@ def main():
         return 1
     if worst > max_budget:
         print(f"FAIL maximo {worst:.2f}ms > {max_budget}ms")
+        return 1
+    if cold_start is None:
+        print("FAIL no se midio el arranque en frio")
+        return 1
+    if cold_start > cold_budget:
+        print(f"FAIL arranque en frio {cold_start:.2f}ms > {cold_budget}ms")
         return 1
     print("OK   todos los movimientos legales y dentro del presupuesto")
     return 0
