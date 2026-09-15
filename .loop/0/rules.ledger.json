@@ -1,0 +1,251 @@
+{
+  "deliverable": "engine/src/rules.cpp",
+  "phase": 0,
+  "status": "CLOSED",
+  "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a",
+  "iterations": [
+    {
+      "n": 1,
+      "class": "correctness",
+      "agent": "rules-auditor",
+      "commit_before": "61c962097c6971b20c62e857a2fc464f6e6d9c8b",
+      "commit_after": "e19a7d3b58150c534f122526c2dc899484c9b953",
+      "cmd": "gate-selftest + subagente rules-auditor contra rules@87e094e2",
+      "exit_code": 0,
+      "started_at": "2026-09-15T18:39:00Z",
+      "duration_ms": 349948,
+      "log_sha256": "6b0a308cb75dab4cfa4b8775f475d060966406f65109ca58f6da48a4668fc7d8",
+      "payload_sha256": "73a6d53b440a13bbacf48c1cc8717d5a70003e18e8fa8fd6668e81ac1b913f96",
+      "metrics": {
+        "diverge": 0,
+        "sin_verificar": 0,
+        "fixtures_pass": 13,
+        "diverge_encontrados": 8,
+        "diverge_reparados": 7,
+        "diverge_descartados": 1
+      },
+      "checks_added": [
+        "tests/test_ruleset_parse.cpp::ruleset: nombres de variante (solo no soportado)"
+      ],
+      "findings": [
+        {
+          "id": "F-R01",
+          "sev": "mayor",
+          "cite": "docs/rules.md",
+          "desc": "R-08 no decia que la eliminada por hazard tambien deja de bloquear",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        },
+        {
+          "id": "F-R02",
+          "sev": "blocker",
+          "cite": "engine/include/engine/ruleset.hpp",
+          "desc": "is_supported declaraba soportado solo, que termina con cero vivas",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        },
+        {
+          "id": "F-R03",
+          "sev": "mayor",
+          "cite": "docs/rules-parametros.md",
+          "desc": "standard descrito como sin stage de hazards",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        },
+        {
+          "id": "F-R04",
+          "sev": "menor",
+          "cite": "docs/rules-parametros.md",
+          "desc": "tres citas con la linea equivocada (constants.go:54, models.go:64, models.go:35)",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        },
+        {
+          "id": "F-R05",
+          "sev": "menor",
+          "cite": "docs/SOURCES.md",
+          "desc": "SOURCES.md duplicaba hechos de rules.md y citaba constants.go:16-17",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        },
+        {
+          "id": "F-R06",
+          "sev": "menor",
+          "cite": "docs/rules.md#r-09",
+          "desc": "apply() no ejecuta el stage 7 de royale (generacion de hazards)",
+          "estado": "DESCARTADO",
+          "razon": "es trabajo de la fase 1 y solo tiene sentido en la arena: la semilla no viaja en el payload (ver docs/rules.md#r-09 y docs/decisions/ADR-0002-representacion-del-estado.md)"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "e19a7d3b58150c534f122526c2dc899484c9b953",
+      "commit_after": "0b44b0a4d3cfe585b2a6fff40624e24449829e86",
+      "cmd": "./scripts/loop.sh 2 rules robustness",
+      "exit_code": 1,
+      "started_at": "2026-09-15T18:53:11Z",
+      "duration_ms": 72563,
+      "log_sha256": "67cdf51b2ff071fc6ebf7e1b8618d16f9789955b84f2a1dfcfcff1bc3253eff2",
+      "payload_sha256": "67cdf51b2ff071fc6ebf7e1b8618d16f9789955b84f2a1dfcfcff1bc3253eff2",
+      "metrics": {
+        "mutants": 6,
+        "mutants_killed": 2,
+        "mutants_killed_ratio": 0.3333,
+        "sanitizer_findings": 0,
+        "fuzz_states": 10000,
+        "illegal_moves": 0,
+        "deadline_violations": 0,
+        "failsafe_levels_covered": 4
+      },
+      "checks_added": [
+        "scripts/mutants.sh: ARNES_ROTO invalida la corrida si un patron no aplica",
+        "tests/test_rules.cpp::el hazard mata cuando la salud no llega"
+      ],
+      "findings": [
+        {
+          "id": "F-R07",
+          "sev": "blocker",
+          "cite": "scripts/mutants.sh",
+          "desc": "tres de los seis patrones de mutacion dejaron de aplicarse tras el reformateo y se contaban como mutantes vivos",
+          "estado": "REPARADO",
+          "fixed_in": "0b44b0a4d3cfe585b2a6fff40624e24449829e86"
+        },
+        {
+          "id": "F-R08",
+          "sev": "mayor",
+          "cite": "tests/test_rules.cpp:120",
+          "desc": "sobrevivia el mutante que impide que el hazard mate: ningun test cubria la muerte por hazard",
+          "estado": "REPARADO",
+          "fixed_in": "0b44b0a4d3cfe585b2a6fff40624e24449829e86",
+          "cite_fix": "tests/test_rules.cpp"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "0b44b0a4d3cfe585b2a6fff40624e24449829e86",
+      "commit_after": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "cmd": "./scripts/loop.sh 3 rules robustness",
+      "exit_code": 0,
+      "started_at": "2026-09-15T18:55:37Z",
+      "duration_ms": 64432,
+      "log_sha256": "51c369f04803e844069fafcc42f2ca1213e18f79e869c071b58b52d2f998a8e3",
+      "payload_sha256": "51c369f04803e844069fafcc42f2ca1213e18f79e869c071b58b52d2f998a8e3",
+      "metrics": {
+        "mutants": 6,
+        "mutants_killed": 5,
+        "mutants_broken_patterns": 0,
+        "mutants_killed_ratio": 0.8333,
+        "sanitizer_findings": 0,
+        "fuzz_states": 10000,
+        "illegal_moves": 0,
+        "deadline_violations": 0,
+        "failsafe_levels_covered": 4
+      },
+      "checks_added": [
+        "tests/test_rules.cpp::con comida en la casilla, el hazard no puede matar"
+      ],
+      "findings": [
+        {
+          "id": "F-R09",
+          "sev": "mayor",
+          "cite": "tests/test_rules.cpp",
+          "desc": "sobrevivia el mutante m2: el caso de comida en hazard usaba salud 40, donde comer deja la salud en 100 con o sin daño, asi que no distinguia las dos semanticas",
+          "estado": "REPARADO",
+          "fixed_in": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "commit_after": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "cmd": "./scripts/loop.sh 4 rules robustness",
+      "exit_code": 0,
+      "started_at": "2026-09-15T18:57:26Z",
+      "duration_ms": 79586,
+      "log_sha256": "4496c2b08f681c7529a9fe364535c8cea5f516b4819871d1a9c8aecb1c5f484d",
+      "payload_sha256": "4496c2b08f681c7529a9fe364535c8cea5f516b4819871d1a9c8aecb1c5f484d",
+      "metrics": {
+        "mutants": 6,
+        "mutants_killed": 6,
+        "mutants_broken_patterns": 0,
+        "mutants_killed_ratio": 1.0,
+        "sanitizer_findings": 0,
+        "fuzz_states": 10000,
+        "illegal_moves": 0,
+        "deadline_violations": 0,
+        "failsafe_levels_covered": 4
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        {
+          "cmd": "cmake --preset debug && cmake --build --preset debug",
+          "exit_code": 0
+        },
+        {
+          "cmd": "unit_tests [fuzz],[failsafe],[brain],[rules] con ASan+UBSan",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/mutants.sh",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "class": "perf",
+      "agent": "perf-analyst",
+      "commit_before": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "commit_after": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "cmd": "./scripts/loop.sh 5 rules perf",
+      "exit_code": 0,
+      "started_at": "2026-09-15T19:10:36Z",
+      "duration_ms": 32853,
+      "log_sha256": "a4203c8af2534dea4c6a7f8f3d1fb4216f5319a1b5545447a30720bec4f2aefa",
+      "payload_sha256": "a4203c8af2534dea4c6a7f8f3d1fb4216f5319a1b5545447a30720bec4f2aefa",
+      "metrics": {
+        "fixtures": 13,
+        "requests": 3900,
+        "p50_ms": 0.416,
+        "p99_ms": 0.537,
+        "max_ms": 23.174,
+        "illegal_moves": 0,
+        "hot_path_allocs": 0,
+        "timeouts": 0,
+        "apply_per_second": 6104320,
+        "legal_moves_per_second": 20432800,
+        "decide_per_second": 1707980
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        {
+          "cmd": "./scripts/bench.sh (preset bench-deployisa, 5 repeticiones)",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/bench.sh --native (local-only)",
+          "exit_code": 0
+        },
+        {
+          "cmd": "unit_tests [perf] (allocator instrumentado)",
+          "exit_code": 0
+        },
+        {
+          "cmd": "scripts/smoke.py --repeats 300 (3900 peticiones)",
+          "exit_code": 0
+        }
+      ]
+    }
+  ]
+}

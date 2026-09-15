@@ -10,13 +10,14 @@ Snake activa: v0-baseline
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
 |---|---|---|---|
-| `apply()/s` (1 hilo, bench-deployisa) | no medido | - | - |
-| `legal_moves()/s` (1 hilo, bench-deployisa) | no medido | - | - |
-| `decide()/s` (1 hilo, bench-deployisa) | no medido | - | - |
-| copias de estado/s | no medido | - | - |
-| `POST /move` p50 (local, fixtures) | no medido | - | - |
-| `POST /move` p99 (local, fixtures) | no medido | - | - |
-| `POST /move` maximo (local, fixtures) | no medido | - | - |
+| `apply()/s` (1 hilo, bench-deployisa) | 6.10 M/s (164 ns) | 8082d1d | 2026-09-15 |
+| `legal_moves()/s` (1 hilo, bench-deployisa) | 20.43 M/s (48.9 ns) | 8082d1d | 2026-09-15 |
+| `decide()/s` (1 hilo, bench-deployisa) | 1.71 M/s (585 ns) | 8082d1d | 2026-09-15 |
+| copias de estado/s | 106.35 M/s (9.40 ns) | 8082d1d | 2026-09-15 |
+| `POST /move` p50 (local, 13 fixtures x 20) | 0.43 ms | 8082d1d | 2026-09-15 |
+| `POST /move` p99 (local, 13 fixtures x 20) | 0.79 ms | 8082d1d | 2026-09-15 |
+| `POST /move` maximo (local, 13 fixtures x 20) | 23.88 ms | 8082d1d | 2026-09-15 |
+| asignaciones dinamicas en `apply`/`legal_moves`/`decide` | 0 / 0 / 0 | 8082d1d | 2026-09-15 |
 <!-- END:perf-snapshot -->
 
 Los numeros de arriba los regenera `./scripts/sync_state.sh` desde `docs/performance.md`,

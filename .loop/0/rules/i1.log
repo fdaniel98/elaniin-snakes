@@ -1,0 +1,37 @@
+=== loop i1 correctness rules @ 2026-09-15T18:39:00Z ===
+Agente: rules-auditor (subagente de solo lectura, contrato en .claude/agents/rules-auditor.md)
+Fuente: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
+
+Comandos ejecutados por el agente: lectura de standard.go, royale.go, maps/royale.go,
+maps/standard.go, board.go, constrictor.go, wrapped.go, solo.go, ruleset.go, pipeline.go,
+settings.go, constants.go, client/models.go y cli/commands/play.go, contrastados contra
+docs/rules.md, docs/rules-parametros.md, engine/src/rules.cpp, engine/include/engine/state.hpp
+y engine/include/engine/ruleset.hpp.
+
+Tabla devuelta (resumen de las filas con veredicto distinto de OK; la tabla completa tenia
+37 filas):
+
+| regla | doc | codigo | veredicto | cita |
+|---|---|---|---|---|
+| R-02 stage 7 spawn_hazards: apply() nunca regenera hazards y royale_hazards lanza | docs/rules.md#r-02 | engine/src/rules.cpp:300-305 | DIVERGE | royale.go:14, royale.go:17-62 |
+| R-08 que serpientes dejan de bloquear: la doc enumera solo hambre y fuera de tablero; la eliminada por hazard tambien deja de bloquear | docs/rules.md#r-08 | engine/src/rules.cpp:173-175 | DIVERGE | standard.go:162-164, standard.go:241-243 |
+| R-13 solo: is_supported lo declara soportado, pero termina con CERO vivas y is_terminal corta con una | docs/rules-parametros.md#r-13 | engine/include/engine/ruleset.hpp:29 | DIVERGE | solo.go:12-19 |
+| R-13 standard descrito como "sin stage de hazards": si aplica daño de hazard | docs/rules-parametros.md#r-13 | engine/src/rules.cpp:171-193 | DIVERGE | standard.go:8-15 (linea 12) |
+| R-20 cita de damagePerTurn apunta a constants.go:52, que es ParamFoodSpawnChance | docs/rules-parametros.md#r-20 | n/a | DIVERGE | constants.go:54 |
+| R-20 cita del anidamiento de royale apunta a client/models.go:63, que es HazardMapAuthor | docs/rules-parametros.md#r-20 | n/a | DIVERGE | client/models.go:64 |
+| R-99 cita de you.latency apunta a client/models.go:36, que es Health | docs/rules-parametros.md#r-99 | n/a | DIVERGE | client/models.go:35 |
+| SOURCES.md cita SnakeMaxHealth/SnakeStartSize en constants.go:16-17, que son BoardSize* | docs/SOURCES.md | n/a | DIVERGE | constants.go:19-20 |
+| R-12 placements con rango compartido promediado | docs/rules.md#r-12 | engine/src/rules.cpp:309-338 | SIN_VERIFICAR | el Go no expone placements; cli/commands/output.go:18-22 solo emite winner/isDraw |
+
+diverge=8 sin_verificar=1 ok=28
+
+Verificacion propia de las citas antes de aceptar el hallazgo (no se corrige contra la
+palabra del agente):
+  $ sed -n '50,56p' constants.go      -> ParamHazardDamagePerTurn en la linea 54
+  $ sed -n '33,37p' client/models.go  -> Latency en la 35
+  $ sed -n '62,66p' client/models.go  -> RoyaleSettings en la 64
+  $ sed -n '1,25p' solo.go            -> GameOverSolo termina con cero vivas
+
+Nota sobre el DIVERGE del stage 7: no se corrige el codigo, se corrige la expectativa. La
+generacion de hazards de royale es de la fase 1 y solo tiene sentido en la arena, porque
+la semilla no viaja en el payload (docs/rules.md#r-09). Queda como DESCARTADO con razon.

@@ -1,0 +1,38 @@
+=== loop i4 robustness rules @ 2026-09-15T18:57:26Z ===
+--- build con ASan + UBSan ---
+Preset CMake variables:
+
+  BSR_BUILD_TESTS="ON"
+  CMAKE_BUILD_TYPE="Debug"
+  CMAKE_CXX_COMPILER="clang++-18"
+  CMAKE_CXX_FLAGS="-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all"
+  CMAKE_C_COMPILER="clang-18"
+  CMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+  CMAKE_EXPORT_COMPILE_COMMANDS="ON"
+
+-- Configuring done (0.1s)
+-- Generating done (0.1s)
+-- Build files have been written to: /mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/build/debug
+[1/2] Building CXX object tests/CMakeFiles/unit_tests.dir/test_rules.cpp.o
+[2/2] Linking CXX executable bin/unit_tests
+--- tests con sanitizers, incluido el fuzz de 10000 estados ---
+Filters: [fuzz],[failsafe],[brain],[rules]
+RNG seed: 1876867177
+/mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/tests/test_brain_v0.cpp:345: failed: deadline_violations == 0 for: 7 == 0 with 1 message: 'estados=10000 ilegales=0 violaciones_deadline=7'
+test cases:  26 |  25 passed | 1 failed
+assertions: 237 | 236 passed | 1 failed
+
+
+--- mutantes ---
+== preparando copia limpia en /tmp/tmp.ODbGNhvqgn ==
+== build de referencia ==
+OK   referencia verde
+MUERTO   m1 - cabeza a cabeza: empate de longitudes deja de matar a ambas
+MUERTO   m2 - el hazard pasa a dañar aunque haya comida en la casilla
+MUERTO   m3 - la cola apilada deja de detectarse
+MUERTO   m4 - el cerebro trata toda cola como libre
+MUERTO   m5 - el hambre deja de restar salud
+MUERTO   m6 - el daño de hazard nunca puede matar
+
+mutantes=6 muertos=6 patrones_rotos=0 ratio=1.0000
+metricas escritas en /mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/.loop/0/rules/i4.metrics.json.mutants

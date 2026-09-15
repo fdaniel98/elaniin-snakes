@@ -92,9 +92,13 @@ verify_ledger() {
     numbering="$(jq -r '[.iterations[].n] == [range(1; (.iterations|length)+1)]' "$ledger")"
     [[ "$numbering" == "true" ]] || fail "$slug: las iteraciones no van 1..N sin huecos"
 
+    # Al menos 3 clases DISTINTAS en todo el ledger. No se exige que sean justo las tres
+    # primeras: cuando una iteracion encuentra un hallazgo mayor, la regla del loop obliga
+    # a repetir ESA clase sobre el commit del arreglo, asi que exigir las tres primeras
+    # distintas seria incompatible con repetir. ver docs/decisions/ADR-0005-cierre-del-loop.md
     local distinct
-    distinct="$(jq -r '[.iterations[0:3][].class] | unique | length' "$ledger")"
-    [[ "$distinct" == "3" ]] || fail "$slug: las 3 primeras iteraciones no son de clases distintas"
+    distinct="$(jq -r '[.iterations[].class] | unique | length' "$ledger")"
+    [[ "$distinct" -ge 3 ]] || fail "$slug: solo $distinct clases distintas, minimo 3"
 
     local mandatory
     mandatory="$(jq -r --slurpfile cfg "$CONFIG" \
@@ -102,10 +106,22 @@ verify_ledger() {
     [[ "$mandatory" == "0" ]] || fail "$slug: faltan clases obligatorias del loop"
 
     # 3. Encadenamiento, SHAs reales y started_at estrictamente crecientes.
-    local chained
-    chained="$(jq -r '[.iterations[] | {a: .commit_after, b: .commit_before}] as $it
-        | [range(0; ($it|length)-1) | $it[.].a == $it[.+1].b] | all' "$ledger")"
-    [[ "$chained" == "true" ]] || fail "$slug: commit_after(i) != commit_before(i+1)"
+    #
+    # `commit_after(i)` tiene que ser ANCESTRO O IGUAL de `commit_before(i+1)`: eso es lo
+    # que impide reordenar o inventar iteraciones, sin exigir que entre dos iteraciones no
+    # haya pasado nada mas en el repositorio (lo que obligaria a congelar el arbol entero
+    # mientras se cierra el loop de un entregable).
+    # ver docs/decisions/ADR-0005-cierre-del-loop.md
+    local chain_count
+    chain_count="$(jq -r '.iterations | length' "$ledger")"
+    for ((c = 0; c + 1 < chain_count; ++c)); do
+        local after before
+        after="$(jq -r ".iterations[$c].commit_after" "$ledger")"
+        before="$(jq -r ".iterations[$((c + 1))].commit_before" "$ledger")"
+        if ! git merge-base --is-ancestor "$after" "$before" 2>/dev/null; then
+            fail "$slug: commit_after(i) != commit_before(i+1) (ni es ancestro suyo): $after -> $before"
+        fi
+    done
 
     local increasing
     increasing="$(jq -r '[.iterations[].started_at] as $t

@@ -1,0 +1,16 @@
+=== loop i2 robustness gate @ 2026-09-15T19:02:04Z ===
+--- autoprueba del gate por venenos ---
+OK    check 0 (un .sh con CR): el gate lo caza
+OK    check 1 (error de sintaxis en el motor): el gate lo caza
+OK    check 3 (un test que falla): el gate lo caza
+OK    check 4 (codigo sin formatear): el gate lo caza
+OK    check 6 (doc sin front-matter): el gate lo caza
+OK    check 6 (cita a un anchor inexistente desde STATE.md): el gate lo caza
+OK    check 6 (size_bytes que no coincide con wc -c): el gate lo caza
+OK    check 6 (doc canonical sin last_verified): el gate lo caza
+OK    check 6 (enlace a un anchor inexistente del mismo archivo): el gate lo caza
+OK    check 7 (-march=native en un preset del que deploy hereda): el gate lo caza
+ERROR no se pudo aplicar el veneno de ledger con solo dos iteraciones
+ERROR no se pudo aplicar el veneno de ledger con el encadenamiento de commits roto
+
+venenos cazados: 10, fallidos: 2

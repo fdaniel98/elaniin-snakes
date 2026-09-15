@@ -63,6 +63,14 @@ run_correctness() {
 }
 
 run_robustness() {
+    if [[ "$SLUG" == "gate" ]]; then
+        # La robustez del oraculo no se mide con sanitizers sino con venenos: un check
+        # que pasa por estar vacio se ve igual que uno que funciona.
+        echo "--- autoprueba del gate por venenos ---"
+        ./scripts/gate-selftest.sh --fast
+        return $?
+    fi
+
     echo "--- build con ASan + UBSan ---"
     cmake --preset debug && cmake --build --preset debug
     echo "--- tests con sanitizers, incluido el fuzz de 10000 estados ---"
@@ -74,10 +82,46 @@ run_robustness() {
 }
 
 run_perf() {
-    echo "--- benchmarks ---"
-    ./scripts/bench.sh --quick
+    if [[ "$SLUG" == "gate" ]]; then
+        # Lo que se mide del gate es cuanto tarda: un oraculo que tarda demasiado deja
+        # de ejecutarse, y entonces no es un oraculo.
+        echo "--- duracion del gate rapido ---"
+        local started_gate
+        started_gate="$(date +%s)"
+        ./scripts/gate.sh --fast
+        local gate_status=$?
+        echo "gate_fast_seconds=$(($(date +%s) - started_gate))"
+        return $gate_status
+    fi
+
+    echo "--- benchmarks con la ISA de deploy (linea base publicable) ---"
+    # Sin --quick: una iteracion de la clase perf mide de verdad, y ademas el umbral
+    # min_duration_ms de config/loop.json existe para que una medicion no sea un parpadeo.
+    ./scripts/bench.sh
+
+    echo "--- benchmarks con -march=native (local-only, solo para comparar) ---"
+    # docs/performance.md#p-02 publica las dos columnas: sirve para saber cuanto deja
+    # sobre la mesa la ISA portable, y el numero nativo NO puede usarse como linea base.
+    ./scripts/bench.sh --native
+
+    echo "--- asignaciones en el hot path (allocator instrumentado) ---"
+    ./build/release/bin/unit_tests "[perf]" --reporter compact
+
     echo "--- latencia end-to-end sobre los fixtures ---"
-    ./scripts/gate.sh 2>&1 | grep -E '^CHECK 8|p50=|p99='
+    # Se mide contra el servidor directamente, no lanzando el gate entero: el gate
+    # incluye el check 9, que depende del ledger que esta iteracion va a producir.
+    cmake --build --preset release >/dev/null
+    PORT=8097 ./build/release/bin/battlesnake-server >/dev/null 2>&1 &
+    local server_pid=$!
+    for _ in $(seq 1 50); do
+        curl -fsS http://127.0.0.1:8097/health >/dev/null 2>&1 && break
+        sleep 0.2
+    done
+    python3 scripts/smoke.py --url http://127.0.0.1:8097 --repeats 300         --json-out "${METRICS}.latency"
+    local smoke_status=$?
+    kill "$server_pid" 2>/dev/null
+    wait "$server_pid" 2>/dev/null
+    return $smoke_status
 }
 
 run_context() {

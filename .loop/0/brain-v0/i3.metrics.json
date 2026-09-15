@@ -1,0 +1,12 @@
+{
+  "n": 3,
+  "class": "perf",
+  "slug": "brain-v0",
+  "phase": 0,
+  "commit_before": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+  "started_at": "2026-09-15T19:09:31Z",
+  "duration_ms": 52206,
+  "exit_code": 0,
+  "log_sha256": "8415bbc7abf66ed8fcb75bdcd3ccd6435aed26e6890b4506f6a638653f43d01c",
+  "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a"
+}

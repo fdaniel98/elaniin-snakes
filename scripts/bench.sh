@@ -14,6 +14,9 @@ cd "$(dirname "$0")/.."
 
 PRESET=bench-deployisa
 LABEL=deploy-isa
+# Cinco repeticiones por benchmark: una sola medicion no distingue una mejora del ruido
+# de la maquina, y la clase perf del loop compara contra una linea base.
+REPETITIONS=5
 EXTRA=()
 
 for arg in "$@"; do
@@ -23,6 +26,7 @@ for arg in "$@"; do
             LABEL=local-only
             ;;
         --quick) EXTRA+=(--benchmark_min_time=0.05s) ;;
+        --repetitions) REPETITIONS=5 ;;
         *)
             echo "uso: $0 [--native] [--quick]"
             exit 2
@@ -37,7 +41,7 @@ cmake --build --preset "$PRESET" >/dev/null || exit 2
 OUT="docs/results/bench-$(date -u +%Y%m%dT%H%M%SZ)-${LABEL}.json"
 mkdir -p docs/results
 
-./build/"$PRESET"/bin/bench_engine     --benchmark_format=console     --benchmark_out="$OUT"     --benchmark_out_format=json     "${EXTRA[@]}"
+./build/"$PRESET"/bin/bench_engine     --benchmark_format=console     --benchmark_out="$OUT"     --benchmark_out_format=json     --benchmark_repetitions="$REPETITIONS"     --benchmark_report_aggregates_only=true     "${EXTRA[@]}"
 
 echo
 echo "resultados en $OUT (etiqueta: $LABEL)"

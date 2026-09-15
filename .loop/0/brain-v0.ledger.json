@@ -1,0 +1,139 @@
+{
+  "deliverable": "snake/src/brain_v0.cpp",
+  "phase": 0,
+  "status": "CLOSED",
+  "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a",
+  "iterations": [
+    {
+      "n": 1,
+      "class": "correctness",
+      "agent": "context-curator",
+      "commit_before": "61c962097c6971b20c62e857a2fc464f6e6d9c8b",
+      "commit_after": "e19a7d3b58150c534f122526c2dc899484c9b953",
+      "cmd": "subagente context-curator + revision del contrato del cerebro",
+      "exit_code": 0,
+      "started_at": "2026-09-15T18:40:00Z",
+      "duration_ms": 309812,
+      "log_sha256": "cd52f2a766fca3effe85f5b62b68305f281aa03e8f0c4fb6530af3c4ad54bc72",
+      "payload_sha256": "a05eb9e23e5fa7d25851db383a3bc30555107a6479a2e281f8e68daf88c0812a",
+      "metrics": {
+        "diverge": 0,
+        "sin_verificar": 0,
+        "fixtures_pass": 13
+      },
+      "checks_added": [
+        "tests/test_brain_v0.cpp::fail-safe: los cuatro escalones (escalon 3 exacto)"
+      ],
+      "findings": [
+        {
+          "id": "F-B01",
+          "sev": "mayor",
+          "cite": "snake/src/server.cpp",
+          "desc": "el servidor emitia un escalon 4 de fail-safe inexistente en la doc y sin test",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        },
+        {
+          "id": "F-B02",
+          "sev": "mayor",
+          "cite": "scripts/smoke.py",
+          "desc": "umbrales de latencia hardcodeados en el script, contra docs/harness.md#h-05",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        },
+        {
+          "id": "F-B03",
+          "sev": "menor",
+          "cite": "README.md",
+          "desc": "ruta del binario inexistente en el README",
+          "estado": "REPARADO",
+          "fixed_in": "2103f0c8d4256d225a5214c5525e9806f9e7f8be"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "commit_after": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "cmd": "./scripts/loop.sh 2 brain-v0 robustness",
+      "exit_code": 0,
+      "started_at": "2026-09-15T19:00:31Z",
+      "duration_ms": 76249,
+      "log_sha256": "e9a11469e335b546458d93ae16197fdbd6c8852f33c39bccb354d38321fe7fe2",
+      "payload_sha256": "e9a11469e335b546458d93ae16197fdbd6c8852f33c39bccb354d38321fe7fe2",
+      "metrics": {
+        "mutants": 6,
+        "mutants_killed": 6,
+        "mutants_broken_patterns": 0,
+        "mutants_killed_ratio": 1.0,
+        "sanitizer_findings": 0,
+        "fuzz_states": 10000,
+        "illegal_moves": 0,
+        "deadline_violations": 0,
+        "failsafe_levels_covered": 4
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        {
+          "cmd": "cmake --preset debug && cmake --build --preset debug",
+          "exit_code": 0
+        },
+        {
+          "cmd": "unit_tests [fuzz],[failsafe],[brain],[rules] con ASan+UBSan",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/mutants.sh (6/6 muertos)",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "class": "perf",
+      "agent": "perf-analyst",
+      "commit_before": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "commit_after": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "cmd": "./scripts/loop.sh 3 brain-v0 perf",
+      "exit_code": 0,
+      "started_at": "2026-09-15T19:09:31Z",
+      "duration_ms": 52206,
+      "log_sha256": "8415bbc7abf66ed8fcb75bdcd3ccd6435aed26e6890b4506f6a638653f43d01c",
+      "payload_sha256": "8415bbc7abf66ed8fcb75bdcd3ccd6435aed26e6890b4506f6a638653f43d01c",
+      "metrics": {
+        "fixtures": 13,
+        "requests": 3900,
+        "p50_ms": 0.39,
+        "p99_ms": 0.587,
+        "max_ms": 24.276,
+        "illegal_moves": 0,
+        "hot_path_allocs": 0,
+        "timeouts": 0,
+        "decide_per_second": 1753490
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        {
+          "cmd": "./scripts/bench.sh (preset bench-deployisa, 5 repeticiones)",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/bench.sh --native (local-only)",
+          "exit_code": 0
+        },
+        {
+          "cmd": "unit_tests [perf] (allocator instrumentado)",
+          "exit_code": 0
+        },
+        {
+          "cmd": "scripts/smoke.py --repeats 300 (3900 peticiones)",
+          "exit_code": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+=== loop i1 correctness brain-v0 @ 2026-09-15T18:39:00Z ===
+Agente: context-curator + revision propia del contrato del cerebro
+Contratos revisados: snake/CLAUDE.md, docs/invariants.md#inv-10, #inv-11, #inv-12,
+snake/src/brain_v0.cpp, snake/src/server.cpp, tests/test_brain_v0.cpp.
+
+Hallazgo principal (severidad mayor), tal como lo reporto el agente:
+
+| archivo | problema | severidad | accion propuesta |
+|---|---|---|---|
+| snake/src/server.cpp:178 vs snake/CLAUDE.md, docs/invariants.md#inv-12 | El servidor emite fallback_level = 4 en la rama de payload invalido, pero toda la doc enuncia cuatro escalones numerados 0-3 y los tests solo cubren 0-3; config/loop.json exige failsafe_levels_covered_min: 4 | mayor | Renumerar el caso del servidor a 3 |
+| README.md | Ruta del binario falsa: ./snake/../build/release/snake/battlesnake-server | mayor | Corregir a build/release/bin/battlesnake-server |
+| docs/performance.md#p-01, scripts/smoke.py | Umbrales de latencia hardcodeados en el script, contra docs/harness.md#h-05 | mayor | smoke.py lee config/loop.json |
+
+Comprobacion propia: grep de fallback_level en snake/ y tests/ -> el unico 4 estaba en
+server.cpp; los tests cubren 0, 1, 2 y 3.
+
+frontmatter_invalid=0 broken_anchors=2 orphan_anchors=59 duplicated_facts=18 size_bytes_mismatch=0

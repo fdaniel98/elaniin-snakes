@@ -1,0 +1,77 @@
+=== loop i5 perf rules @ 2026-09-15T19:10:36Z ===
+--- benchmarks con la ISA de deploy (linea base publicable) ---
+== preset bench-deployisa (deploy-isa) ==
+2026-09-15T15:10:37-04:00
+Running ./build/bench-deployisa/bin/bench_engine
+Run on (8 X 3000.01 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x8)
+  L1 Instruction 32 KiB (x8)
+  L2 Unified 256 KiB (x8)
+  L3 Unified 12288 KiB (x1)
+Load Average: 0.74, 1.12, 1.25
+***WARNING*** Library was built as DEBUG. Timings may be affected.
+--------------------------------------------------------------------------------
+Benchmark                      Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------
+bm_apply_mean                171 ns          166 ns            5 items_per_second=6.01346M/s
+bm_apply_median              173 ns          168 ns            5 items_per_second=5.94395M/s
+bm_apply_stddev             3.41 ns         3.31 ns            5 items_per_second=120.618k/s
+bm_apply_cv                 1.99 %          1.99 %             5 items_per_second=2.01%
+bm_legal_moves_mean         51.3 ns         49.8 ns            5 items_per_second=20.0754M/s
+bm_legal_moves_median       51.1 ns         49.7 ns            5 items_per_second=20.1326M/s
+bm_legal_moves_stddev      0.821 ns        0.798 ns            5 items_per_second=321.159k/s
+bm_legal_moves_cv           1.60 %          1.60 %             5 items_per_second=1.60%
+bm_copy_state_mean          9.69 ns         9.41 ns            5 items_per_second=106.267M/s
+bm_copy_state_median        9.66 ns         9.39 ns            5 items_per_second=106.53M/s
+bm_copy_state_stddev       0.156 ns        0.151 ns            5 items_per_second=1.68043M/s
+bm_copy_state_cv            1.61 %          1.60 %             5 items_per_second=1.58%
+bm_decide_mean               616 ns          599 ns            5 items_per_second=1.6729M/s
+bm_decide_median             609 ns          592 ns            5 items_per_second=1.69032M/s
+bm_decide_stddev            25.5 ns         24.7 ns            5 items_per_second=65.9566k/s
+bm_decide_cv                4.13 %          4.13 %             5 items_per_second=3.94%
+
+resultados en docs/results/bench-20260915T191037Z-deploy-isa.json (etiqueta: deploy-isa)
+--- benchmarks con -march=native (local-only, solo para comparar) ---
+== preset bench (local-only) ==
+2026-09-15T15:10:52-04:00
+Running ./build/bench/bin/bench_engine
+Run on (8 X 3000.01 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x8)
+  L1 Instruction 32 KiB (x8)
+  L2 Unified 256 KiB (x8)
+  L3 Unified 12288 KiB (x1)
+Load Average: 0.79, 1.11, 1.24
+***WARNING*** Library was built as DEBUG. Timings may be affected.
+--------------------------------------------------------------------------------
+Benchmark                      Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------
+bm_apply_mean                172 ns          167 ns            5 items_per_second=6.00116M/s
+bm_apply_median              172 ns          167 ns            5 items_per_second=5.99253M/s
+bm_apply_stddev             1.75 ns         1.70 ns            5 items_per_second=61.2466k/s
+bm_apply_cv                 1.02 %          1.02 %             5 items_per_second=1.02%
+bm_legal_moves_mean         47.5 ns         46.2 ns            5 items_per_second=21.6656M/s
+bm_legal_moves_median       47.5 ns         46.1 ns            5 items_per_second=21.6863M/s
+bm_legal_moves_stddev      0.212 ns        0.206 ns            5 items_per_second=96.3996k/s
+bm_legal_moves_cv           0.45 %          0.45 %             5 items_per_second=0.44%
+bm_copy_state_mean          9.55 ns         9.27 ns            5 items_per_second=107.834M/s
+bm_copy_state_median        9.53 ns         9.25 ns            5 items_per_second=108.053M/s
+bm_copy_state_stddev       0.051 ns        0.050 ns            5 items_per_second=578.02k/s
+bm_copy_state_cv            0.54 %          0.54 %             5 items_per_second=0.54%
+bm_decide_mean               579 ns          562 ns            5 items_per_second=1.77867M/s
+bm_decide_median             579 ns          562 ns            5 items_per_second=1.77923M/s
+bm_decide_stddev            1.97 ns         1.92 ns            5 items_per_second=6.05764k/s
+bm_decide_cv                0.34 %          0.34 %             5 items_per_second=0.34%
+
+resultados en docs/results/bench-20260915T191052Z-local-only.json (etiqueta: local-only)
+AVISO local-only: estos numeros NO pueden publicarse como linea base
+--- asignaciones en el hot path (allocator instrumentado) ---
+Filters: [perf]
+RNG seed: 3602337984
+All tests passed (5 assertions in 1 test case)
+
+
+--- latencia end-to-end sobre los fixtures ---
+fixtures=13 peticiones=3900 p50=0.42ms p99=0.54ms max=23.17ms
+OK   todos los movimientos legales y dentro del presupuesto

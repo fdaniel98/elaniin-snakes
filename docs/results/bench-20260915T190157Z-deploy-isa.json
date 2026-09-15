@@ -1,0 +1,100 @@
+{
+  "context": {
+    "date": "2026-09-15T15:01:57-04:00",
+    "host_name": "DESKTOP-AL9OUEQ",
+    "executable": "./build/bench-deployisa/bin/bench_engine",
+    "num_cpus": 8,
+    "mhz_per_cpu": 3000,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 1
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 1
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 262144,
+        "num_sharing": 1
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 12582912,
+        "num_sharing": 8
+      }
+    ],
+    "load_avg": [1.61377,1.46191,1.25635],
+    "library_build_type": "debug"
+  },
+  "benchmarks": [
+    {
+      "name": "bm_apply",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "bm_apply",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 430889,
+      "real_time": 1.8219395250737176e+02,
+      "cpu_time": 1.7737932506979755e+02,
+      "time_unit": "ns",
+      "items_per_second": 5.6376356128681106e+06
+    },
+    {
+      "name": "bm_legal_moves",
+      "family_index": 1,
+      "per_family_instance_index": 0,
+      "run_name": "bm_legal_moves",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 1434226,
+      "real_time": 5.0098928620890867e+01,
+      "cpu_time": 4.8774600376788584e+01,
+      "time_unit": "ns",
+      "items_per_second": 2.0502474490306463e+07
+    },
+    {
+      "name": "bm_copy_state",
+      "family_index": 2,
+      "per_family_instance_index": 0,
+      "run_name": "bm_copy_state",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 7594909,
+      "real_time": 9.4342094158116510e+00,
+      "cpu_time": 9.1840863399416612e+00,
+      "time_unit": "ns",
+      "items_per_second": 1.0888399378945212e+08
+    },
+    {
+      "name": "bm_decide",
+      "family_index": 3,
+      "per_family_instance_index": 0,
+      "run_name": "bm_decide",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 123553,
+      "real_time": 6.0446996836301253e+02,
+      "cpu_time": 5.8849319725138196e+02,
+      "time_unit": "ns",
+      "items_per_second": 1.6992549865837072e+06
+    }
+  ]
+}

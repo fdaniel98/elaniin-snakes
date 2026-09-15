@@ -1,0 +1,8 @@
+{
+  "fixtures": 13,
+  "requests": 3900,
+  "p50_ms": 0.39,
+  "p99_ms": 0.587,
+  "max_ms": 24.276,
+  "illegal_moves": 0
+}

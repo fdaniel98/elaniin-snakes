@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2975
+size_bytes: 3617
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -55,13 +55,14 @@ Dos corridas con campos distintos en esta tabla **no se comparan**.
 <!-- BEGIN:perf-canonical -->
 | metrica | valor | commit | fecha |
 |---|---|---|---|
-| `apply()/s` (1 hilo, bench-deployisa) | no medido | - | - |
-| `legal_moves()/s` (1 hilo, bench-deployisa) | no medido | - | - |
-| `decide()/s` (1 hilo, bench-deployisa) | no medido | - | - |
-| copias de estado/s | no medido | - | - |
-| `POST /move` p50 (local, fixtures) | no medido | - | - |
-| `POST /move` p99 (local, fixtures) | no medido | - | - |
-| `POST /move` maximo (local, fixtures) | no medido | - | - |
+| `apply()/s` (1 hilo, bench-deployisa) | 6.10 M/s (164 ns) | 8082d1d | 2026-09-15 |
+| `legal_moves()/s` (1 hilo, bench-deployisa) | 20.43 M/s (48.9 ns) | 8082d1d | 2026-09-15 |
+| `decide()/s` (1 hilo, bench-deployisa) | 1.71 M/s (585 ns) | 8082d1d | 2026-09-15 |
+| copias de estado/s | 106.35 M/s (9.40 ns) | 8082d1d | 2026-09-15 |
+| `POST /move` p50 (local, 13 fixtures x 20) | 0.43 ms | 8082d1d | 2026-09-15 |
+| `POST /move` p99 (local, 13 fixtures x 20) | 0.79 ms | 8082d1d | 2026-09-15 |
+| `POST /move` maximo (local, 13 fixtures x 20) | 23.88 ms | 8082d1d | 2026-09-15 |
+| asignaciones dinamicas en `apply`/`legal_moves`/`decide` | 0 / 0 / 0 | 8082d1d | 2026-09-15 |
 <!-- END:perf-canonical -->
 
 ## P-04 Historico {#p-04}
@@ -71,4 +72,9 @@ van a `docs/results/bench-*.json`, que queda fuera del lint de docs.
 
 | Fecha | Cambio | Metrica | Antes | Despues | Veredicto |
 |---|---|---|---|---|---|
-| - | linea base inicial pendiente | - | - | - | - |
+| 2026-09-15 | linea base inicial de la fase 0 (commit 8082d1d) | todas | - | ver tabla canonica | LINEA BASE |
+
+El maximo de `POST /move` (23.88 ms) esta 30 veces por encima del p99 (0.79 ms): es la
+primera peticion, que paga el arranque del servidor y la carga del config. Queda como
+hallazgo abierto de la clase `perf`, no como regresion: el presupuesto de la fase 0 son
+50 ms de p99 y 150 ms de maximo, y ambos se cumplen con margen.

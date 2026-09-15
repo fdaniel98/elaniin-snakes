@@ -164,7 +164,11 @@ poison_10() {
         deploy/Dockerfile
 }
 
-# veneno | check esperado | descripcion
+# veneno | check esperado | descripcion | [mensaje exacto que debe aparecer]
+#
+# El cuarto campo es opcional y existe para los venenos del check 9: ese check puede
+# fallar por varias razones a la vez, asi que exigir el MENSAJE concreto es lo unico que
+# prueba que el veneno se detecto y no que fallo otra cosa.
 POISONS=(
     "poison_0|0|un .sh con CR"
     "poison_1|1|error de sintaxis en el motor"
@@ -179,8 +183,8 @@ POISONS=(
     "poison_6e|6|enlace a un anchor inexistente del mismo archivo"
     "poison_7|7|-march=native en un preset del que deploy hereda"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
-    "poison_9|9|ledger con solo dos iteraciones"
-    "poison_9b|9|ledger con el encadenamiento de commits roto"
+    "poison_9|9|ledger con solo dos iteraciones|iteraciones, minimo 3"
+    "poison_9b|9|ledger con el encadenamiento de commits roto|commit_after(i) != commit_before(i+1)"
     "poison_10|10|runtime distroless sin libstdc++"
 )
 
@@ -188,7 +192,7 @@ passed=0
 failed=0
 
 for entry in "${POISONS[@]}"; do
-    IFS='|' read -r fn check description <<<"$entry"
+    IFS='|' read -r fn check description expected <<<"$entry"
 
     [[ -n "$ONLY" && "$ONLY" != "$check" ]] && continue
     if [[ $FAST_ONLY -eq 1 ]] && ! is_fast_check "$check"; then
@@ -225,13 +229,17 @@ for entry in "${POISONS[@]}"; do
     if [[ $gate_status -eq 0 ]]; then
         echo "FALLO check $check ($description): el gate paso con el veneno aplicado"
         failed=$((failed + 1))
-    elif grep -qE "^CHECK ${check} .* FAIL" <<<"$output"; then
-        echo "OK    check $check ($description): el gate lo caza"
-        passed=$((passed + 1))
-    else
+    elif ! grep -qE "^CHECK ${check} .* FAIL" <<<"$output"; then
         echo "FALLO check $check ($description): el gate fallo, pero no en el check $check"
         grep -E '^CHECK ' <<<"$output" | tail -5
         failed=$((failed + 1))
+    elif [[ -n "${expected:-}" ]] && ! grep -qF "$expected" <<<"$output"; then
+        echo "FALLO check $check ($description): el check fallo, pero sin el mensaje esperado"
+        echo "  esperado: $expected"
+        failed=$((failed + 1))
+    else
+        echo "OK    check $check ($description): el gate lo caza"
+        passed=$((passed + 1))
     fi
     popd >/dev/null
     rm -rf "$work"
