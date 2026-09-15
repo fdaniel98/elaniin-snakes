@@ -80,7 +80,24 @@ verify_ledger() {
     [[ "$sha" == "$CONFIG_SHA" ]] ||
         fail "$slug: thresholds_sha256 no coincide con config/loop.json ($sha vs $CONFIG_SHA)"
 
-    # 2. >=3 iteraciones, numeradas 1..N sin huecos, las 3 primeras de clases distintas.
+    # 2. >=3 iteraciones VALIDAS, numeradas 1..N sin huecos, con >=3 clases distintas.
+    #
+    # Una iteracion marcada `annulled` queda en el ledger por trazabilidad -es evidencia
+    # de trabajo real, y de su arreglo- pero no cuenta para el minimo ni para los
+    # umbrales: es lo que la regla de la ronda ANULADA pide. Toda iteracion anulada tiene
+    # que declarar `annulled_reason`.
+    local annulled valid
+    annulled="$(jq -r '[.iterations[] | select(.annulled == true)] | length' "$ledger")"
+    valid=$((iterations - annulled))
+    local missing_reason
+    missing_reason="$(jq -r '[.iterations[] | select(.annulled == true)
+        | select((.annulled_reason // "") == "")] | length' "$ledger")"
+    [[ "$missing_reason" == "0" ]] || fail "$slug: hay iteraciones anuladas sin annulled_reason"
+
+    if [[ "$valid" -lt "$MIN_ITER" ]]; then
+        fail "$slug: $valid iteraciones validas (de $iterations), minimo $MIN_ITER"
+        return
+    fi
     if [[ "$iterations" -lt "$MIN_ITER" ]]; then
         fail "$slug: $iterations iteraciones, minimo $MIN_ITER"
         return
@@ -97,7 +114,7 @@ verify_ledger() {
     # a repetir ESA clase sobre el commit del arreglo, asi que exigir las tres primeras
     # distintas seria incompatible con repetir. ver docs/decisions/ADR-0005-cierre-del-loop.md
     local distinct
-    distinct="$(jq -r '[.iterations[].class] | unique | length' "$ledger")"
+    distinct="$(jq -r '[.iterations[] | select(.annulled != true) | .class] | unique | length' "$ledger")"
     [[ "$distinct" -ge 3 ]] || fail "$slug: solo $distinct clases distintas, minimo 3"
 
     local mandatory
@@ -144,12 +161,15 @@ verify_ledger() {
         log_sha="$(jq -r ".iterations[$((n - 1))].log_sha256 // empty" "$ledger")"
         min_duration="$(jq -r ".classes[\"$class\"].min_duration_ms // empty" "$CONFIG")"
 
+        local is_annulled
+        is_annulled="$(jq -r ".iterations[$((n - 1))].annulled // false" "$ledger")"
+
         [[ -n "$exit_code" ]] || fail "$slug i$n: sin exit_code"
         [[ -n "$min_duration" ]] || {
             fail "$slug i$n: clase '$class' desconocida en $CONFIG"
             continue
         }
-        if [[ "$duration" -lt "$min_duration" ]]; then
+        if [[ "$is_annulled" != "true" && "$duration" -lt "$min_duration" ]]; then
             fail "$slug i$n: duration_ms=$duration < min_duration_ms=$min_duration ($class)"
         fi
 
@@ -178,7 +198,9 @@ verify_ledger() {
         fi
 
         # 8. Umbrales de la clase sobre las metricas de la iteracion.
-        verify_metrics "$slug" "$n" "$class" "$ledger"
+        if [[ "$is_annulled" != "true" ]]; then
+            verify_metrics "$slug" "$n" "$class" "$ledger"
+        fi
     done
 
     # 5. Todo finding REPARADO tiene fixed_in y ese commit toca un archivo citado.

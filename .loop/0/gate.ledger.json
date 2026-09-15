@@ -1,0 +1,213 @@
+{
+  "deliverable": "scripts/gate.sh",
+  "phase": 0,
+  "status": "CLOSED",
+  "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a",
+  "iterations": [
+    {
+      "n": 1,
+      "class": "correctness",
+      "agent": "main",
+      "commit_before": "61c962097c6971b20c62e857a2fc464f6e6d9c8b",
+      "commit_after": "ac6300b1fef16be0b6b41b17d5b7ce8d763a13ba",
+      "cmd": "./scripts/gate-selftest.sh --fast",
+      "exit_code": 0,
+      "started_at": "2026-09-15T18:30:00Z",
+      "duration_ms": 900000,
+      "log_sha256": "652720f2e961ab229a49eff5ee9c72429b5622fb93208d3656d986e55ea1590a",
+      "payload_sha256": "acaf992169be5be7e6be8dfec29e6000265d10afd79c3d4811e81aa40ae332f7",
+      "metrics": {
+        "diverge": 0,
+        "sin_verificar": 0,
+        "poisons_total": 11,
+        "poisons_caught": 8
+      },
+      "checks_added": [
+        "scripts/gate-selftest.sh: veneno del check 7 sobre CMAKE_CXX_FLAGS_RELEASE",
+        "bit de ejecucion en el indice, sin el cual ningun veneno se evaluaba"
+      ],
+      "findings": [
+        {
+          "id": "F-G01",
+          "sev": "blocker",
+          "cite": "scripts/gate-selftest.sh",
+          "desc": "los scripts no tenian el bit de ejecucion en el indice de git, asi que el gate del repo copiado por git archive no arrancaba y todos los venenos salian como no cazados",
+          "estado": "REPARADO",
+          "fixed_in": "821be6bebd05f2612da06efee6e038341f09eae3"
+        },
+        {
+          "id": "F-G02",
+          "sev": "blocker",
+          "cite": "scripts/lint-deploy.sh",
+          "desc": "el check 7 no comprobaba nada: el patron empieza por guion y grep lo interpretaba como opcion",
+          "estado": "REPARADO",
+          "fixed_in": "ac6300b1fef16be0b6b41b17d5b7ce8d763a13ba"
+        },
+        {
+          "id": "F-G03",
+          "sev": "mayor",
+          "cite": "scripts/gate-selftest.sh",
+          "desc": "el veneno del check 7 usaba una variable que el preset deploy redefine, asi que nunca llegaba a los flags efectivos",
+          "estado": "REPARADO",
+          "fixed_in": "05d7ef886d01b04bed0070e5d14c1e203f53b4aa"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "8082d1df9b4d7484b8def14c249bcd2071e5bdd3",
+      "commit_after": "fe308c7fe1b703d44968a495bde71510b6b9be9d",
+      "cmd": "./scripts/loop.sh 2 gate robustness",
+      "exit_code": 1,
+      "started_at": "2026-09-15T19:02:04Z",
+      "duration_ms": 233632,
+      "log_sha256": "54fb051ac78c44205871edc013dd6c6a9c1300024924620331671c20eedab6ae",
+      "payload_sha256": "54fb051ac78c44205871edc013dd6c6a9c1300024924620331671c20eedab6ae",
+      "metrics": {
+        "poisons_total": 12,
+        "poisons_caught": 10,
+        "poisons_failed": 2
+      },
+      "checks_added": [
+        "scripts/gate-selftest.sh: cuarto campo con el mensaje exacto que debe aparecer, para que un veneno del check 9 no se de por cazado si el check falla por otra razon"
+      ],
+      "findings": [
+        {
+          "id": "F-G04",
+          "sev": "mayor",
+          "cite": "scripts/gate-selftest.sh",
+          "desc": "los venenos 9 y 9b no se podian aplicar porque no existia ningun ledger, y el arnes los contaba como fallo sin distinguir de un veneno no cazado",
+          "estado": "REPARADO",
+          "fixed_in": "fe308c7fe1b703d44968a495bde71510b6b9be9d"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "fe308c7fe1b703d44968a495bde71510b6b9be9d",
+      "commit_after": "fe308c7fe1b703d44968a495bde71510b6b9be9d",
+      "cmd": "./scripts/loop.sh 3 gate robustness",
+      "exit_code": 0,
+      "started_at": "2026-09-15T19:14:51Z",
+      "duration_ms": 267697,
+      "log_sha256": "36a308d40c04cfef8ba0ddec258642a74652509a5d3cab82564be3bccd050a5c",
+      "payload_sha256": "36a308d40c04cfef8ba0ddec258642a74652509a5d3cab82564be3bccd050a5c",
+      "metrics": {
+        "poisons_total": 12,
+        "poisons_caught": 12,
+        "poisons_failed": 0
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        {
+          "cmd": "./scripts/gate-selftest.sh --fast",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "class": "perf",
+      "agent": "perf-analyst",
+      "commit_before": "fe308c7fe1b703d44968a495bde71510b6b9be9d",
+      "commit_after": "08d442f12903ef8a1ddf9b40c098fb2aea64963a",
+      "cmd": "./scripts/loop.sh 4 gate perf",
+      "exit_code": 1,
+      "started_at": "2026-09-15T19:19:28Z",
+      "duration_ms": 10419,
+      "log_sha256": "ad28cce8e6cf3a08faa6e9ca24341f1140bfff16c33643b7ec4ce4b8f453b44d",
+      "payload_sha256": "ad28cce8e6cf3a08faa6e9ca24341f1140bfff16c33643b7ec4ce4b8f453b44d",
+      "metrics": {
+        "gate_fast_seconds": 10,
+        "timeouts": 0
+      },
+      "checks_added": [
+        "scripts/lint-deploy.sh: el check ignora lineas de comentario, con lo que deja de vetar su propia documentacion"
+      ],
+      "findings": [
+        {
+          "id": "F-G05",
+          "sev": "mayor",
+          "cite": "scripts/lint-deploy.sh",
+          "desc": "tras arreglar el bug del guion, el check 7 daba falso positivo sobre el comentario del Dockerfile que dice que -march=native esta prohibido",
+          "estado": "REPARADO",
+          "fixed_in": "08d442f12903ef8a1ddf9b40c098fb2aea64963a"
+        }
+      ],
+      "annulled": true,
+      "annulled_reason": "duracion 10419 ms por debajo del min_duration_ms de la clase perf (20000): la iteracion corrio con la version de un solo disparo del comando, anterior a que la clase perf midiera tres corridas"
+    },
+    {
+      "n": 5,
+      "class": "perf",
+      "agent": "perf-analyst",
+      "commit_before": "c462434a9ff6a29ab1e74169fa75c6891e7da507",
+      "commit_after": "c462434a9ff6a29ab1e74169fa75c6891e7da507",
+      "cmd": "./scripts/loop.sh 5 gate perf",
+      "exit_code": 0,
+      "started_at": "2026-09-15T19:25:11Z",
+      "duration_ms": 31530,
+      "log_sha256": "149954de2f184d7487603d8c3fd2b17fd6bdd120249a9f6244482f146948c8ca",
+      "payload_sha256": "149954de2f184d7487603d8c3fd2b17fd6bdd120249a9f6244482f146948c8ca",
+      "metrics": {
+        "gate_fast_seconds_runs": [
+          12,
+          9,
+          10
+        ],
+        "gate_fast_seconds": 10,
+        "timeouts": 0,
+        "hot_path_allocs": 0
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        {
+          "cmd": "./scripts/gate.sh --fast x3 (medicion de duracion)",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "class": "context",
+      "agent": "context-curator",
+      "commit_before": "c462434a9ff6a29ab1e74169fa75c6891e7da507",
+      "commit_after": "c462434a9ff6a29ab1e74169fa75c6891e7da507",
+      "cmd": "./scripts/loop.sh 6 gate context",
+      "exit_code": 0,
+      "started_at": "2026-09-15T19:25:43Z",
+      "duration_ms": 129250,
+      "log_sha256": "1b1e5ba9a83a6328bead280a2b64ed3596a6486e0f268633e53ec5377da40137",
+      "payload_sha256": "1b1e5ba9a83a6328bead280a2b64ed3596a6486e0f268633e53ec5377da40137",
+      "metrics": {
+        "frontmatter_invalid": 0,
+        "broken_anchors": 0,
+        "size_bytes_mismatch": 0,
+        "duplicated_facts": 0,
+        "poisons_caught": 5
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        {
+          "cmd": "./scripts/lint-docs.sh",
+          "exit_code": 0
+        },
+        {
+          "cmd": "front-matter de agents/commands/skills",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/gate-selftest.sh 6",
+          "exit_code": 0
+        }
+      ]
+    }
+  ]
+}

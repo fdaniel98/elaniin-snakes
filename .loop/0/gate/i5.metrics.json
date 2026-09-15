@@ -3,10 +3,10 @@
   "class": "perf",
   "slug": "gate",
   "phase": 0,
-  "commit_before": "718d79643a877e02e7ee6a244d817a28146797c9",
-  "started_at": "2026-09-15T19:21:25Z",
-  "duration_ms": 31408,
+  "commit_before": "c462434a9ff6a29ab1e74169fa75c6891e7da507",
+  "started_at": "2026-09-15T19:25:11Z",
+  "duration_ms": 31530,
   "exit_code": 0,
-  "log_sha256": "85089a76c46dfda00b966f00160148633665e8b5d9203bf6c4c335fccfd5592a",
+  "log_sha256": "149954de2f184d7487603d8c3fd2b17fd6bdd120249a9f6244482f146948c8ca",
   "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a"
 }

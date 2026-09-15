@@ -1,0 +1,34 @@
+=== loop i1 correctness gate @ 2026-09-15T18:30:00Z ===
+Agente: hilo principal ejecutando la autoprueba del gate (scripts/gate-selftest.sh).
+
+Comandos:
+  $ ./scripts/gate-selftest.sh --fast
+  $ ./scripts/gate-selftest.sh 7
+
+Primera corrida:
+  FALLO check 0 (un .sh con CR): el gate fallo, pero no en el check 0
+  FALLO check 1 (error de sintaxis en el motor): el gate fallo, pero no en el check 1
+  ... todos los venenos igual ...
+  venenos cazados: 0, fallidos: 11
+
+F-G01 (blocker): `git archive` respeta el modo del indice y los scripts estaban
+commiteados sin bit de ejecucion, asi que en el repo copiado `./scripts/gate.sh` daba
+"Permission denied" y ningun veneno se evaluaba. Reparado con `git update-index --chmod=+x`.
+
+Segunda corrida:
+  OK check 0, 1, 3, 4 y los cuatro del 6
+  FALLO check 7 (-march=native en un preset del que deploy hereda)
+  venenos cazados: 8, fallidos: 3
+
+F-G02 (blocker): el check 7 no comprobaba nada. NATIVE_RE empieza por guion y se pasaba a
+grep sin `--`; grep lo tomaba como opcion (-m es max-count), respondia "grep: invalid max
+count" y el check daba OK siempre.
+
+F-G03 (mayor): el veneno del check 7 tampoco servia: metia -march=native en
+CMAKE_CXX_FLAGS, que el propio preset deploy redefine. Se cambia a CMAKE_CXX_FLAGS_RELEASE,
+que deploy hereda intacto y acaba en los flags efectivos.
+
+Verificacion tras los arreglos:
+  $ ./scripts/gate-selftest.sh 7
+  OK    check 7 (-march=native en un preset del que deploy hereda): el gate lo caza
+  venenos cazados: 1, fallidos: 0

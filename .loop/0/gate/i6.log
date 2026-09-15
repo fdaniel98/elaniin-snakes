@@ -1,4 +1,4 @@
-=== loop i6 context gate @ 2026-09-15T19:22:03Z ===
+=== loop i6 context gate @ 2026-09-15T19:25:43Z ===
 --- lint de documentacion ---
 == front-matter ==
 OK   front-matter valido
@@ -77,3 +77,13 @@ WARN anchor huerfano (nadie lo cita): docs/strategy.md#s-fuera
 INFO 62 anchors huerfanos de 95
 == STATE.md ==
 OK   perf-snapshot de STATE.md sincronizado con docs/performance.md
+--- front-matter de los agentes, comandos y skills ---
+OK front-matter del harness
+--- venenos del check 6 (el lint de docs se prueba a si mismo) ---
+OK    check 6 (doc sin front-matter): el gate lo caza
+OK    check 6 (cita a un anchor inexistente desde STATE.md): el gate lo caza
+OK    check 6 (size_bytes que no coincide con wc -c): el gate lo caza
+OK    check 6 (doc canonical sin last_verified): el gate lo caza
+OK    check 6 (enlace a un anchor inexistente del mismo archivo): el gate lo caza
+
+venenos cazados: 5, fallidos: 0
