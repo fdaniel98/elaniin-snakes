@@ -3,8 +3,8 @@
 ## Estado actual
 
 Fase: 0 (Setup) — PARCIAL: falta una corrida limpia del gate y la autoprueba tras arreglar git
-Gate: el check 10 (deploy real) PASA en la maquina de referencia en 41 s; los checks 6, 8 y 9
-      fallaron por dos causas ya reparadas (ver docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0080)
+Gate: el check 10 (deploy real) PASA en 41 s; los checks 6, 8 y 9 fallaron por dos causas ya
+      reparadas (ver docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0080)
 Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.)
 Snake activa: v0-baseline
 
@@ -21,8 +21,8 @@ Snake activa: v0-baseline
 | asignaciones dinamicas en `apply`/`legal_moves`/`decide` | 0 / 0 / 0 | 8082d1d | 2026-09-15 |
 <!-- END:perf-snapshot -->
 
-Los numeros de arriba los regenera `./scripts/sync_state.sh` desde `docs/performance.md`,
-que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
+Esa tabla la regenera `./scripts/sync_state.sh` desde `docs/performance.md`, su unico
+dueño; editarla a mano es un fallo que el gate detecta.
 
 ## Entregables de la fase con loop obligatorio
 
@@ -33,9 +33,9 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 | brain-v0 | snake/src/brain_v0.cpp | correctness, robustness, perf |
 <!-- END:loop-deliverables -->
 
-Que entra en esta tabla y que no lo decide el ambito del loop: ver
-docs/decisions/ADR-0008-ambito-del-loop.md#d-0071. El ledger de `scripts/gate.sh`, cerrado
-con 8 iteraciones, se conserva en `.loop/0/` como historia.
+Que entra aqui lo decide el ambito del loop
+(ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071). El ledger de `scripts/gate.sh`,
+cerrado con 8 iteraciones, se conserva en `.loop/0/`.
 
 ## Bloqueado / pendiente de decision humana
 
@@ -54,18 +54,15 @@ con 8 iteraciones, se conserva en `.loop/0/` como historia.
       dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
       (Docker Desktop, Settings, Resources, WSL integration).
 
-## Decisiones humanas tomadas el 2026-09-15
+## Decisiones humanas del 2026-09-15
 
-Cada una con su ADR, que es donde vive el contenido:
-
-- Los tres ajustes del check 9: **aprobados**,
-  ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0043.
-- Estrechar los checks 5 y 7: **rechazado**,
-  ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051.
-- Duplicados medidos y techo de iteraciones: **aprobado**,
-  ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0052.
-- Umbrales por clase: **aprobado**, ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061.
-- Ambito del loop: **aprobado**, ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
+Cinco, todas con su ADR, que es donde vive el contenido: ajustes del check 9
+(ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0043), duplicados medidos y techo
+(ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0052, que tambien recoge el
+rechazo a estrechar los checks 5 y 7), umbrales por clase
+(ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061), ambito del loop
+(ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071) y arranque en frio
+(ver docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0081).
 
 ## Hallazgos abiertos del loop
 
@@ -74,18 +71,15 @@ Cada una con su ADR, que es donde vive el contenido:
 - [ ] `placements()` quedo `SIN_VERIFICAR` contra la fuente: el motor oficial no expone
       placements y el JSONL no trae el turno de eliminacion (ver docs/rules.md#r-12). La
       formula de rango compartido promediado es nuestra, no derivada.
-- [ ] Los numeros publicados se midieron en la maquina de referencia
-      (ver docs/performance.md#p-03). El cierre del loop se hizo en otra, de 2 nucleos, y
-      por eso no se publico ninguna medicion nueva: la tabla canonica sigue siendo la del
-      commit 8082d1d.
+- [ ] La tabla canonica sigue siendo la del commit 8082d1d: parte del trabajo se hizo en
+      otra maquina y por eso no se publico medicion nueva (ver docs/performance.md#p-03).
 - [ ] `cold_start_ms_max` es un umbral nuevo sin veneno propio en `gate-selftest.sh`: el
       veneno del check 8 cubre el movimiento ilegal, no el arranque en frio. Deuda
       declarada en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
 - [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
       sentido en la arena (ver docs/rules.md#r-09).
-- [ ] El criterio 5 quedo cerrado: v0 gana su partida contra Eremetic Eric en 80 turnos
-      (`docs/results/2026-09-15-v0-vs-eremetic-eric.md`). El rival murio de hambre dentro
-      del hazard; una partida no es una medicion.
+- [ ] Criterio 5 cerrado: v0 gana contra Eremetic Eric en 80 turnos, que murio de hambre
+      dentro del hazard (`docs/results/2026-09-15-v0-vs-eremetic-eric.md`).
 
 ## Desviaciones del arbol de archivos
 
