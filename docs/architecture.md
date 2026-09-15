@@ -3,7 +3,7 @@ title: Arquitectura y dependencias entre modulos
 read_when: "antes de mover codigo entre modulos o de añadir una dependencia"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2610
+size_bytes: 3368
 ---
 
 ## A-01 Grafo de dependencias {#a-01}
@@ -59,3 +59,16 @@ mas, y solo si el perfil demuestra que el parseo es un cuello de botella real.
 - No mantiene estado global: ni RNG, ni caches, ni singletons.
 - No filtra movimientos en `apply()`: acepta el mortal, porque el test diferencial de la
   fase 1 necesita reproducir los logs del arbitro (ver docs/rules.md#r-03).
+
+## A-06 Desviaciones del arbol de archivos especificado {#a-06}
+
+- `tests/test_rng.cpp`: los vectores de referencia del RNG necesitaban su propio archivo.
+- `snake/include/snake/config_loader.hpp`: la frontera de JSON necesita cabecera propia
+  para que los tests la usen.
+- `snake/include/snake/eval/floodfill.hpp` no es un stub: `brain_v0` necesita flood fill.
+  `voronoi.hpp` y `features.hpp` si lo son.
+- `scripts/smoke.py` y `scripts/mutants.sh`: el check 8 y la prueba de mutantes necesitan
+  una implementacion independiente de la del motor.
+- `third_party/cpp-httplib/`: ver docs/decisions/ADR-0003-dependencias.md.
+- `docs/rules-parametros.md`: `docs/rules.md` se partio en dos para no pasarse del
+  presupuesto por tarea (ver docs/INDEX.md#i-02).

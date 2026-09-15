@@ -74,18 +74,9 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 - [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
       sentido en la arena (ver docs/rules.md#r-09).
 
-## Desviaciones menores del arbol de archivos especificado
+## Desviaciones del arbol de archivos
 
-- `tests/test_rng.cpp`: los vectores de referencia del RNG necesitaban su propio archivo.
-- `snake/include/snake/config_loader.hpp`: la frontera de JSON necesita cabecera propia
-  para que los tests la usen.
-- `snake/include/snake/eval/floodfill.hpp` no es un stub: `brain_v0` necesita flood fill.
-  `voronoi.hpp` y `features.hpp` si lo son.
-- `scripts/smoke.py` y `scripts/mutants.sh`: el check 8 y la prueba de mutantes necesitan
-  una implementacion independiente de la del motor.
-- `third_party/cpp-httplib/`: ver docs/decisions/ADR-0003-dependencias.md.
-- `docs/rules-parametros.md`: `docs/rules.md` se partio en dos para no pasarse del
-  presupuesto por tarea (ver docs/INDEX.md#i-02).
+Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
