@@ -3,7 +3,7 @@ title: ADR-0005: como se cierra el loop sin contradecir el antifraude
 read_when: "antes de cambiar config/loop.json o scripts/loop_verify.sh"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 3402
+size_bytes: 3633
 ---
 
 
@@ -58,7 +58,10 @@ rastro es lo que permite auditar que el arreglo existio.
 
 ## D-0043 Estado {#d-0043}
 
-**Pendiente de aprobacion humana explicita**, las tres decisiones de este ADR. Estan
-escritas asi en `scripts/loop_verify.sh` para que la fase 0 pueda cerrarse, y anotadas en
-`STATE.md` como decision abierta. Si el humano prefiere otra resolucion, se cambia el
-script y este ADR queda como historia.
+**APROBADO por el humano el 2026-09-15**, las tres decisiones de este ADR (D-0041 y las
+dos filas de D-0044), tal y como estan escritas en `scripts/loop_verify.sh`. La aprobacion
+se pidio enumerando las tres por separado y se concedio en bloque.
+
+En la misma decision **no** se aprobo estrechar los checks 5 y 7 para que ignorasen
+comentarios: ambos vuelven a su forma estricta, y los dos comentarios que los hacian
+saltar se reescribieron para citar en vez de nombrar (ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051).

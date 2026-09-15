@@ -3,7 +3,7 @@ title: Harness - gate, hooks, subagentes, comandos y loop
 read_when: "antes de tocar scripts/, .claude/ o config/loop.json"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 6387
+size_bytes: 6853
 ---
 
 Modificar `scripts/gate.sh`, `config/loop.json` o `.claude/settings.json` exige
@@ -24,7 +24,7 @@ relajarlo en silencio, nunca.
 | 3 | tests en release y en debug | ctest |
 | 4 | `clang-format --dry-run --Werror` | clang-format-18 |
 | 5 | `clang-tidy` y generadores de la STL prohibidos | clang-tidy-18 |
-| 6 | front-matter, `size_bytes`, presupuestos, anchors, `STATE.md` | `scripts/lint-docs.sh` |
+| 6 | front-matter, `size_bytes`, presupuestos, anchors, duplicados, `STATE.md` | `scripts/lint-docs.sh` |
 | 7 | ISA nativa en los flags EFECTIVOS del preset deploy | `scripts/lint-deploy.sh` |
 | 8 | smoke end-to-end: movimiento legal y latencia sobre los fixtures | `scripts/smoke.py` |
 | 9 | ledger del loop | `scripts/loop_verify.sh` |
@@ -33,6 +33,13 @@ relajarlo en silencio, nunca.
 Codigos de salida: `0` pasa, `1` fallo de check, `2` error de entorno o toolchain, que
 **no** es un veredicto sobre el codigo. Si falta docker, el check 10 sale `SKIP` y el
 resumen lo dice: un gate verde con SKIP no prueba el deploy.
+
+Dentro del check 6, `scripts/lint_dupes.py` mide los hechos duplicados: pasajes de doce
+palabras normalizadas que dos documentos repiten en vez de enlazar. El umbral sale de
+`classes.context.thresholds.duplicated_facts_max` de `config/loop.json`, y el porque de
+que sea una medida y no un juicio esta en
+docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051. Para apagarlo se borra su bloque
+de `lint-docs.sh`, con el ADR que exige la regla de oro 10.
 
 `--fast` ejecuta 0, 1, 3 (solo release), 4, 6, 7 y 9, e imprime
 `MODO RAPIDO - no apto para cerrar fase`. Ningun modo ejecuta tests contra un binario que

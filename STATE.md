@@ -61,9 +61,8 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 
 ## Hallazgos abiertos del loop
 
-- [ ] `POST /move` maximo 23.9 ms frente a p99 0.79 ms: es la primera peticion, que paga el
-      arranque del servidor y la carga del config. Dentro de presupuesto, pero conviene
-      precalentar antes de medir en la fase 2.
+- [ ] El maximo de `POST /move` esta muy por encima de su p99. Causa, numeros y veredicto
+      en docs/performance.md#p-04; conviene precalentar antes de medir en la fase 2.
 - [ ] `placements()` quedo `SIN_VERIFICAR` contra la fuente: el motor oficial no expone
       placements y el JSONL no trae el turno de eliminacion (ver docs/rules.md#r-12). La
       formula de rango compartido promediado es nuestra, no derivada.

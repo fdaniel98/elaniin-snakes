@@ -103,6 +103,32 @@ Ver [preguntas abiertas](#no-existe-este-anchor).
 ' >>docs/glossary.md
 }
 
+poison_5b() {
+    # Un generador prohibido de la STL dentro de engine/, en un comentario. El check 5
+    # mira el arbol entero de engine/ y arena/ sin excepcion para comentarios: un
+    # comentario esta a un `sed -i` de ser codigo. ver docs/invariants.md#inv-08
+    printf '\n// ejemplo: std::shuffle sobre el tablero\n' >>engine/src/rules.cpp
+}
+
+poison_6f() {
+    # El mismo hecho, con las mismas palabras, en dos archivos. Un hecho, un lugar:
+    # ver docs/INDEX.md#i-04.
+    python3 - <<'EOF'
+import re
+from pathlib import Path
+
+prosa = [
+    l.strip()
+    for l in Path("docs/rules.md").read_text(encoding="utf-8").splitlines()
+    if len(l.split()) >= 14 and not l.lstrip().startswith(("|", "#", "-", "*", "`", ">"))
+]
+if not prosa:
+    raise SystemExit("no hay prosa larga que duplicar en docs/rules.md")
+with Path("docs/glossary.md").open("a", encoding="utf-8") as fh:
+    fh.write("\n" + prosa[0] + "\n")
+EOF
+}
+
 poison_7() {
     # -march=native en el preset del que deploy HEREDA: el grep textual sobre el bloque
     # `deploy` no lo ve; solo los flags efectivos lo delatan.
@@ -179,11 +205,13 @@ POISONS=(
     "poison_3|3|un test que falla"
     "poison_4|4|codigo sin formatear"
     "poison_5|5|aviso de clang-tidy"
+    "poison_5b|5|generador prohibido de la STL en un comentario de engine/"
     "poison_6|6|doc sin front-matter"
     "poison_6b|6|cita a un anchor inexistente desde STATE.md"
     "poison_6c|6|size_bytes que no coincide con wc -c"
     "poison_6d|6|doc canonical sin last_verified"
     "poison_6e|6|enlace a un anchor inexistente del mismo archivo"
+    "poison_6f|6|el mismo hecho escrito en dos documentos"
     "poison_7|7|-march=native en un preset del que deploy hereda"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
     "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"

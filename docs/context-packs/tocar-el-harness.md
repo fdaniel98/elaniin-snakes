@@ -3,7 +3,7 @@ title: Pack: modificar el harness
 read_when: "antes de tocar scripts/, .claude/ o config/loop.json"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1503
+size_bytes: 1516
 ---
 
 
@@ -20,8 +20,8 @@ size_bytes: 1503
 
 ## CP-41 Reglas duras {#cp-41}
 
-1. El gate **solo crece**. Si el gate pasa y sabes que algo esta mal, el bug esta en el
-   gate: añade el check que falta.
+1. El gate **solo crece** (regla de oro 4 de `CLAUDE.md`): un fallo que el gate no ve se
+   arregla añadiendo el check, no relajandolo.
 2. Toda modificacion que **reduzca** lo comprobado exige aprobacion humana explicita y un
    ADR. Comentar un check, `|| true`, reducir fixtures o relajar `clang-tidy` cuentan como
    reducir.

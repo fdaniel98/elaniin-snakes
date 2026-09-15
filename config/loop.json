@@ -3,7 +3,7 @@
   "version": 1,
   "closing": {
     "min_iterations": 3,
-    "max_iterations": 6,
+    "max_iterations": 8,
     "clean_tail_iterations": 2,
     "discarded_ratio_max": 0.3,
     "mandatory_classes": ["correctness", "robustness", "perf"],

@@ -6,7 +6,9 @@
 #   3. size_bytes exacto y presupuestos de bytes (scripts/docs_meta.sh)
 #   4. anchors bidireccionales sobre **/*.{cpp,hpp} y TODOS los .md del repo,
 #      incluidos CLAUDE.md, */CLAUDE.md y STATE.md
-#   5. sync_state.sh --check
+#   5. hechos duplicados entre documentos (scripts/lint_dupes.py), con el umbral
+#      duplicated_facts_max de config/loop.json
+#   6. sync_state.sh --check
 #
 # Sintaxis fijada (docs/INDEX.md#i-03):
 #   definicion: ^#{2,4} .+ \{#([a-z0-9-]+)\}$
@@ -119,6 +121,10 @@ while read -r anchor; do
     fi
 done <"$anchors_file"
 echo "INFO $orphans anchors huerfanos de $(wc -l <"$anchors_file")"
+
+echo "== duplicados ==" # un hecho, un lugar (docs/INDEX.md#i-04)
+dupes_max="$(jq -r '.classes.context.thresholds.duplicated_facts_max' config/loop.json)"
+./scripts/lint_dupes.py --max "$dupes_max" || fail "hechos duplicados por encima del umbral"
 
 echo "== STATE.md =="
 ./scripts/sync_state.sh --check || status=1

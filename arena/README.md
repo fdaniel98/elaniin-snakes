@@ -17,11 +17,10 @@ struct ArenaConfig {
 ArenaResult play(const ArenaConfig&, std::span<const Params> contenders);
 ```
 
-- `exact_schedule_arena` esta restringido **por contrato** a la arena: el payload de
-  `/move` no trae la semilla, asi que en partida real el lado del proximo shrink no es
-  conocible (ver docs/rules.md#r-09).
-- El schedule de comida y hazards se pre-genera desde la semilla e indexado por turno,
-  antes de empezar (ver `.claude/skills/experiment-protocol/SKILL.md`).
+- `exact_schedule_arena` esta restringido **por contrato** a la arena, porque el payload
+  de `/move` no trae la semilla (ver docs/rules.md#r-09).
+- El sorteo de comida y hazards se resuelve entero por adelantado; el porque, en la skill
+  `experiment-protocol`.
 - Usa el mismo `decide()` que el servidor (ver docs/architecture.md#a-02).
 
 Estado: no implementado. Lo abre la fase 4.

@@ -3,7 +3,7 @@ title: Pack: investigar una derrota
 read_when: "al analizar un replay JSONL de una partida perdida"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1342
+size_bytes: 1310
 ---
 
 
@@ -21,8 +21,8 @@ size_bytes: 1342
 ## CP-31 Como se hace {#cp-31}
 
 1. `./scripts/replay.sh <archivo.jsonl>` para el resumen, y con `<turno>` para el detalle.
-2. El JSONL no trae placements ni turno de eliminacion: el orden final se deriva del turno
-   en que cada serpiente desaparece (ver docs/rules.md#r-12).
+2. Reconstruye las posiciones finales segun la regla canonica
+   (ver docs/rules.md#r-12); el log por si solo no las da.
 3. Invoca `match-analyst` para clasificar la causa: cabezazo, cuerpo propio, cuerpo rival,
    pared, hambre o hazard.
 4. Convierte el turno del error decisivo en un **fixture nuevo** con su movimiento

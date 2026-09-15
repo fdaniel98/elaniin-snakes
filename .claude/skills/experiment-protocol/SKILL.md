@@ -5,21 +5,18 @@ description: Como se corre un experimento valido en el Training Room. Usar al la
 
 # Protocolo de experimentos
 
-## Unidad de analisis
+## Que dice el protocolo, y donde vive
 
-El **bloque**: una semilla por una rotacion de asientos. Nunca la partida. En una partida
-de 4 las posiciones de los participantes suman una constante, asi que las partidas de un
-mismo bloque no son independientes.
+Las reglas de aceptacion (unidad de analisis, partidas espejo, metrica primaria, que hacer
+al agotar el presupuesto) tienen un unico dueño: ver docs/strategy.md#s-ab. Esta skill no
+las repite; explica **por que** son asi, que es lo que se olvida.
 
-A y B **nunca juegan la misma partida**: se comparan en partidas espejo con identica
-composicion de rivales y la misma semilla. Compartir partida hace su covarianza negativa
-por construccion y viola la independencia que el test exige.
-
-## Metrica primaria unica
-
-Diferencia pareada de posicion media por bloque. Todo lo demas (win rate, causa de muerte,
-turnos sobrevividos, latencia) es descriptivo y se reporta **sin p-valores ni veredicto**:
-mirar diez metricas a alfa 0.05 da un 40% de probabilidad de al menos un falso positivo.
+- Por bloques y no por partida: en una partida de 4 las posiciones suman una constante, de
+  modo que las partidas de un mismo bloque no son independientes.
+- Espejo y no compartida: si A y B juegan la misma partida su covarianza es negativa por
+  construccion, y el test exige independencia.
+- Una sola metrica con veredicto: mirar diez a alfa 0.05 da un 40% de probabilidad de al
+  menos un falso positivo.
 
 ## Semillas comunes que de verdad reducen varianza
 

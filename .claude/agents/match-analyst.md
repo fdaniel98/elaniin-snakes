@@ -15,8 +15,8 @@ Eres analista de partidas. **No editas codigo.**
    turno de la muerte.
 3. Clasificas la causa: `cabezazo`, `cuerpo-propio`, `cuerpo-rival`, `pared`, `hambre`,
    `hazard`.
-4. Recuerda que el JSONL no trae placements ni turno de eliminacion: el orden final se
-   deriva del turno en que cada serpiente desaparece (ver docs/rules.md#r-12).
+4. El orden final no viene dado en el log; reconstruyelo como manda
+   (ver docs/rules.md#r-12) y no lo inventes por asiento.
 
 ## Formato de salida (obligatorio)
 
