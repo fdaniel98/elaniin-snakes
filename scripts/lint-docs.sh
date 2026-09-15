@@ -127,10 +127,12 @@ done <"$citations_file"
 
 # Anchors huerfanos: se listan, no rompen el gate (un anchor puede existir para que lo
 # cite una fase futura), salvo que este marcado como obligatorio en docs/INDEX.md.
+# Se resumen en vez de enumerarse: sesenta WARN empujaban el diagnostico real fuera de
+# la cola del log que imprime el gate. `LINT_DOCS_ORPHANS=1` los lista.
 orphans=0
 while read -r anchor; do
     if ! cut -d'|' -f2 "$citations_file" | grep -qxF "$anchor"; then
-        echo "WARN anchor huerfano (nadie lo cita): $anchor"
+        [[ "${LINT_DOCS_ORPHANS:-0}" == "1" ]] && echo "WARN anchor huerfano (nadie lo cita): $anchor"
         orphans=$((orphans + 1))
     fi
 done <"$anchors_file"

@@ -54,7 +54,13 @@ run_check() {
     fi
     report "$number" "$name" FAIL "$(($(date +%s) - started))"
     echo "--- salida del check $number ($name) ---"
-    tail -40 "$log"
+    # Primero las lineas de fallo: un check ruidoso puede empujar su propio diagnostico
+    # fuera de la cola, y entonces el gate dice que fallo sin decir por que.
+    if grep -qE '^(FAIL|ERROR)' "$log"; then
+        grep -E '^(FAIL|ERROR)' "$log" | head -20
+        echo "--- contexto (cola del log) ---"
+    fi
+    tail -20 "$log"
     echo "--- fin del check $number ---"
     return 1
 }
