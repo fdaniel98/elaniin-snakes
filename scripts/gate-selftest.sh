@@ -101,7 +101,10 @@ with open("CMakePresets.json", encoding="utf-8") as fh:
     doc = json.load(fh)
 for preset in doc["configurePresets"]:
     if preset["name"] == "base":
-        preset.setdefault("cacheVariables", {})["CMAKE_CXX_FLAGS"] = "-march=native"
+        # CMAKE_CXX_FLAGS_RELEASE, no CMAKE_CXX_FLAGS: el preset deploy define el
+        # segundo y lo sobreescribiria, mientras que el primero se hereda intacto y
+        # acaba en los flags efectivos. Justo el caso que el grep textual no ve.
+        preset.setdefault("cacheVariables", {})["CMAKE_CXX_FLAGS_RELEASE"] = "-O3 -march=native"
 with open("CMakePresets.json", "w", encoding="utf-8", newline="\n") as fh:
     json.dump(doc, fh, indent=2)
     fh.write("\n")
