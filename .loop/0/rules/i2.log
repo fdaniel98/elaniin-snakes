@@ -1,0 +1,50 @@
+=== loop i2 robustness rules @ 2026-09-15T18:53:11Z ===
+--- build con ASan + UBSan ---
+Preset CMake variables:
+
+  BSR_BUILD_TESTS="ON"
+  CMAKE_BUILD_TYPE="Debug"
+  CMAKE_CXX_COMPILER="clang++-18"
+  CMAKE_CXX_FLAGS="-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all"
+  CMAKE_C_COMPILER="clang-18"
+  CMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+  CMAKE_EXPORT_COMPILE_COMMANDS="ON"
+
+-- Configuring done (0.1s)
+-- Generating done (0.1s)
+-- Build files have been written to: /mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/build/debug
+[1/12] Building CXX object engine/CMakeFiles/engine.dir/src/rules.cpp.o
+[2/12] Building CXX object tests/CMakeFiles/unit_tests.dir/test_differential.cpp.o
+[3/12] Linking CXX static library engine/libengine.a
+[4/12] Building CXX object snake/CMakeFiles/snake_brain.dir/src/brain_v0.cpp.o
+[5/12] Building CXX object tests/CMakeFiles/unit_tests.dir/test_rules.cpp.o
+[6/12] Building CXX object snake/CMakeFiles/snake_brain.dir/src/config_loader.cpp.o
+[7/12] Linking CXX static library snake/libsnake_brain.a
+[8/12] Building CXX object tests/CMakeFiles/unit_tests.dir/test_ruleset_parse.cpp.o
+[9/12] Building CXX object tests/CMakeFiles/unit_tests.dir/test_brain_v0.cpp.o
+[10/12] Linking CXX executable bin/unit_tests
+[11/12] Building CXX object snake/CMakeFiles/battlesnake-server.dir/src/server.cpp.o
+[12/12] Linking CXX executable bin/battlesnake-server
+--- tests con sanitizers, incluido el fuzz de 10000 estados ---
+Filters: [fuzz],[failsafe],[brain],[rules]
+RNG seed: 249475779
+All tests passed (229 assertions in 26 test cases)
+
+
+--- mutantes ---
+== preparando copia limpia en /tmp/tmp.b2LilJz4nH ==
+== build de referencia ==
+OK   referencia verde
+MUERTO   m1 - cabeza a cabeza: empate de longitudes deja de matar a ambas
+FAIL m2: el patron sed no cambio nada en engine/src/rules.cpp (mutante invalido)
+FAIL m3: el patron sed no cambio nada en engine/include/engine/state.hpp (mutante invalido)
+FAIL m4: el patron sed no cambio nada en snake/src/brain_v0.cpp (mutante invalido)
+MUERTO   m5 - el hambre deja de restar salud
+VIVO     m6 - el daño de hazard nunca puede matar
+
+mutantes=6 muertos=2 ratio=0.3333
+SUPERVIVIENTE m2 (patron no aplicado)
+SUPERVIVIENTE m3 (patron no aplicado)
+SUPERVIVIENTE m4 (patron no aplicado)
+SUPERVIVIENTE m6: el daño de hazard nunca puede matar
+metricas escritas en /mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding/.loop/0/rules/i2.metrics.json.mutants

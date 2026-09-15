@@ -23,9 +23,9 @@ trap 'rm -rf "$WORK"' EXIT
 # id | archivo | patron sed | descripcion
 MUTANTS=(
     "m1|engine/src/rules.cpp|s/snake.length <= other.length/snake.length < other.length/|cabeza a cabeza: empate de longitudes deja de matar a ambas"
-    "m2|engine/src/rules.cpp|s/if (s.food.test(head)) continue;/if (false) continue;/|el hazard pasa a dañar aunque haya comida en la casilla"
-    "m3|engine/include/engine/state.hpp|s/return length >= 2 \&\& segment/return false \&\& segment/|la cola apilada deja de detectarse"
-    "m4|snake/src/brain_v0.cpp|s/if (seg == last \&\& !other.tail_is_stacked()) continue;/if (seg == last) continue;/|el cerebro trata toda cola como libre"
+    "m2|engine/src/rules.cpp|s/if (s.food.test(head)) {/if (false) {/|el hazard pasa a dañar aunque haya comida en la casilla"
+    "m3|engine/include/engine/state.hpp|s/return length >= 2 \&\&/return false \&\&/|la cola apilada deja de detectarse"
+    "m4|snake/src/brain_v0.cpp|s/if (seg == last \&\& !other.tail_is_stacked()) {/if (seg == last) {/|el cerebro trata toda cola como libre"
     "m5|engine/src/rules.cpp|s/- health_loss_per_turn/- 0/|el hambre deja de restar salud"
     "m6|engine/src/rules.cpp|s/std::clamp(health, 0, max_health)/std::clamp(health, 1, max_health)/|el daño de hazard nunca puede matar"
 )
@@ -50,6 +50,7 @@ echo "OK   referencia verde"
 
 total=0
 killed=0
+broken=0
 survivors=()
 
 for entry in "${MUTANTS[@]}"; do
@@ -59,9 +60,12 @@ for entry in "${MUTANTS[@]}"; do
     cp "$file" "$file.orig"
     sed -i "$pattern" "$file"
     if diff -q "$file" "$file.orig" >/dev/null; then
-        echo "FAIL $id: el patron sed no cambio nada en $file (mutante invalido)"
+        echo "ARNES_ROTO $id: el patron sed no cambio nada en $file"
+        echo "  (el codigo cambio de forma y el mutante dejo de aplicarse; no es un"
+        echo "   mutante vivo, es el arnes de mutantes degradado en silencio)"
         mv "$file.orig" "$file"
-        survivors+=("$id (patron no aplicado)")
+        broken=$((broken + 1))
+        survivors+=("$id (patron no aplicado: arnes roto)")
         continue
     fi
 
@@ -84,7 +88,7 @@ cmake --build --preset release >/dev/null 2>&1
 
 ratio="$(awk -v k="$killed" -v t="$total" 'BEGIN{printf "%.4f", (t ? k/t : 0)}')"
 echo
-echo "mutantes=$total muertos=$killed ratio=$ratio"
+echo "mutantes=$total muertos=$killed patrones_rotos=$broken ratio=$ratio"
 for survivor in "${survivors[@]:-}"; do
     [[ -n "$survivor" ]] && echo "SUPERVIVIENTE $survivor"
 done
@@ -94,9 +98,11 @@ if [[ -n "$JSON_OUT" ]]; then
         /*) out="$JSON_OUT" ;;
         *) out="$REPO/$JSON_OUT" ;;
     esac
-    printf '{\n  "mutants": %d,\n  "mutants_killed": %d,\n  "mutants_killed_ratio": %s\n}\n' \
-        "$total" "$killed" "$ratio" >"$out"
+    printf '{\n  "mutants": %d,\n  "mutants_killed": %d,\n  "mutants_broken_patterns": %d,\n  "mutants_killed_ratio": %s\n}\n' \
+        "$total" "$killed" "$broken" "$ratio" >"$out"
     echo "metricas escritas en $out"
 fi
 
+# Un patron roto invalida la corrida entera: sin el, el ratio miente por arriba.
+[[ $broken -eq 0 ]] || exit 1
 awk -v k="$killed" -v t="$total" 'BEGIN{exit !(t > 0 && k/t >= 0.8)}'
