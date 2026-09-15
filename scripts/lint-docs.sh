@@ -124,7 +124,9 @@ echo "INFO $orphans anchors huerfanos de $(wc -l <"$anchors_file")"
 
 echo "== duplicados ==" # un hecho, un lugar (docs/INDEX.md#i-04)
 dupes_max="$(jq -r '.classes.context.thresholds.duplicated_facts_max' config/loop.json)"
-./scripts/lint_dupes.py --max "$dupes_max" || fail "hechos duplicados por encima del umbral"
+# Se invoca por el interprete, no por el bit de ejecucion: un checkout desde Windows
+# no lo conserva y el check moriria con "permission denied" en vez de medir.
+python3 scripts/lint_dupes.py --max "$dupes_max" || fail "hechos duplicados por encima del umbral"
 
 echo "== STATE.md =="
 ./scripts/sync_state.sh --check || status=1
