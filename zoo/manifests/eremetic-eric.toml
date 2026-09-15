@@ -1,0 +1,23 @@
+# Manifest propio de una snake publica del zoo.
+#
+# NO es el manifest de upstream: el de `BattlesnakeOfficial/snake-zoo` no fija commit, y
+# `docker build` de un repo de terceros ejecuta codigo ajeno. Aqui el SHA es parte del
+# contrato: se construye ese commit y ningun otro. Cambiar `sha` es aprobar codigo nuevo
+# y exige otra confirmacion humana. ver zoo/README.md
+
+name = "Eremetic Eric"
+slug = "eremetic-eric"
+repo = "https://github.com/coreyja/battlesnake-rs"
+sha = "d3a9bed45789f00918ea25df6025ed4e01462ae3"
+dockerfile = "./Dockerfile"
+entrypoint = "eremetic-eric"
+port = 8000
+strategy = "Tail Chaser"
+
+# Confirmacion humana, una vez por repositorio (ver zoo/README.md).
+approved_by = "Daniel"
+approved_at = "2026-09-15"
+
+# Catalogo de origen, para trazar de donde sale este slug.
+catalog = "github.com/BattlesnakeOfficial/snake-zoo@6c2edcdb6e35a5ccc03a9cdd80e4af74e9baf4a8"
+catalog_file = "snakes/eremetic-eric.toml"

@@ -21,6 +21,21 @@ Nunca `-v`, nunca `/var/run/docker.sock`.
 temporal **fuera del repo**, `zoo add <repo-url>` de un repo nuevo exige confirmacion
 humana una vez, y el manifest fija el commit SHA aprobado.
 
+## Manifest propio, y una partida
+
+`zoo/manifests/<slug>.toml` es **nuestro** manifest, no el de upstream: añade `sha` (el
+commit aprobado, 40 caracteres, nunca una rama) y `approved_by`, que es donde vive la
+confirmacion humana del repositorio. `scripts/zoo-game.sh <slug>` juega una partida
+completa del arbitro oficial contra esa snake y guarda el JSONL en `docs/results/`.
+
+`entrypoint` no es un binario: es el **segmento de ruta** con el que un servidor de varias
+snakes elige cual responde. Las snakes de un solo cerebro no lo traen y sirven en la raiz.
+
+El aislamiento manda sobre el catalogo: una snake cuyo arranque escriba en el sistema de
+archivos -Robosnake hace `sed -i` sobre la config de nginx- no funciona con `--read-only`,
+y no se añade relajando el aislamiento, sino montando un `tmpfs` en la ruta concreta que
+necesite, o no se añade.
+
 ## Recursos justos
 
 Todas las snakes, **la nuestra incluida**, corren con identicos `--cpus`, `--memory` y

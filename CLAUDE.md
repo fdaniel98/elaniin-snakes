@@ -46,6 +46,7 @@ ctest --preset release
 ./scripts/gate-selftest.sh              # prueba que el gate sirve
 ./scripts/loop.sh <n> <slug> [clase]    # una iteracion del loop
 ./scripts/bench.sh                      # linea base publicable (ISA de deploy)
+./scripts/zoo-game.sh <slug>            # una partida real contra una snake del zoo
 PORT=8080 ./build/release/bin/battlesnake-server
 ```
 
