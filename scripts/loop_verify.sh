@@ -225,7 +225,18 @@ verify_ledger() {
         fi
 
         # 8. Umbrales de la clase sobre las metricas de la iteracion.
-        if [[ "$is_annulled" != "true" ]]; then
+        #
+        # Solo sobre la ULTIMA iteracion no anulada de cada clase. Una iteracion que
+        # encuentra un incumplimiento tiene que registrarlo -es su trabajo-, y la regla
+        # del loop obliga a repetir esa misma clase sobre el commit del arreglo. Exigir
+        # el umbral tambien a la iteracion que lo descubrio haria que ningun ledger
+        # pudiera cerrarse jamas despues de un hallazgo.
+        # ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0060
+        local is_last_of_class
+        is_last_of_class="$(jq -r --arg class "$class" --argjson n "$n" \
+            '[.iterations[] | select(.annulled != true) | select(.class == $class) | .n]
+             | max == $n' "$ledger")"
+        if [[ "$is_annulled" != "true" && "$is_last_of_class" == "true" ]]; then
             verify_metrics "$slug" "$n" "$class" "$ledger"
         fi
     done

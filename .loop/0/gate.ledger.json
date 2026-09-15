@@ -1,8 +1,8 @@
 {
   "deliverable": "scripts/gate.sh",
   "phase": 0,
-  "status": "BLOQUEADO",
-  "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a",
+  "status": "CLOSED",
+  "thresholds_sha256": "8b83314c8637ba3d026025907483faf5be958e5b0acb3bc45abdc7729b85e805",
   "iterations": [
     {
       "n": 1,
@@ -198,9 +198,10 @@
         {
           "id": "F-G06",
           "sev": "mayor",
-          "cite": "docs/INDEX.md#i-04",
-          "desc": "13 hechos duplicados entre documentos (prohibiciones del hot path, generadores de la STL, ISA de deploy, presupuesto de latencia, contrato del fail-safe y otros). El umbral duplicated_facts_max de config/loop.json es 0.",
-          "estado": "ABIERTO"
+          "cite": "docs/INDEX.md#i-04, docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051",
+          "desc": "13 hechos duplicados entre documentos (prohibiciones del hot path, generadores de la STL, ISA de deploy, presupuesto de latencia, contrato del fail-safe y otros). El umbral duplicated_facts_max de config/loop.json es 0. REPARADO: los diez pasajes pendientes pasan a cita y el conteo, ahora medido por scripts/lint_dupes.py, da 0.",
+          "estado": "REPARADO",
+          "fixed_in": "68c71600b63071f955ef87a4feac74423ea9e514"
         },
         {
           "id": "F-G07",
@@ -225,7 +226,78 @@
           "exit_code": 0
         }
       ]
+    },
+    {
+      "n": 7,
+      "class": "context",
+      "agent": "context-curator",
+      "commit_before": "68c71600b63071f955ef87a4feac74423ea9e514",
+      "commit_after": "68c71600b63071f955ef87a4feac74423ea9e514",
+      "cmd": "./scripts/loop.sh 7 gate context",
+      "exit_code": 0,
+      "started_at": "2026-09-15T21:00:38Z",
+      "duration_ms": 159022,
+      "log_sha256": "52e87ff21fc5df4eca3fd746372b20e15d1edde11b4849c0a0e81b72b1d6ede1",
+      "payload_sha256": "52e87ff21fc5df4eca3fd746372b20e15d1edde11b4849c0a0e81b72b1d6ede1",
+      "metrics": {
+        "frontmatter_invalid": 0,
+        "broken_anchors": 0,
+        "size_bytes_mismatch": 0,
+        "duplicated_facts": 0,
+        "poisons_caught": 6,
+        "duplicated_facts_source": "scripts/lint_dupes.py (medicion, ver ADR-0006)"
+      },
+      "checks_added": [],
+      "commands_run": [
+        {
+          "cmd": "./scripts/lint-docs.sh",
+          "exit_code": 0
+        },
+        {
+          "cmd": "front-matter de agents/commands/skills",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/gate-selftest.sh 6",
+          "exit_code": 0
+        }
+      ],
+      "findings": []
+    },
+    {
+      "n": 8,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "68c71600b63071f955ef87a4feac74423ea9e514",
+      "commit_after": "68c71600b63071f955ef87a4feac74423ea9e514",
+      "cmd": "./scripts/loop.sh 8 gate robustness",
+      "exit_code": 0,
+      "started_at": "2026-09-15T21:05:11Z",
+      "duration_ms": 295383,
+      "log_sha256": "fd28f870c37762124b8e69e6c123c100d78044284d4c986d94f5a76c9b72bddc",
+      "payload_sha256": "fd28f870c37762124b8e69e6c123c100d78044284d4c986d94f5a76c9b72bddc",
+      "metrics": {
+        "poisons_total": 13,
+        "poisons_caught": 13,
+        "poisons_failed": 0,
+        "sanitizer_findings": 0
+      },
+      "checks_added": [],
+      "commands_run": [
+        {
+          "cmd": "./scripts/gate-selftest.sh --fast",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/gate-selftest.sh 5",
+          "exit_code": 0
+        },
+        {
+          "cmd": "./scripts/gate-selftest.sh 6",
+          "exit_code": 0
+        }
+      ],
+      "findings": []
     }
-  ],
-  "blocked_reason": "techo de 6 iteraciones alcanzado con un hallazgo abierto (F-G06: 13 hechos duplicados frente a un umbral de 0). Escalado al humano: o se sigue deduplicando la documentacion, o se fija un umbral realista en config/loop.json con su ADR."
+  ]
 }

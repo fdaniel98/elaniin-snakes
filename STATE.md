@@ -2,9 +2,9 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — PARCIAL: el loop del entregable `gate` esta BLOQUEADO
-Gate: FAIL en el check 9 (lint del loop) por el ledger BLOQUEADO; los otros 10 checks en verde
-Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.) · scripts/gate.sh → BLOQUEADO (6 it., techo alcanzado)
+Fase: 0 (Setup) — PARCIAL: falta el check 10 y la partida contra el zoo, ambos con docker
+Gate: checks 0-9 en verde; el 10 no se pudo correr donde se cerro la fase (sin registro de imagenes)
+Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.) · scripts/gate.sh → CLOSED (8 it.)
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -35,29 +35,30 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 
 ## Bloqueado / pendiente de decision humana
 
-- [ ] **DECISION QUE BLOQUEA EL CIERRE DE LA FASE.** El entregable `scripts/gate.sh` agoto
-      sus 6 iteraciones (el techo) con un hallazgo abierto: `duplicated_facts = 13` frente
-      a un umbral de 0 en `config/loop.json`. Las duplicaciones son reales pero menores
-      (el mismo hecho enunciado en `CLAUDE.md`, una skill y un invariante, en vez de
-      enlazado). Dos salidas, y la eleccion es tuya:
-      **(a)** seguir deduplicando la documentacion hasta llegar a 0, o
-      **(b)** fijar un umbral realista en `config/loop.json` (por ejemplo 3) con su ADR.
-      Tocar `config/loop.json` exige tu aprobacion explicita (regla de oro 10), por eso no
-      lo he hecho.
-- [ ] **Tres ajustes del check 9** (ver docs/decisions/ADR-0005-cierre-del-loop.md): exigir
-      `checks_added` solo en iteraciones que producen commit; 3 clases distintas en todo el
-      ledger en vez de en las tres primeras iteraciones; y encadenamiento por ancestro en
-      vez de por igualdad. Las tres reglas originales eran incompatibles entre si. Falta tu
-      visto bueno.
-- [ ] **Estrechamiento de dos checks**: el grep de generadores prohibidos de la STL (check
-      5) solo mira `.cpp`/`.hpp` y descarta comentarios, y el check 7 ignora comentarios en
-      el Dockerfile. Sin eso, la documentacion no puede nombrar lo que prohibe.
-- [ ] **Partida contra una snake del zoo**: la partida completa del CLI se jugo contra una
-      snake tonta propia, no contra el zoo. `docker build` de un repo de terceros ejecuta
-      codigo ajeno: hace falta tu confirmacion explicita, una vez por repositorio.
+- [ ] **Correr el gate completo y la autoprueba en la maquina de referencia.** El cierre
+      del loop se hizo en un contenedor sin acceso a registro de imagenes, asi que ni el
+      check 10 (`docker build` mas contenedor respondiendo) ni su veneno se ejecutaron
+      ahi. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que
+      separa la fase de COMPLETA.
+- [ ] **Partida contra una snake del zoo** (criterio 5 de la DoD). Autorizada el
+      2026-09-15, pendiente de ejecutarse: necesita `docker build` de un repo de terceros
+      y el CLI oficial, y ninguno de los dos llegaba desde ese contenedor. El manifest
+      fija el commit SHA aprobado y el contenedor corre aislado: `--read-only`,
+      `--cap-drop=ALL`, sin volumenes y con el puerto solo en `127.0.0.1`.
 - [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
       dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
       (Docker Desktop, Settings, Resources, WSL integration).
+
+## Decisiones humanas tomadas el 2026-09-15
+
+- Los tres ajustes del check 9 quedan **aprobados**
+  (ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0043).
+- Estrechar los checks 5 y 7 para que ignorasen comentarios queda **rechazado**: ambos
+  vuelven a su forma estricta (ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051).
+- `duplicated_facts` pasa a medirse con `scripts/lint_dupes.py`, su umbral se queda en 0 y
+  `max_iterations` sube de 6 a 8 (ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0052).
+- Los umbrales de clase se exigen a la ultima iteracion de cada clase
+  (ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061).
 
 ## Hallazgos abiertos del loop
 
@@ -66,10 +67,10 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 - [ ] `placements()` quedo `SIN_VERIFICAR` contra la fuente: el motor oficial no expone
       placements y el JSONL no trae el turno de eliminacion (ver docs/rules.md#r-12). La
       formula de rango compartido promediado es nuestra, no derivada.
-- [ ] **F-G06 (abierto, mayor):** 13 hechos duplicados entre documentos. Se corrigieron
-      los tres de mayor severidad (hot path, generadores de la STL, ISA de deploy); quedan
-      diez, listados por `context-curator` en la auditoria final. Es lo que bloquea el
-      cierre del loop del gate.
+- [ ] Los numeros publicados se midieron en la maquina de referencia
+      (ver docs/performance.md#p-03). El cierre del loop se hizo en otra, de 2 nucleos, y
+      por eso no se publico ninguna medicion nueva: la tabla canonica sigue siendo la del
+      commit 8082d1d.
 - [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
       sentido en la arena (ver docs/rules.md#r-09).
 
@@ -79,6 +80,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Decidir entre (a) terminar de deduplicar los diez hechos que quedan o (b) aprobar un
-umbral realista de `duplicated_facts_max` con su ADR; aplicar la opcion elegida, cerrar el
-ledger del gate y volver a correr `./scripts/gate.sh` completo.
+Correr `./scripts/gate.sh` y `./scripts/gate-selftest.sh` completos en WSL2, con docker
+disponible, y jugar la partida del criterio 5 contra una snake del zoo; con eso la fase 0
+pasa de PARCIAL a COMPLETA.

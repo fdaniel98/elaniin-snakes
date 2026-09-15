@@ -1,0 +1,94 @@
+=== loop i7 context gate @ 2026-09-15T21:00:38Z ===
+--- lint de documentacion ---
+== front-matter ==
+OK   front-matter valido
+== size_bytes y presupuestos ==
+size_bytes correcto en 21 docs
+OK   arranque: 11788 / 12288 bytes
+OK   docs/context-packs/debug-partida.md: 37361 / 49152 bytes
+OK   docs/context-packs/implementar-regla.md: 46166 / 49152 bytes
+OK   docs/context-packs/nueva-heuristica.md: 44075 / 49152 bytes
+OK   docs/context-packs/optimizar-hotpath.md: 35282 / 49152 bytes
+OK   docs/context-packs/tocar-el-harness.md: 40789 / 49152 bytes
+== anchors ==
+OK   178 citas resueltas
+WARN anchor huerfano (nadie lo cita): docs/INDEX.md#i-01
+WARN anchor huerfano (nadie lo cita): docs/INDEX.md#i-03
+WARN anchor huerfano (nadie lo cita): docs/SOURCES.md#s-01
+WARN anchor huerfano (nadie lo cita): docs/SOURCES.md#s-02
+WARN anchor huerfano (nadie lo cita): docs/SOURCES.md#s-03
+WARN anchor huerfano (nadie lo cita): docs/architecture.md#a-01
+WARN anchor huerfano (nadie lo cita): docs/architecture.md#a-04
+WARN anchor huerfano (nadie lo cita): docs/architecture.md#a-05
+WARN anchor huerfano (nadie lo cita): docs/context-packs/debug-partida.md#cp-30
+WARN anchor huerfano (nadie lo cita): docs/context-packs/debug-partida.md#cp-31
+WARN anchor huerfano (nadie lo cita): docs/context-packs/debug-partida.md#cp-32
+WARN anchor huerfano (nadie lo cita): docs/context-packs/implementar-regla.md#cp-01
+WARN anchor huerfano (nadie lo cita): docs/context-packs/implementar-regla.md#cp-02
+WARN anchor huerfano (nadie lo cita): docs/context-packs/implementar-regla.md#cp-03
+WARN anchor huerfano (nadie lo cita): docs/context-packs/nueva-heuristica.md#cp-20
+WARN anchor huerfano (nadie lo cita): docs/context-packs/nueva-heuristica.md#cp-21
+WARN anchor huerfano (nadie lo cita): docs/context-packs/nueva-heuristica.md#cp-22
+WARN anchor huerfano (nadie lo cita): docs/context-packs/optimizar-hotpath.md#cp-10
+WARN anchor huerfano (nadie lo cita): docs/context-packs/optimizar-hotpath.md#cp-11
+WARN anchor huerfano (nadie lo cita): docs/context-packs/optimizar-hotpath.md#cp-12
+WARN anchor huerfano (nadie lo cita): docs/context-packs/tocar-el-harness.md#cp-40
+WARN anchor huerfano (nadie lo cita): docs/context-packs/tocar-el-harness.md#cp-41
+WARN anchor huerfano (nadie lo cita): docs/context-packs/tocar-el-harness.md#cp-42
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0001-donde-corre-el-harness.md#d-0001
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0001-donde-corre-el-harness.md#d-0002
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0001-donde-corre-el-harness.md#d-0003
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0001-donde-corre-el-harness.md#d-0004
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0002-representacion-del-estado.md#d-0010
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0002-representacion-del-estado.md#d-0011
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0002-representacion-del-estado.md#d-0012
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0002-representacion-del-estado.md#d-0013
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0003-dependencias.md#d-0020
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0003-dependencias.md#d-0021
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0003-dependencias.md#d-0022
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0003-dependencias.md#d-0023
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0004-deploy.md#d-0030
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0004-deploy.md#d-0031
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0004-deploy.md#d-0032
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0004-deploy.md#d-0033
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0005-cierre-del-loop.md#d-0040
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0005-cierre-del-loop.md#d-0041
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0005-cierre-del-loop.md#d-0042
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0005-cierre-del-loop.md#d-0043
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0050
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0052
+WARN anchor huerfano (nadie lo cita): docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0053
+WARN anchor huerfano (nadie lo cita): docs/glossary.md#g-01
+WARN anchor huerfano (nadie lo cita): docs/glossary.md#g-02
+WARN anchor huerfano (nadie lo cita): docs/harness.md#h-01
+WARN anchor huerfano (nadie lo cita): docs/harness.md#h-02
+WARN anchor huerfano (nadie lo cita): docs/harness.md#h-03
+WARN anchor huerfano (nadie lo cita): docs/harness.md#h-04
+WARN anchor huerfano (nadie lo cita): docs/invariants.md#inv-01
+WARN anchor huerfano (nadie lo cita): docs/invariants.md#inv-02
+WARN anchor huerfano (nadie lo cita): docs/invariants.md#inv-06
+WARN anchor huerfano (nadie lo cita): docs/performance.md#p-03
+WARN anchor huerfano (nadie lo cita): docs/performance.md#p-04
+WARN anchor huerfano (nadie lo cita): docs/rules.md#r-10
+WARN anchor huerfano (nadie lo cita): docs/rules.md#r-30
+WARN anchor huerfano (nadie lo cita): docs/strategy.md#s-v2
+WARN anchor huerfano (nadie lo cita): docs/strategy.md#s-v3
+WARN anchor huerfano (nadie lo cita): docs/strategy.md#s-v4
+WARN anchor huerfano (nadie lo cita): docs/strategy.md#s-v5
+WARN anchor huerfano (nadie lo cita): docs/strategy.md#s-fuera
+INFO 64 anchors huerfanos de 102
+== duplicados ==
+hechos duplicados: 0 (n-grama de 12 palabras, 38 archivos)
+== STATE.md ==
+OK   perf-snapshot de STATE.md sincronizado con docs/performance.md
+--- front-matter de los agentes, comandos y skills ---
+OK front-matter del harness
+--- venenos del check 6 (el lint de docs se prueba a si mismo) ---
+OK    check 6 (doc sin front-matter): el gate lo caza
+OK    check 6 (cita a un anchor inexistente desde STATE.md): el gate lo caza
+OK    check 6 (size_bytes que no coincide con wc -c): el gate lo caza
+OK    check 6 (doc canonical sin last_verified): el gate lo caza
+OK    check 6 (enlace a un anchor inexistente del mismo archivo): el gate lo caza
+OK    check 6 (el mismo hecho escrito en dos documentos): el gate lo caza
+
+venenos cazados: 6, fallidos: 0

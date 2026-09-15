@@ -1,0 +1,12 @@
+{
+  "n": 8,
+  "class": "robustness",
+  "slug": "gate",
+  "phase": 0,
+  "commit_before": "68c71600b63071f955ef87a4feac74423ea9e514",
+  "started_at": "2026-09-15T21:05:11Z",
+  "duration_ms": 295383,
+  "exit_code": 0,
+  "log_sha256": "fd28f870c37762124b8e69e6c123c100d78044284d4c986d94f5a76c9b72bddc",
+  "thresholds_sha256": "8b83314c8637ba3d026025907483faf5be958e5b0acb3bc45abdc7729b85e805"
+}

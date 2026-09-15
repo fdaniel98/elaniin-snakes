@@ -188,6 +188,34 @@ with open(path, "w", encoding="utf-8", newline="\n") as fh:
 EOF
 }
 
+poison_9c() {
+    # Ultima iteracion de una clase con una metrica fuera de umbral. Es la regla que
+    # ADR-0007 deja en pie: las intermedias guardan lo que encontraron, la ultima de cada
+    # clase tiene que cumplir. ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061
+    local ledger
+    ledger="$(find .loop -name '*.ledger.json' | head -1)"
+    [[ -n "$ledger" ]] || return 1
+    python3 - "$ledger" <<'EOF'
+import json, sys
+
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    doc = json.load(fh)
+
+vivas = [it for it in doc["iterations"] if not it.get("annulled")]
+ultima_por_clase = {}
+for it in vivas:
+    ultima_por_clase[it["class"]] = it
+objetivo = ultima_por_clase.get("perf") or ultima_por_clase.get("context") or vivas[-1]
+objetivo.setdefault("metrics", {})["p99_move_ms"] = 999999
+objetivo["metrics"]["duplicated_facts"] = 999
+
+with open(path, "w", encoding="utf-8", newline="\n") as fh:
+    json.dump(doc, fh, indent=2)
+    fh.write("\n")
+EOF
+}
+
 poison_10() {
     sed -i 's|^FROM gcr.io/distroless/cc-debian12:nonroot|FROM gcr.io/distroless/static-debian12:nonroot|' \
         deploy/Dockerfile
@@ -216,6 +244,7 @@ POISONS=(
     "poison_8|8|el servidor devuelve un movimiento ilegal"
     "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"
     "poison_9b|9|ledger con el encadenamiento de commits roto|commit_after(i) != commit_before(i+1)"
+    "poison_9c|9|ultima iteracion de una clase fuera de umbral|umbral incumplido"
     "poison_10|10|runtime distroless sin libstdc++"
 )
 
