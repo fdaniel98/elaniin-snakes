@@ -265,7 +265,7 @@ private:
     std::array<Word, word_count> words_{};
 };
 
-/// Alias por defecto del formato objetivo. ver docs/rules.md#r-20
+/// Alias por defecto del formato objetivo. ver docs/rules-parametros.md#r-20
 using Board11 = Bitboard<11, 11>;
 using Board7 = Bitboard<7, 7>;
 using Board19 = Bitboard<19, 19>;

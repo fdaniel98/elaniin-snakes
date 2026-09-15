@@ -1,0 +1,85 @@
+{
+  "_comment": "Permisos y hooks. El toolchain vive en WSL2 y el agente corre en Windows (ver docs/decisions/ADR-0001-donde-corre-el-harness.md), asi que las reglas llevan el prefijo literal de wsl: la coincidencia en Bash es por PREFIJO. Modificar este archivo exige aprobacion humana explicita y un ADR.",
+  "permissions": {
+    "allow": [
+      "Bash(cmake:*)",
+      "Bash(ctest:*)",
+      "Bash(ninja:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(./scripts/gate.sh:*)",
+      "Bash(./scripts/gate-selftest.sh:*)",
+      "Bash(./scripts/bench.sh:*)",
+      "Bash(./scripts/loop.sh:*)",
+      "Bash(./scripts/loop_verify.sh:*)",
+      "Bash(./scripts/lint-docs.sh:*)",
+      "Bash(./scripts/lint-deploy.sh:*)",
+      "Bash(./scripts/docs_meta.sh:*)",
+      "Bash(./scripts/sync_state.sh:*)",
+      "Bash(./scripts/bootstrap.sh:*)",
+      "Bash(wsl -d Ubuntu-24.04 -e bash -lc 'cd /mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding && cmake:*)",
+      "Bash(wsl -d Ubuntu-24.04 -e bash -lc 'cd /mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding && ctest:*)",
+      "Bash(wsl -d Ubuntu-24.04 -e bash -lc 'cd /mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding && ./scripts/:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(wsl -d Ubuntu-24.04 -e bash -lc 'rm -rf:*)",
+      "Write(scripts/gate.sh)",
+      "Edit(scripts/gate.sh)",
+      "Write(config/loop.json)",
+      "Edit(config/loop.json)",
+      "Write(.claude/settings.json)",
+      "Edit(.claude/settings.json)"
+    ],
+    "_comment_deny": "Nunca Bash(git:*) en allow: autorizaria git push --force y git reset --hard. docker no se allowlista. Omitir algo de allow solo produce un prompt, no lo prohibe: por eso deny es explicito (regla de oro 10)."
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | grep -E '\\.(cpp|hpp)$' | xargs -r clang-format-18 -i"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/no-march-native.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/state-updated.sh\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 /// @file config_loader.cpp
 /// Parseo del request y del config. Cada lectura del ruleset usa la ruta JSON exacta
 /// verificada contra el codigo del arbitro; `settings` NO es plano.
-/// ver docs/rules.md#r-20
+/// ver docs/rules-parametros.md#r-20
 
 #include <snake/config_loader.hpp>
 

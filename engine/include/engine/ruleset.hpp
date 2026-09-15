@@ -2,7 +2,7 @@
 
 /// @file ruleset.hpp
 /// Parametros del ruleset. Todos llegan en el request por una ruta JSON exacta
-/// (ver docs/rules.md#r-20); los valores de abajo son *fallbacks*, no verdades.
+/// (ver docs/rules-parametros.md#r-20); los valores de abajo son *fallbacks*, no verdades.
 /// Usar un fallback marca `used_fallback` y el servidor emite WARN (regla de oro 5).
 ///
 /// El parser vive en `snake/src/config_loader.cpp` para que `engine/` no dependa
@@ -12,7 +12,7 @@
 
 namespace engine {
 
-/// Variante de juego. ver docs/rules.md#r-13
+/// Variante de juego. ver docs/rules-parametros.md#r-13
 enum class Variant : std::uint8_t {
     standard = 0,
     royale = 1,
@@ -24,7 +24,7 @@ enum class Variant : std::uint8_t {
 };
 
 /// Combinaciones que el cerebro soporta con todas sus heuristicas. El resto entra
-/// en modo degradado seguro. ver docs/rules.md#r-13
+/// en modo degradado seguro. ver docs/rules-parametros.md#r-13
 [[nodiscard]] constexpr bool is_supported(Variant v) noexcept {
     return v == Variant::standard || v == Variant::royale || v == Variant::solo;
 }
@@ -73,7 +73,7 @@ struct Ruleset {
     FallbackFlags fallbacks{};
 };
 
-/// Constantes del motor que NO viajan en el request. ver docs/rules.md#r-21
+/// Constantes del motor que NO viajan en el request. ver docs/rules-parametros.md#r-21
 inline constexpr int max_health = 100;
 inline constexpr int start_length = 3;
 inline constexpr int health_loss_per_turn = 1;

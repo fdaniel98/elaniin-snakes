@@ -32,7 +32,7 @@ Move decide(const engine::State11& state, Deadline deadline, const Params& param
 
 /// Version degradada segura para variantes no soportadas (wrapped, constrictor):
 /// sin tail-escape ni modelo de hazards, solo filtro duro y flood fill conservador.
-/// ver docs/rules.md#r-13
+/// ver docs/rules-parametros.md#r-13
 Move decide_degraded(const engine::State11& state, Deadline deadline,
                      const Params& params) noexcept;
 

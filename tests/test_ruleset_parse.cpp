@@ -1,7 +1,7 @@
 /// @file test_ruleset_parse.cpp
 /// Falla si el parser no recupera CADA parametro por su ruta JSON exacta, y si
 /// `snake/config/default.json` deja de ser 1:1 con `snake::Params`.
-/// ver docs/rules.md#r-20
+/// ver docs/rules-parametros.md#r-20
 
 #include <algorithm>
 #include <fstream>

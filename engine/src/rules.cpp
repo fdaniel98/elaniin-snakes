@@ -290,7 +290,7 @@ Bitboard<W, H> royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_t
     (void)shrink_every_n_turns;
     // El schedule de shrink solo es reproducible dentro de la arena in-process, porque
     // depende del `math/rand` de Go y la semilla no viaja en el payload de /move.
-    // ver docs/rules.md#r-09 y docs/rules.md#r-99
+    // ver docs/rules.md#r-09 y docs/rules-parametros.md#r-99
     throw std::logic_error("no implementado: fase 1");
 }
 

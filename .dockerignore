@@ -1,0 +1,8 @@
+build/
+build-*/
+.git/
+.loop/
+docs/results/
+*.log
+.venv/
+third_party/*/LICENSE

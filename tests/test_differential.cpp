@@ -1,7 +1,7 @@
 /// @file test_differential.cpp
 /// [FASE 1] Replay de los JSONL del arbitro oficial: se reproduce cada partida turno a
 /// turno inyectando la comida y los hazards del log (el RNG del motor es `math/rand`
-/// de Go y no lo reproducimos desde C++, ver docs/rules.md#r-99) y se exige estado
+/// de Go y no lo reproducimos desde C++, ver docs/rules-parametros.md#r-99) y se exige estado
 /// identico, incluido el movimiento por defecto ante respuestas invalidas.
 ///
 /// Registrado con la etiqueta [.pending]: no corre por defecto, asi que `ctest` pasa en

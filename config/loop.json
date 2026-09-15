@@ -1,0 +1,59 @@
+{
+  "_comment": "Umbrales del loop de ingenieria. Ningun umbral vive hardcodeado en scripts/loop_verify.sh: el ledger copia el sha256 de ESTE archivo y el gate lo compara. Modificarlo exige aprobacion humana explicita y un ADR.",
+  "version": 1,
+  "closing": {
+    "min_iterations": 3,
+    "max_iterations": 6,
+    "clean_tail_iterations": 2,
+    "discarded_ratio_max": 0.3,
+    "mandatory_classes": ["correctness", "robustness", "perf"],
+    "context_required_when_touching": ["docs/", ".claude/", "STATE.md", "docs/performance.md"]
+  },
+  "classes": {
+    "correctness": {
+      "agent": "rules-auditor",
+      "min_duration_ms": 20000,
+      "thresholds": {
+        "diverge_max": 0,
+        "sin_verificar_max": 0,
+        "fixtures_pass_ratio_min": 1.0,
+        "citations_required": true
+      }
+    },
+    "robustness": {
+      "agent": "main",
+      "min_duration_ms": 20000,
+      "thresholds": {
+        "sanitizer_findings_max": 0,
+        "failsafe_levels_covered_min": 4,
+        "fuzz_states_min": 10000,
+        "illegal_moves_max": 0,
+        "deadline_violations_max": 0,
+        "mutants_min": 5,
+        "mutants_killed_ratio_min": 0.8
+      }
+    },
+    "perf": {
+      "agent": "perf-analyst",
+      "min_duration_ms": 20000,
+      "thresholds": {
+        "p99_move_ms_max": 50,
+        "max_move_ms_max": 150,
+        "timeouts_max": 0,
+        "regression_pct": 5.0,
+        "hot_path_allocs_max": 0
+      }
+    },
+    "context": {
+      "agent": "context-curator",
+      "min_duration_ms": 10000,
+      "thresholds": {
+        "frontmatter_invalid_max": 0,
+        "broken_anchors_max": 0,
+        "duplicated_facts_max": 0,
+        "last_verified_max_age_days": 7,
+        "size_bytes_mismatch_max": 0
+      }
+    }
+  }
+}

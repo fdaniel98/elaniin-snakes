@@ -15,6 +15,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
 
+#include <engine/rng.hpp>
 #include <engine/rules.hpp>
 
 #include <snake/brain.hpp>
@@ -233,4 +234,88 @@ TEST_CASE("brain_v0: variantes no soportadas entran en modo degradado",
         const engine::MoveMask legal = engine::legal_moves(state, state.you);
         REQUIRE(engine::mask_has(legal, move.direction));
     }
+}
+
+namespace {
+
+/// Genera un estado aleatorio pero valido: cuerpos contiguos, sin solapes, salud y
+/// comida arbitrarias. Es la entrada del fuzz de la clase `robustness` del loop.
+engine::State11 random_state(engine::Rng& rng) {
+    using Board = engine::State11::Board;
+    engine::State11 state;
+    state.rules.hazard_damage_per_turn = static_cast<std::int32_t>(rng.bounded(30));
+    state.turn = static_cast<std::int32_t>(rng.bounded(300));
+    state.snake_count = static_cast<std::uint8_t>(1 + rng.bounded(4));
+    state.you = static_cast<engine::SnakeId>(rng.bounded(state.snake_count));
+
+    engine::Board11 taken;
+    for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {
+        auto& snake = state.snakes[static_cast<unsigned>(i)];
+        const auto length = static_cast<int>(2 + rng.bounded(8));
+        engine::Coord cursor{static_cast<std::int8_t>(rng.bounded(11)),
+                             static_cast<std::int8_t>(rng.bounded(11))};
+        snake.head_slot = 0;
+        snake.length = 0;
+        snake.health = static_cast<std::uint8_t>(1 + rng.bounded(100));
+        snake.status = engine::Elimination::alive;
+
+        for (int seg = 0; seg < length; ++seg) {
+            if (!Board::in_bounds(cursor) || taken.test(Board::index_of(cursor))) break;
+            taken.set(Board::index_of(cursor));
+            snake.cells[static_cast<unsigned>(seg)] =
+                static_cast<std::uint16_t>(Board::index_of(cursor));
+            ++snake.length;
+            cursor = engine::step(cursor, static_cast<engine::Direction>(rng.bounded(4)));
+        }
+        if (snake.length == 0) {
+            snake.cells[0] = 0;
+            snake.length = 1;
+        }
+    }
+
+    for (int i = 0; i < static_cast<int>(rng.bounded(5)); ++i) {
+        state.food.set(static_cast<int>(rng.bounded(121)));
+    }
+    if (rng.bounded(2) == 0) {
+        const auto side = static_cast<int>(rng.bounded(4));
+        for (int k = 0; k < 11; ++k) {
+            state.hazards.set(side < 2 ? Board::index_of(side * 10, k)
+                                       : Board::index_of(k, (side - 2) * 10));
+        }
+    }
+    state.refresh_occupancy();
+    return state;
+}
+
+} // namespace
+
+TEST_CASE("fuzz: 10000 estados aleatorios sin movimiento ilegal ni deadline excedido",
+          "[fuzz][brain][inv-10][inv-11]") {
+    const snake::Params params;
+    engine::Rng rng(20260915);
+
+    int illegal = 0;
+    int deadline_violations = 0;
+    constexpr int states = 10000;
+
+    for (int i = 0; i < states; ++i) {
+        const engine::State11 state = random_state(rng);
+        const auto started = snake::Deadline::Clock::now();
+        const snake::Deadline deadline(started + std::chrono::milliseconds(5));
+        const snake::Move move = snake::decide(state, deadline, params);
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                 snake::Deadline::Clock::now() - started)
+                                 .count();
+        if (elapsed > 5) ++deadline_violations;
+
+        const engine::MoveMask legal = engine::legal_moves(state, state.you);
+        if (legal != engine::move_mask_none && !engine::mask_has(legal, move.direction)) {
+            ++illegal;
+        }
+    }
+
+    INFO("estados=" << states << " ilegales=" << illegal
+                    << " violaciones_deadline=" << deadline_violations);
+    REQUIRE(illegal == 0);
+    REQUIRE(deadline_violations == 0);
 }

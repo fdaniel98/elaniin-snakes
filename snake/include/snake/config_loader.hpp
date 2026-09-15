@@ -7,7 +7,7 @@
 ///
 /// Los parametros del ruleset se leen por su ruta JSON exacta; lo que falte se
 /// rellena con el fallback y se marca en `Ruleset::fallbacks`.
-/// ver docs/rules.md#r-20
+/// ver docs/rules-parametros.md#r-20
 
 #include <string>
 
@@ -30,7 +30,7 @@ namespace snake {
 /// Parametros del ruleset desde el objeto `game` del request.
 [[nodiscard]] engine::Ruleset parse_ruleset(const nlohmann::json& game);
 
-/// Variante a partir de `game.ruleset.name`. ver docs/rules.md#r-13
+/// Variante a partir de `game.ruleset.name`. ver docs/rules-parametros.md#r-13
 [[nodiscard]] engine::Variant parse_variant(const std::string& name);
 
 /// Construye el estado desde un request completo de `/move`.
