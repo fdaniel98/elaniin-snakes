@@ -132,8 +132,7 @@ EOF
 poison_6g() {
     # Un valor de front-matter con dos puntos sin entrecomillar: no es YAML valido, y un
     # grep por clave lo deja pasar. Es el defecto que tenian diez documentos.
-    sed -i '0,/^title: /s//title: Roto: esto no parsea como YAML\n#/' docs/glossary.md
-    sed -i '/^#$/d' docs/glossary.md
+    sed -i '0,/^title: /s/^title: .*/title: Roto: esto no parsea como YAML/' docs/glossary.md
 }
 
 poison_7() {
