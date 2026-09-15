@@ -44,10 +44,9 @@ con 8 iteraciones, se conserva en `.loop/0/` como historia.
       ahi. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que
       separa la fase de COMPLETA.
 - [ ] **Partida contra una snake del zoo** (criterio 5 de la DoD). Autorizada el
-      2026-09-15, pendiente de ejecutarse: necesita `docker build` de un repo de terceros
-      y el CLI oficial, y ninguno de los dos llegaba desde ese contenedor. El manifest
-      fija el commit SHA aprobado y el contenedor corre aislado: `--read-only`,
-      `--cap-drop=ALL`, sin volumenes y con el puerto solo en `127.0.0.1`.
+      2026-09-15 y ya con su herramienta: `./scripts/zoo-game.sh eremetic-eric`. Queda
+      ejecutarla en una maquina con docker y acceso a registro. El primer build compila
+      un proyecto Rust entero y tarda; el JSONL sale en `docs/results/`.
 - [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
       dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
       (Docker Desktop, Settings, Resources, WSL integration).
@@ -85,6 +84,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr `./scripts/gate.sh` y `./scripts/gate-selftest.sh` completos en WSL2, con docker
-disponible, y jugar la partida del criterio 5 contra una snake del zoo; con eso la fase 0
-pasa de PARCIAL a COMPLETA.
+En WSL2, con docker: `./scripts/gate.sh`, `./scripts/gate-selftest.sh` y
+`./scripts/zoo-game.sh eremetic-eric`. Con esos tres en verde la fase 0 pasa de PARCIAL a
+COMPLETA y se abre la fase 1 (reglas completas y test diferencial).
