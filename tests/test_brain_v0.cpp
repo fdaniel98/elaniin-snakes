@@ -7,8 +7,11 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <new>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -61,6 +64,11 @@ const char* name_of(engine::Direction d) {
             return "right";
     }
     return "up";
+}
+
+/// Impide que el optimizador elimine la llamada cuyo coste se esta midiendo.
+template <typename T> void benchmarkable(T&& value) {
+    asm volatile("" : : "r,m"(value) : "memory");
 }
 
 snake::Deadline generous() {
@@ -335,4 +343,94 @@ TEST_CASE("fuzz: 10000 estados aleatorios sin movimiento ilegal ni deadline exce
                     << " violaciones_deadline=" << deadline_violations);
     REQUIRE(illegal == 0);
     REQUIRE(deadline_violations == 0);
+}
+
+// ---------------------------------------------------------------------------------
+// Allocator instrumentado: cuenta asignaciones dinamicas dentro de una region marcada.
+// Es la comprobacion mecanica de INV-03, que hasta ahora era "por construccion".
+// ver docs/invariants.md#inv-03
+// ---------------------------------------------------------------------------------
+
+namespace {
+bool counting_allocations = false;
+std::size_t allocation_count = 0;
+
+struct AllocationGuard {
+    AllocationGuard() {
+        allocation_count = 0;
+        counting_allocations = true;
+    }
+
+    ~AllocationGuard() { counting_allocations = false; }
+
+    AllocationGuard(const AllocationGuard&) = delete;
+    AllocationGuard& operator=(const AllocationGuard&) = delete;
+    AllocationGuard(AllocationGuard&&) = delete;
+    AllocationGuard& operator=(AllocationGuard&&) = delete;
+};
+} // namespace
+
+void* operator new(std::size_t size) {
+    if (counting_allocations) {
+        ++allocation_count;
+    }
+    void* memory = std::malloc(size);
+    if (memory == nullptr) {
+        throw std::bad_alloc();
+    }
+    return memory;
+}
+
+void operator delete(void* memory) noexcept {
+    std::free(memory);
+}
+
+void operator delete(void* memory, std::size_t) noexcept {
+    std::free(memory);
+}
+
+TEST_CASE("hot path: cero asignaciones dinamicas en apply, legal_moves y decide",
+          "[perf][inv-03]") {
+    const snake::Params params;
+    engine::State11 base;
+    {
+        const auto fixtures = load_fixtures();
+        REQUIRE_FALSE(fixtures.empty());
+        REQUIRE(snake::parse_state(fixtures.front().doc, base));
+    }
+
+    const std::array<engine::Direction, 4> moves{engine::Direction::up,
+                                                 engine::Direction::down,
+                                                 engine::Direction::left,
+                                                 engine::Direction::right};
+
+    std::size_t allocations_apply = 0;
+    {
+        engine::State11 state = base;
+        const AllocationGuard guard;
+        engine::apply(state, std::span<const engine::Direction>(moves));
+        allocations_apply = allocation_count;
+    }
+
+    std::size_t allocations_legal = 0;
+    {
+        const AllocationGuard guard;
+        benchmarkable(engine::legal_moves(base, base.you));
+        allocations_legal = allocation_count;
+    }
+
+    std::size_t allocations_decide = 0;
+    {
+        const snake::Deadline deadline(snake::Deadline::Clock::now() +
+                                       std::chrono::milliseconds(350));
+        const AllocationGuard guard;
+        benchmarkable(snake::decide(base, deadline, params));
+        allocations_decide = allocation_count;
+    }
+
+    INFO("apply=" << allocations_apply << " legal_moves=" << allocations_legal
+                  << " decide=" << allocations_decide);
+    REQUIRE(allocations_apply == 0);
+    REQUIRE(allocations_legal == 0);
+    REQUIRE(allocations_decide == 0);
 }
