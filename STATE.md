@@ -2,9 +2,9 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — COMPLETA salvo lo listado en «Bloqueado»
-Gate: PASS (2026-09-15, 12 checks, commit 507ea2f) · ./scripts/gate.sh
-Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.) · scripts/gate.sh → CLOSED (6 it., 1 anulada)
+Fase: 0 (Setup) — PARCIAL: el loop del entregable `gate` esta BLOQUEADO
+Gate: FAIL en el check 9 (lint del loop) por el ledger BLOQUEADO; los otros 10 checks en verde
+Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.) · scripts/gate.sh → BLOQUEADO (6 it., techo alcanzado)
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -35,6 +35,15 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 
 ## Bloqueado / pendiente de decision humana
 
+- [ ] **DECISION QUE BLOQUEA EL CIERRE DE LA FASE.** El entregable `scripts/gate.sh` agoto
+      sus 6 iteraciones (el techo) con un hallazgo abierto: `duplicated_facts = 13` frente
+      a un umbral de 0 en `config/loop.json`. Las duplicaciones son reales pero menores
+      (el mismo hecho enunciado en `CLAUDE.md`, una skill y un invariante, en vez de
+      enlazado). Dos salidas, y la eleccion es tuya:
+      **(a)** seguir deduplicando la documentacion hasta llegar a 0, o
+      **(b)** fijar un umbral realista en `config/loop.json` (por ejemplo 3) con su ADR.
+      Tocar `config/loop.json` exige tu aprobacion explicita (regla de oro 10), por eso no
+      lo he hecho.
 - [ ] **Tres ajustes del check 9** (ver docs/decisions/ADR-0005-cierre-del-loop.md): exigir
       `checks_added` solo en iteraciones que producen commit; 3 clases distintas en todo el
       ledger en vez de en las tres primeras iteraciones; y encadenamiento por ancestro en
@@ -58,9 +67,10 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 - [ ] `placements()` quedo `SIN_VERIFICAR` contra la fuente: el motor oficial no expone
       placements y el JSONL no trae el turno de eliminacion (ver docs/rules.md#r-12). La
       formula de rango compartido promediado es nuestra, no derivada.
-- [ ] Duplicaciones de hechos entre documentos que reporto `context-curator` y que solo se
-      corrigieron en parte: quedan las de menor severidad (prohibiciones del hot path
-      enunciadas en `CLAUDE.md`, `engine/CLAUDE.md` y la skill `cpp-hotpath`).
+- [ ] **F-G06 (abierto, mayor):** 13 hechos duplicados entre documentos. Se corrigieron
+      los tres de mayor severidad (hot path, generadores de la STL, ISA de deploy); quedan
+      diez, listados por `context-curator` en la auditoria final. Es lo que bloquea el
+      cierre del loop del gate.
 - [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
       sentido en la arena (ver docs/rules.md#r-09).
 
@@ -79,5 +89,6 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 
 ## Siguiente accion concreta
 
-Pedir confirmacion humana para construir las imagenes del zoo y jugar la partida de la
-DoD 5 contra una snake publica; despues, abrir la fase 1 con `/phase 1`.
+Decidir entre (a) terminar de deduplicar los diez hechos que quedan o (b) aprobar un
+umbral realista de `duplicated_facts_max` con su ADR; aplicar la opcion elegida, cerrar el
+ledger del gate y volver a correr `./scripts/gate.sh` completo.

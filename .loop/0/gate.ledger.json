@@ -208,7 +208,7 @@
           "cite": "scripts/loop_verify.sh",
           "desc": "verify_metrics no evaluaba duplicated_facts_max ni last_verified_max_age_days: dos umbrales declarados en config/loop.json que el check 9 nunca comprobaba, que es por lo que F-G06 pudo colarse en una iteracion de cierre.",
           "estado": "REPARADO",
-          "fixed_in": "pendiente-de-commit"
+          "fixed_in": "b58be952a267e504a44ccd50e3f30f00de7d9d96"
         }
       ],
       "commands_run": [
