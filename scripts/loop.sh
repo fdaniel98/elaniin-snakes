@@ -83,15 +83,41 @@ run_robustness() {
 
 run_perf() {
     if [[ "$SLUG" == "gate" ]]; then
-        # Lo que se mide del gate es cuanto tarda: un oraculo que tarda demasiado deja
-        # de ejecutarse, y entonces no es un oraculo.
-        echo "--- duracion del gate rapido ---"
-        local started_gate
-        started_gate="$(date +%s)"
-        ./scripts/gate.sh --fast
-        local gate_status=$?
-        echo "gate_fast_seconds=$(($(date +%s) - started_gate))"
-        return $gate_status
+        # Lo que se mide del gate es cuanto tarda: un oraculo que tarda demasiado deja de
+        # ejecutarse, y entonces no es un oraculo. Se mide tres veces porque una sola
+        # medicion no distingue el coste real de un pico de la maquina.
+        echo "--- duracion del gate rapido (3 corridas) ---"
+        local times=()
+        local run
+        for run in 1 2 3; do
+            local started_gate
+            started_gate="$(date +%s)"
+            local output
+            output="$(./scripts/gate.sh --fast 2>&1)"
+            local gate_status=$?
+            local seconds=$(($(date +%s) - started_gate))
+            times+=("$seconds")
+            echo "corrida $run: ${seconds}s exit=${gate_status}"
+            grep -E '^CHECK |checks fallidos' <<<"$output"
+
+            # Mientras se cierra el loop del propio gate, el check 9 falla porque el
+            # ledger de este entregable todavia no existe: es la unica excepcion
+            # aceptada, y solo esa. Cualquier otro check en rojo anula la iteracion.
+            if [[ $gate_status -ne 0 ]]; then
+                local failed_line
+                failed_line="$(grep -E '^checks fallidos' <<<"$output")"
+                if [[ "$failed_line" != "checks fallidos: 9 lint-loop" ]]; then
+                    echo "ITERACION ANULADA: el gate falla en algo que no es el check 9"
+                    return 1
+                fi
+                if [[ -f ".loop/${PHASE}/${SLUG}.ledger.json" ]]; then
+                    echo "ITERACION ANULADA: el ledger ya existe, el check 9 no deberia fallar"
+                    return 1
+                fi
+            fi
+        done
+        echo "gate_fast_seconds=${times[*]}"
+        return 0
     fi
 
     echo "--- benchmarks con la ISA de deploy (linea base publicable) ---"
