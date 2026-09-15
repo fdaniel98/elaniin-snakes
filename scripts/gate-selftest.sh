@@ -42,6 +42,12 @@ docker_available() {
 
 poison_0() { printf '\r\n' >>scripts/bench.sh; }
 
+poison_0b() {
+    # Un script sin el bit de ejecucion EN EL INDICE. En /mnt/c el archivo se ve 777, asi
+    # que solo el indice lo delata: es como `scripts/zoo-game.sh` se commiteo sin bit.
+    git update-index --chmod=-x scripts/bench.sh
+}
+
 poison_1() { echo 'int veneno( {' >>engine/src/rules.cpp; }
 
 poison_2() {
@@ -249,6 +255,7 @@ poison_10() {
 # prueba que el veneno se detecto y no que fallo otra cosa.
 POISONS=(
     "poison_0|0|un .sh con CR"
+    "poison_0b|0|un script sin bit de ejecucion en el indice de git|en el indice como 100644"
     "poison_1|1|error de sintaxis en el motor"
     "poison_2|2|codigo que solo rompe el build debug"
     "poison_3|3|un test que falla"

@@ -82,7 +82,22 @@ check_scripts_hygiene() {
             bad=1
         fi
     done < <(find scripts -name '*.sh' | sort)
-    [[ $bad -eq 0 ]] && echo "OK scripts sin CR y ejecutables"
+
+    # El bit del INDICE, no solo el del disco: con `core.fileMode=false` -que es lo
+    # normal en un repo editado desde Windows- un `chmod +x` no llega al commit, y el
+    # script sale sin bit en cualquier clon limpio. En /mnt/c todo se ve 777 y el
+    # `-x` de arriba no lo caza nunca.
+    local entry mode file
+    while read -r entry; do
+        mode="${entry%% *}"
+        file="${entry#*$'\t'}"
+        if [[ "$mode" != "100755" ]]; then
+            echo "FAIL $file esta en el indice como $mode; usa 'git update-index --chmod=+x $file'"
+            bad=1
+        fi
+    done < <(git ls-files -s 'scripts/*.sh' 'scripts/*.py' 2>/dev/null)
+
+    [[ $bad -eq 0 ]] && echo "OK scripts sin CR y ejecutables, en disco y en el indice"
     return $bad
 }
 
