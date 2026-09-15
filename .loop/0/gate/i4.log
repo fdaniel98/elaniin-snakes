@@ -1,0 +1,40 @@
+=== loop i4 perf gate @ 2026-09-15T19:19:28Z ===
+--- duracion del gate rapido ---
+== gate (rapido) ==
+CHECK 0 higiene-scripts PASS 0
+CHECK 1 build-release PASS 0
+CHECK 2 build-debug SKIP 0
+CHECK 3 tests-release PASS 2
+CHECK 4 clang-format PASS 0
+CHECK 5 clang-tidy SKIP 0
+CHECK 6 lint-docs PASS 3
+CHECK 7 lint-deploy FAIL 2
+--- salida del check 7 (lint-deploy) ---
+== configurando preset deploy en /tmp/tmp.LpCsNQyU4e ==
+== flags efectivos ==
+OK   compile_commands.json sin ISA nativa
+OK   CMAKE_CXX_FLAGS* sin ISA nativa
+OK   linea base de ISA presente
+== Dockerfile ==
+OK   el Dockerfile no inyecta CXXFLAGS
+FAIL deploy/Dockerfile menciona ISA nativa
+== grep textual (check redundante) ==
+deploy/Dockerfile:9:# `deploy`: -march=x86-64-v2 -mtune=generic. -march=native esta prohibido aqui.
+FAIL ISA nativa en deploy/
+--- fin del check 7 ---
+CHECK 8 smoke-e2e SKIP 0
+CHECK 9 lint-loop FAIL 3
+--- salida del check 9 (lint-loop) ---
+== lint del loop, fase 0 ==
+OK   rules (5 iteraciones)
+OK   brain-v0 (3 iteraciones)
+FAIL gate: falta .loop/0/gate.ledger.json (entregable declarado en STATE.md)
+check 9 FAIL
+--- fin del check 9 ---
+CHECK 10 deploy-real SKIP 0
+
+MODO RAPIDO - no apto para cerrar fase
+4 checks SKIP
+5 checks PASS, 3 tests PENDIENTES
+checks fallidos: 7 lint-deploy 9 lint-loop
+gate_fast_seconds=10

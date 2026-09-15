@@ -70,16 +70,18 @@ if [[ -f deploy/Dockerfile ]]; then
     else
         echo "OK   el Dockerfile no inyecta CXXFLAGS"
     fi
-    if grep -qE -- "$NATIVE_RE" deploy/Dockerfile; then
-        fail "deploy/Dockerfile menciona ISA nativa"
+    # Se ignoran los comentarios: el propio Dockerfile documenta que -march=native esta
+    # prohibido, y prohibir nombrarlo convertiria el check en un veto a la documentacion.
+    if grep -vE '^[[:space:]]*#' deploy/Dockerfile | grep -qE -- "$NATIVE_RE"; then
+        fail "deploy/Dockerfile menciona ISA nativa fuera de un comentario"
     fi
 else
     fail "no existe deploy/Dockerfile"
 fi
 
 echo "== grep textual (check redundante) =="
-if grep -rnE -- "$NATIVE_RE" deploy/ 2>/dev/null; then
-    fail "ISA nativa en deploy/"
+if grep -rnE -- "$NATIVE_RE" deploy/ 2>/dev/null | grep -vE ':[[:space:]]*#'; then
+    fail "ISA nativa en deploy/ fuera de un comentario"
 else
     echo "OK   deploy/ sin ISA nativa"
 fi

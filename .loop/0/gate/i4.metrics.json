@@ -1,0 +1,12 @@
+{
+  "n": 4,
+  "class": "perf",
+  "slug": "gate",
+  "phase": 0,
+  "commit_before": "fe308c7fe1b703d44968a495bde71510b6b9be9d",
+  "started_at": "2026-09-15T19:19:28Z",
+  "duration_ms": 10419,
+  "exit_code": 1,
+  "log_sha256": "ad28cce8e6cf3a08faa6e9ca24341f1140bfff16c33643b7ec4ce4b8f453b44d",
+  "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a"
+}
