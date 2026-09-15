@@ -152,7 +152,33 @@ run_perf() {
 
 run_context() {
     echo "--- lint de documentacion ---"
-    ./scripts/lint-docs.sh
+    ./scripts/lint-docs.sh || return 1
+
+    echo "--- front-matter de los agentes, comandos y skills ---"
+    local bad=0
+    local file
+    for file in .claude/agents/*.md .claude/commands/*.md .claude/skills/*/SKILL.md; do
+        [[ -f "$file" ]] || continue
+        if [[ "$(head -1 "$file")" != "---" ]]; then
+            echo "FAIL $file: sin front-matter"
+            bad=1
+            continue
+        fi
+        if ! grep -qE '^(name|description):' "$file"; then
+            echo "FAIL $file: front-matter sin name ni description"
+            bad=1
+        fi
+    done
+    [[ $bad -eq 0 ]] && echo "OK front-matter del harness"
+
+    if [[ "$SLUG" == "gate" ]]; then
+        # La clase context del gate no se conforma con que el lint pase: comprueba que el
+        # lint CAZA lo que dice cazar, con los cinco venenos del check 6.
+        echo "--- venenos del check 6 (el lint de docs se prueba a si mismo) ---"
+        ./scripts/gate-selftest.sh 6 || return 1
+    fi
+
+    return $bad
 }
 
 status=0
