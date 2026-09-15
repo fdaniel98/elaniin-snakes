@@ -6,7 +6,8 @@
 # distroless-cc-debian12: si la glibc de build fuera mayor, el binario no arrancaria.
 #
 # NO se inyecta CXXFLAGS (el check 7 del gate lo comprueba). La ISA la fija el preset
-# `deploy`: -march=x86-64-v2 -mtune=generic. -march=native esta prohibido aqui.
+# `deploy`: -march=x86-64-v2 -mtune=generic. La ISA nativa esta prohibida aqui,
+# ver docs/decisions/ADR-0004-deploy.md#d-0030.
 # ver docs/decisions/ADR-0004-deploy.md
 
 FROM debian:12 AS build

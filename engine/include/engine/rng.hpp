@@ -3,8 +3,8 @@
 /// @file rng.hpp
 /// xoshiro256++ propio, sembrado con splitmix64.
 ///
-/// Motivo de no usar la STL: `std::uniform_int_distribution`, `std::shuffle`,
-/// `std::sample` y `std::random_device` no tienen algoritmo especificado y difieren
+/// Motivo de no usar las distribuciones ni los generadores de la STL listados en
+/// docs/invariants.md#inv-08: su algoritmo no esta especificado y difiere
 /// entre libstdc++ y libc++, asi que romperian la reproducibilidad de la arena.
 /// El gate falla si aparecen bajo engine/ o arena/ (check 5).
 ///

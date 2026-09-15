@@ -15,6 +15,7 @@ APT_PACKAGES=(
     clang-format-18
     clang-tidy-18
     lld-18
+    libclang-rt-18-dev
     cmake
     ninja-build
     jq
@@ -41,11 +42,28 @@ need_cmd() {
 }
 
 need_header() {
-    local header="$1" pkg="$2"
+    local header="$1" pkg="$2" vendored="${3:-}"
     if [[ -f "/usr/include/$header" ]]; then
         report "$header" "OK" "/usr/include/$header"
+    elif [[ -n "$vendored" && -f "$vendored" ]]; then
+        # El build usa la copia del repo; exigir ademas la del sistema haria fallar el
+        # bootstrap en una maquina limpia donde el build funciona.
+        report "$header" "OK" "$vendored (vendorizado)"
     else
         report "$header" "FALTA" "apt install $pkg"
+        missing=1
+    fi
+}
+
+# El runtime de los sanitizers no es un binario ni una cabecera: sin el, el preset
+# debug configura y enlaza mal, y el check 2 del gate muere en `cmake --preset debug`.
+need_sanitizer_runtime() {
+    local dir
+    dir="$(clang++-18 -print-resource-dir 2>/dev/null)/lib/linux"
+    if compgen -G "$dir/libclang_rt.asan-*.a" >/dev/null; then
+        report "libclang_rt.asan" "OK" "$dir"
+    else
+        report "libclang_rt.asan" "FALTA" "apt install libclang-rt-18-dev"
         missing=1
     fi
 }
@@ -75,6 +93,7 @@ need_cmd clang-18 "clang 17+"
 need_cmd cmake "3.25+"
 need_cmd ninja
 need_cmd lld-18
+need_sanitizer_runtime
 
 echo
 echo "== herramientas del gate y de los hooks =="
@@ -91,7 +110,7 @@ echo "== dependencias de terceros =="
 need_header "catch2/catch_test_macros.hpp" catch2
 need_header "benchmark/benchmark.h" libbenchmark-dev
 need_header "nlohmann/json.hpp" nlohmann-json3-dev
-need_header "httplib.h" libcpp-httplib-dev
+need_header "httplib.h" libcpp-httplib-dev "third_party/cpp-httplib/httplib.h"
 
 echo
 echo "== opcionales (fases posteriores) =="
