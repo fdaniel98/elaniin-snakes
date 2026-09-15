@@ -1,0 +1,149 @@
+{
+  "_name": "13-payload-literal-del-cli.json",
+  "_comment": "Payload LITERAL emitido por `battlesnake play` (rules@87e094e2) en el turno 0 de una partida royale 11x11 con semilla 20260915. Confirma la forma exacta del request: settings.royale anidado, los campos deprecados hazardMap y squad presentes, y los tres segmentos del cuerpo apilados en la misma casilla. No se edita a mano.",
+  "_expect_not": [],
+  "game": {
+    "id": "3883801b-98aa-45f9-ac06-7902d202bea5",
+    "ruleset": {
+      "name": "royale",
+      "version": "cli",
+      "settings": {
+        "foodSpawnChance": 15,
+        "minimumFood": 1,
+        "hazardDamagePerTurn": 14,
+        "hazardMap": "",
+        "hazardMapAuthor": "",
+        "royale": {
+          "shrinkEveryNTurns": 25
+        },
+        "squad": {
+          "allowBodyCollisions": false,
+          "sharedElimination": false,
+          "sharedHealth": false,
+          "sharedLength": false
+        }
+      }
+    },
+    "map": "royale",
+    "timeout": 500,
+    "source": ""
+  },
+  "turn": 0,
+  "board": {
+    "height": 11,
+    "width": 11,
+    "snakes": [
+      {
+        "id": "35b25d9a-6f83-445e-b398-8c93d52d6341",
+        "name": "nuestra",
+        "latency": "0",
+        "health": 100,
+        "body": [
+          {
+            "x": 9,
+            "y": 1
+          },
+          {
+            "x": 9,
+            "y": 1
+          },
+          {
+            "x": 9,
+            "y": 1
+          }
+        ],
+        "head": {
+          "x": 9,
+          "y": 1
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#1b5e20",
+          "head": "beluga",
+          "tail": "bolt"
+        }
+      },
+      {
+        "id": "330fbf6a-00cb-4fb9-ad46-0a8b8040f996",
+        "name": "recorder",
+        "latency": "0",
+        "health": 100,
+        "body": [
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 1
+          }
+        ],
+        "head": {
+          "x": 1,
+          "y": 1
+        },
+        "length": 3,
+        "shout": "",
+        "squad": "",
+        "customizations": {
+          "color": "#888888",
+          "head": "default",
+          "tail": "default"
+        }
+      }
+    ],
+    "food": [
+      {
+        "x": 10,
+        "y": 2
+      },
+      {
+        "x": 0,
+        "y": 2
+      },
+      {
+        "x": 5,
+        "y": 5
+      }
+    ],
+    "hazards": []
+  },
+  "you": {
+    "id": "330fbf6a-00cb-4fb9-ad46-0a8b8040f996",
+    "name": "recorder",
+    "latency": "0",
+    "health": 100,
+    "body": [
+      {
+        "x": 1,
+        "y": 1
+      },
+      {
+        "x": 1,
+        "y": 1
+      },
+      {
+        "x": 1,
+        "y": 1
+      }
+    ],
+    "head": {
+      "x": 1,
+      "y": 1
+    },
+    "length": 3,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+      "color": "#888888",
+      "head": "default",
+      "tail": "default"
+    }
+  }
+}
