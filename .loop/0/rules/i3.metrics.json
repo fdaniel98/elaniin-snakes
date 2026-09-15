@@ -1,0 +1,12 @@
+{
+  "n": 3,
+  "class": "robustness",
+  "slug": "rules",
+  "phase": 0,
+  "commit_before": "0b44b0a4d3cfe585b2a6fff40624e24449829e86",
+  "started_at": "2026-09-15T18:55:37Z",
+  "duration_ms": 64432,
+  "exit_code": 0,
+  "log_sha256": "51c369f04803e844069fafcc42f2ca1213e18f79e869c071b58b52d2f998a8e3",
+  "thresholds_sha256": "ca8837dbaecee8121ada2ca208d1fbbe0ab79515b249692d33b81433f1b9f16a"
+}

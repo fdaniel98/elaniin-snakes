@@ -120,6 +120,25 @@ TEST_CASE("apply: el hazard solo daña la cabeza y no si hay comida", "[rules][r
         REQUIRE(s.snake(0).health == 100);
     }
 
+    SECTION("con comida en la casilla, el hazard no puede matar") {
+        // Con salud 10 y daño 14, si el hazard se aplicara la serpiente moriria ANTES
+        // de comer. Como la comida cancela el daño, sobrevive y come. Es el unico
+        // caso que distingue las dos semanticas: con salud alta, comer deja la salud
+        // en 100 de todas formas y el test no prueba nada. Lo descubrio el mutante m2.
+        // ver docs/rules.md#r-06
+        const std::array<Coord, 3> body{Coord{5, 5}, Coord{5, 4}, Coord{5, 3}};
+        put_snake(s, 0, body, 10);
+        const std::array<Coord, 3> other{Coord{1, 1}, Coord{1, 0}, Coord{2, 0}};
+        put_snake(s, 1, other, 100);
+        s.hazards.set(cell(5, 6));
+        s.food.set(cell(5, 6));
+
+        REQUIRE(step_all(s, {Direction::up, Direction::up}) == Status::ok);
+        REQUIRE(s.snake(0).status == Elimination::alive);
+        REQUIRE(s.snake(0).health == 100);
+        REQUIRE(s.snake(0).length == 4);
+    }
+
     SECTION("el hazard mata cuando la salud no llega") {
         // Sin este caso, cambiar el acotado de la salud a [1,100] -es decir, que el
         // hazard nunca pueda matar- pasaba los tests. Lo descubrio la prueba de
