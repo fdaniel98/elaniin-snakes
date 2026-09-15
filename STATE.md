@@ -54,19 +54,21 @@ con 8 iteraciones, se conserva en `.loop/0/` como historia.
 
 ## Decisiones humanas tomadas el 2026-09-15
 
-- Los tres ajustes del check 9 quedan **aprobados**
-  (ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0043).
-- Estrechar los checks 5 y 7 para que ignorasen comentarios queda **rechazado**: ambos
-  vuelven a su forma estricta (ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051).
-- `duplicated_facts` pasa a medirse con `scripts/lint_dupes.py`, su umbral se queda en 0 y
-  `max_iterations` sube de 6 a 8 (ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0052).
-- Los umbrales de clase se exigen a la ultima iteracion de cada clase
-  (ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061).
+Cada una con su ADR, que es donde vive el contenido:
+
+- Los tres ajustes del check 9: **aprobados**,
+  ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0043.
+- Estrechar los checks 5 y 7: **rechazado**,
+  ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051.
+- Duplicados medidos y techo de iteraciones: **aprobado**,
+  ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0052.
+- Umbrales por clase: **aprobado**, ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061.
+- Ambito del loop: **aprobado**, ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Hallazgos abiertos del loop
 
-- [ ] El maximo de `POST /move` esta muy por encima de su p99. Causa, numeros y veredicto
-      en docs/performance.md#p-04; conviene precalentar antes de medir en la fase 2.
+- [ ] El maximo de `POST /move` esta muy por encima de su p99; causa y veredicto,
+      ver docs/performance.md#p-04. Conviene precalentar antes de medir en la fase 2.
 - [ ] `placements()` quedo `SIN_VERIFICAR` contra la fuente: el motor oficial no expone
       placements y el JSONL no trae el turno de eliminacion (ver docs/rules.md#r-12). La
       formula de rango compartido promediado es nuestra, no derivada.

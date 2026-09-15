@@ -3,7 +3,7 @@ title: "ADR-0008: el loop se aplica a engine/ y snake/, no al harness ni a la do
 read_when: "al declarar un entregable con loop o al discutir cuanto proceso merece una tarea"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2855
+size_bytes: 2858
 ---
 
 
@@ -14,8 +14,9 @@ La fase 0 aplico el loop a tres entregables: `engine/src/rules.cpp`,
 encontraron defectos de los que cuestan partidas. El tercero consumio ocho iteraciones y
 las dos unicas decisiones que hubo que escalar al humano para cerrar la fase; ninguna de
 las dos era sobre la snake, sino sobre contradicciones internas de las reglas del loop
-aplicadas a documentos (ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0044 y
-docs/decisions/ADR-0007-umbrales-por-clase.md#d-0060).
+aplicadas a documentos:
+ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0044 y
+ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0060.
 
 El proceso tiene que costar menos que lo que protege. Con un `.md` no lo cumple.
 

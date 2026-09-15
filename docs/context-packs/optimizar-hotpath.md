@@ -1,9 +1,9 @@
 ---
-title: Pack: optimizar el hot path
+title: "Pack: optimizar el hot path"
 read_when: "antes de optimizar engine/ o snake/ guiado por perfil"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1508
+size_bytes: 1510
 ---
 
 

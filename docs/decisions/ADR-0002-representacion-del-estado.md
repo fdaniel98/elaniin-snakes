@@ -1,9 +1,9 @@
 ---
-title: ADR-0002: bitboard parametrizado, ring buffer y copy-make
+title: "ADR-0002: bitboard parametrizado, ring buffer y copy-make"
 read_when: "antes de cambiar la representacion del estado o la firma de apply()"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 1890
+size_bytes: 1892
 ---
 
 

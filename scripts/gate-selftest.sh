@@ -129,6 +129,13 @@ with Path("docs/glossary.md").open("a", encoding="utf-8") as fh:
 EOF
 }
 
+poison_6g() {
+    # Un valor de front-matter con dos puntos sin entrecomillar: no es YAML valido, y un
+    # grep por clave lo deja pasar. Es el defecto que tenian diez documentos.
+    sed -i '0,/^title: /s//title: Roto: esto no parsea como YAML\n#/' docs/glossary.md
+    sed -i '/^#$/d' docs/glossary.md
+}
+
 poison_7() {
     # -march=native en el preset del que deploy HEREDA: el grep textual sobre el bloque
     # `deploy` no lo ve; solo los flags efectivos lo delatan.
@@ -255,6 +262,7 @@ POISONS=(
     "poison_6d|6|doc canonical sin last_verified"
     "poison_6e|6|enlace a un anchor inexistente del mismo archivo"
     "poison_6f|6|el mismo hecho escrito en dos documentos"
+    "poison_6g|6|front-matter con un valor que no es YAML valido|no es YAML valido"
     "poison_7|7|-march=native en un preset del que deploy hereda"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
     "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"

@@ -1,9 +1,9 @@
 ---
-title: ADR-0001: el toolchain vive en WSL2 y el repo en el filesystem de Windows
+title: "ADR-0001: el toolchain vive en WSL2 y el repo en el filesystem de Windows"
 read_when: "al cambiar donde corren el gate, los hooks o el build"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2441
+size_bytes: 2443
 ---
 
 

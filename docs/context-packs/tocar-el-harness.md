@@ -1,9 +1,9 @@
 ---
-title: Pack: modificar el harness
+title: "Pack: modificar el harness"
 read_when: "antes de tocar scripts/, .claude/ o config/loop.json"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1516
+size_bytes: 1558
 ---
 
 
@@ -34,5 +34,6 @@ size_bytes: 1516
 - `./scripts/gate-selftest.sh` en verde, incluido el veneno nuevo.
 - `docs/harness.md` actualizado con la pieza y como desactivarla.
 - ADR si la decision tiene alternativa descartada.
-- Clases del loop: `context` obligatoria (tocas `.claude/` o `docs/`), mas `correctness`
-  sobre el propio harness: que el check hace lo que dice.
+- Sin ledger: el harness esta fuera del ambito del loop
+  (ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071). Lo que lo verifica es el gate
+  y su veneno nuevo, no tres iteraciones.

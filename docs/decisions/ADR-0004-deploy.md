@@ -1,9 +1,9 @@
 ---
-title: ADR-0004: runtime distroless/cc con libstdc++ estatico
+title: "ADR-0004: runtime distroless/cc con libstdc++ estatico"
 read_when: "antes de tocar deploy/Dockerfile o los flags del preset deploy"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2334
+size_bytes: 2336
 ---
 
 

@@ -1,9 +1,9 @@
 ---
-title: Pack: implementar o corregir una regla
+title: "Pack: implementar o corregir una regla"
 read_when: "antes de tocar engine/src/rules.cpp o de añadir un fixture de reglas"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1824
+size_bytes: 1826
 ---
 
 

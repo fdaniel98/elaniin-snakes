@@ -1,9 +1,8 @@
 # arena/ - [FASE 4] self-play in-process
 
 Enfrenta variantes compiladas del cerebro **sin HTTP**, con presupuesto determinista por
-nodos (`budget_nodes`), nunca por reloj: una busqueda anytime con deadline de reloj
-devuelve movimientos distintos segun la carga de la maquina, y eso destruye la
-reproducibilidad que un A/B necesita.
+nodos (`budget_nodes`) y nunca por reloj. El motivo, en la skill `experiment-protocol`,
+apartado de lo que invalida un resultado.
 
 ## Contrato previsto
 

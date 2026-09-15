@@ -3,7 +3,7 @@ title: Harness - gate, hooks, subagentes, comandos y loop
 read_when: "antes de tocar scripts/, .claude/ o config/loop.json"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 7164
+size_bytes: 7048
 ---
 
 Modificar `scripts/gate.sh`, `config/loop.json` o `.claude/settings.json` exige
@@ -34,11 +34,10 @@ Codigos de salida: `0` pasa, `1` fallo de check, `2` error de entorno o toolchai
 **no** es un veredicto sobre el codigo. Si falta docker, el check 10 sale `SKIP` y el
 resumen lo dice: un gate verde con SKIP no prueba el deploy.
 
-Dentro del check 6, `scripts/lint_dupes.py` mide los hechos duplicados: pasajes de doce
-palabras normalizadas que dos documentos repiten en vez de enlazar. El umbral sale de
-`classes.context.thresholds.duplicated_facts_max` de `config/loop.json`, y el porque de
-que sea una medida y no un juicio esta en
-docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051. Para apagarlo se borra su bloque
+Dentro del check 6, `scripts/lint_dupes.py` mide los hechos duplicados entre documentos.
+El criterio exacto y el porque de que sea una medida y no un juicio estan en
+docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0051; el umbral, en
+`classes.context.thresholds.duplicated_facts_max` de `config/loop.json`. Para apagarlo se borra su bloque
 de `lint-docs.sh`, con el ADR que exige la regla de oro 10.
 
 `--fast` ejecuta 0, 1, 3 (solo release), 4, 6, 7 y 9, e imprime
@@ -48,10 +47,9 @@ ese mismo modo no haya construido.
 ## H-02 Autoprueba del gate {#h-02}
 
 `./scripts/gate-selftest.sh` aplica un veneno por cada check sobre una copia temporal y
-falla si el gate no falla **en ese check concreto**. Cubre los checks 0 a 10; el numero exacto
-de venenos por check lo fija la tabla `POISONS` del script, que hoy tiene varios para el 6 y
-dos para el 9, cada uno con el mensaje concreto que debe aparecer. Sin esto, "el gate pasa en verde" es
-una afirmacion, no un hecho.
+falla si el gate no falla **en ese check concreto**. Cubre los checks 0 a 10; cuantos venenos tiene cada
+uno lo fija la tabla `POISONS` del script, y no se copia aqui para que no envejezca. Sin
+esto, "el gate pasa en verde" es una afirmacion, no un hecho.
 
 ## H-03 Hooks {#h-03}
 

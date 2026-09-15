@@ -6,7 +6,7 @@ allowed-tools: Bash, Read
 
 Config A: `$1`
 Config B: `$2`
-Resto de argumentos: `$ARGUMENTS`
+Argumentos completos, incluidos los dos de arriba: `$ARGUMENTS`
 
 Antes de lanzar nada, comprueba y di en voz alta:
 

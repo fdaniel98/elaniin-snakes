@@ -1,9 +1,9 @@
 ---
-title: ADR-0003: cpp-httplib vendorizado, el resto desde el sistema
+title: "ADR-0003: cpp-httplib vendorizado, el resto desde el sistema"
 read_when: "antes de añadir, quitar o cambiar una dependencia de terceros"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 1996
+size_bytes: 1998
 ---
 
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Check 6 del gate: lint de la capa de contexto.
 #
-#   1. front-matter valido en docs/** (excluyendo docs/results/**)
+#   1. front-matter valido en docs/** (excluyendo docs/results/**), incluido que sus
+#      valores sean YAML parseable y no solo que la clave exista
 #   2. ningun doc `canonical` sin `last_verified`
 #   3. size_bytes exacto y presupuestos de bytes (scripts/docs_meta.sh)
 #   4. anchors bidireccionales sobre **/*.{cpp,hpp} y TODOS los .md del repo,
@@ -38,6 +39,19 @@ while read -r file; do
             fail "$file: falta '${key}' en el front-matter"
         fi
     done
+    # YAML de verdad: `title: ADR-0005: como se cierra...` no parsea, y un grep por
+    # clave no lo ve. Diez documentos vivieron asi hasta que el auditor lo encontro.
+    while IFS= read -r fmline; do
+        [[ -z "$fmline" ]] && continue
+        value="${fmline#*: }"
+        case "$value" in
+            '"'* | "'"*) continue ;;
+        esac
+        if [[ "$value" == *": "* ]]; then
+            fail "$file: front-matter no es YAML valido, entrecomilla el valor: $fmline"
+        fi
+    done < <(grep -E '^[a-z_]+: ' <<<"$block")
+
     authority="$(grep -E '^authority:' <<<"$block" | head -1 | awk '{print $2}')"
     case "$authority" in
         canonical | derived | speculative) ;;

@@ -30,8 +30,9 @@ No explores a ciegas: si no sabes que pack usar, empieza por `docs/INDEX.md`.
    fuente; se corrige el codigo, la doc y `docs/SOURCES.md`.
 10. `scripts/gate.sh`, `config/loop.json` y `.claude/settings.json` no se tocan sin
     aprobacion humana explicita y un ADR.
-11. **Ningun entregable se cierra sin su loop:** 3 iteraciones de clases distintas con
-    ledger valido. Gate verde es necesario, no suficiente.
+11. **Ningun entregable de `engine/` ni `snake/` se cierra sin su loop:** 3 iteraciones
+    de clases distintas con ledger valido, y gate verde es necesario, no suficiente. El
+    ambito, en docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Comandos canonicos
 

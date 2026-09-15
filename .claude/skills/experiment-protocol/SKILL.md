@@ -27,14 +27,12 @@ partidas donde hay diferencia.
 
 ## Decision
 
-SPRT sobre la diferencia pareada por bloque, con alfa, beta, delta y `--max-games`
-**declarados en el config y escritos en el reporte**. Veredicto: `MEJORA`, `EMPEORA` o
-`NO CONCLUYENTE`, mas los bloques consumidos. Intervalos de Wilson para las tasas
-descriptivas.
+El test es SPRT sobre la diferencia pareada por bloque; alfa, beta, delta y `--max-games`
+se declaran en el config y se escriben en el reporte. El veredicto y que hacer al agotar
+el presupuesto: ver docs/strategy.md#s-ab. Wilson, solo para las tasas descriptivas.
 
-Agotado `--max-games` sin cruzar frontera: `NO CONCLUYENTE`. **No se relanza con otro set
-de semillas**; solo se amplia `--max-games` del mismo run. Relanzar hasta que salga es
-p-hacking.
+Lo que hay que entender de esa regla: relanzar con otras semillas hasta que salga el
+veredicto que uno queria es p-hacking, y por eso solo se amplia el mismo run.
 
 ## Que invalida un resultado
 

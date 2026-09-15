@@ -1,9 +1,9 @@
 ---
-title: ADR-0005: como se cierra el loop sin contradecir el antifraude
+title: "ADR-0005: como se cierra el loop sin contradecir el antifraude"
 read_when: "antes de cambiar config/loop.json o scripts/loop_verify.sh"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 3633
+size_bytes: 3635
 ---
 
 

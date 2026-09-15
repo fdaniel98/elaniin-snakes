@@ -3,7 +3,7 @@ title: "ADR-0007: los umbrales del loop se exigen a la ultima iteracion de cada 
 read_when: "antes de tocar scripts/loop_verify.sh o de discutir por que un ledger no cierra"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2928
+size_bytes: 2966
 ---
 
 
@@ -41,7 +41,7 @@ Aprobado por el humano el 2026-09-15, enunciada la alternativa.
 |---|---|
 | Dejar la regla literal | El ledger del gate no puede cerrarse por ninguna via honesta; la fase se queda PARCIAL para siempre |
 | Reescribir la metrica de la i6 | Falsea lo que aquella iteracion midio, que es justo lo que el antifraude existe para impedir |
-| Marcar la i6 como `annulled` | `annulled` esta definido para rondas en las que fallo el gate (ADR-0005#d-0045). Usarlo para una iteracion que hizo su trabajo vaciaria el campo de significado |
+| Marcar la i6 como `annulled` | `annulled` esta definido para rondas en las que fallo el gate (ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0045). Usarlo para una iteracion que hizo su trabajo vaciaria el campo de significado |
 | Exigir el umbral solo a la cola limpia | Una clase auditada a mitad del loop y nunca repetida se quedaria sin comprobar |
 
 ## D-0063 Consecuencias {#d-0063}

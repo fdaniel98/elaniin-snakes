@@ -1,9 +1,9 @@
 ---
-title: Pack: investigar una derrota
+title: "Pack: investigar una derrota"
 read_when: "al analizar un replay JSONL de una partida perdida"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1310
+size_bytes: 1309
 ---
 
 
@@ -20,12 +20,11 @@ size_bytes: 1310
 
 ## CP-31 Como se hace {#cp-31}
 
-1. `./scripts/replay.sh <archivo.jsonl>` para el resumen, y con `<turno>` para el detalle.
-2. Reconstruye las posiciones finales segun la regla canonica
-   (ver docs/rules.md#r-12); el log por si solo no las da.
-3. Invoca `match-analyst` para clasificar la causa: cabezazo, cuerpo propio, cuerpo rival,
-   pared, hambre o hazard.
-4. Convierte el turno del error decisivo en un **fixture nuevo** con su movimiento
+1. Invoca `match-analyst`. El procedimiento completo -que comando corre, como localiza el
+   turno decisivo, con que categorias clasifica y que formato devuelve- vive en su
+   contrato, `.claude/agents/match-analyst.md`, y no se copia aqui.
+2. Para las posiciones finales, ver docs/rules.md#r-12: el log por si solo no las da.
+3. Convierte el turno del error decisivo en un **fixture nuevo** con su movimiento
    esperado. Una derrota sin fixture se repite.
 
 ## CP-32 Criterio de salida {#cp-32}

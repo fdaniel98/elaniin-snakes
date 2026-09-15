@@ -1,9 +1,9 @@
 ---
-title: Pack: añadir o cambiar una heuristica
+title: "Pack: añadir o cambiar una heuristica"
 read_when: "antes de tocar la evaluacion del cerebro o de lanzar un A/B"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1435
+size_bytes: 1437
 ---
 
 
