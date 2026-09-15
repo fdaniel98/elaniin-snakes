@@ -2,9 +2,9 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — EN CURSO
-Gate: pendiente de la primera pasada completa
-Loop: engine/src/rules.cpp → pendiente · snake/src/brain_v0.cpp → pendiente · scripts/gate.sh → pendiente
+Fase: 0 (Setup) — COMPLETA salvo lo listado en «Bloqueado»
+Gate: PASS (2026-09-15, 12 checks, commit 507ea2f) · ./scripts/gate.sh
+Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.) · scripts/gate.sh → CLOSED (6 it., 1 anulada)
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -35,22 +35,34 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 
 ## Bloqueado / pendiente de decision humana
 
-- [ ] **Cierre del loop vs antifraude** (ver docs/decisions/ADR-0005-cierre-del-loop.md):
-      exigir `checks_added` en toda iteracion y a la vez que las dos ultimas compartan
-      `commit_after` es imposible. Resuelto exigiendo `checks_added` solo cuando la
-      iteracion produce commit, y `commands_run` cuando no. Falta tu visto bueno.
-- [ ] **Integracion de snake-zoo**: su runner lanza contenedores sin aislamiento y publica
-      en todas las interfaces. Se usaran sus manifests TOML con un runner propio que
-      aplique `--user`, `--read-only`, `--cap-drop=ALL` y publicacion solo en `127.0.0.1`.
-      Construir la imagen de una snake de terceros ejecuta codigo ajeno: hace falta tu
-      confirmacion explicita una vez por repositorio.
+- [ ] **Tres ajustes del check 9** (ver docs/decisions/ADR-0005-cierre-del-loop.md): exigir
+      `checks_added` solo en iteraciones que producen commit; 3 clases distintas en todo el
+      ledger en vez de en las tres primeras iteraciones; y encadenamiento por ancestro en
+      vez de por igualdad. Las tres reglas originales eran incompatibles entre si. Falta tu
+      visto bueno.
+- [ ] **Estrechamiento de dos checks**: el grep de generadores prohibidos de la STL (check
+      5) solo mira `.cpp`/`.hpp` y descarta comentarios, y el check 7 ignora comentarios en
+      el Dockerfile. Sin eso, la documentacion no puede nombrar lo que prohibe.
+- [ ] **Partida contra una snake del zoo**: la partida completa del CLI se jugo contra una
+      snake tonta propia, no contra el zoo. `docker build` de un repo de terceros ejecuta
+      codigo ajeno: hace falta tu confirmacion explicita, una vez por repositorio.
 - [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
-      dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla en
-      Docker Desktop (Settings, Resources, WSL integration).
+      dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
+      (Docker Desktop, Settings, Resources, WSL integration).
 
 ## Hallazgos abiertos del loop
 
-- [ ] (ninguno todavia: el loop aun no ha corrido)
+- [ ] `POST /move` maximo 23.9 ms frente a p99 0.79 ms: es la primera peticion, que paga el
+      arranque del servidor y la carga del config. Dentro de presupuesto, pero conviene
+      precalentar antes de medir en la fase 2.
+- [ ] `placements()` quedo `SIN_VERIFICAR` contra la fuente: el motor oficial no expone
+      placements y el JSONL no trae el turno de eliminacion (ver docs/rules.md#r-12). La
+      formula de rango compartido promediado es nuestra, no derivada.
+- [ ] Duplicaciones de hechos entre documentos que reporto `context-curator` y que solo se
+      corrigieron en parte: quedan las de menor severidad (prohibiciones del hot path
+      enunciadas en `CLAUDE.md`, `engine/CLAUDE.md` y la skill `cpp-hotpath`).
+- [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
+      sentido en la arena (ver docs/rules.md#r-09).
 
 ## Desviaciones menores del arbol de archivos especificado
 
@@ -62,7 +74,10 @@ que es su unico dueño. Editarlos a mano es un fallo que el gate detecta.
 - `scripts/smoke.py` y `scripts/mutants.sh`: el check 8 y la prueba de mutantes necesitan
   una implementacion independiente de la del motor.
 - `third_party/cpp-httplib/`: ver docs/decisions/ADR-0003-dependencias.md.
+- `docs/rules-parametros.md`: `docs/rules.md` se partio en dos para no pasarse del
+  presupuesto por tarea (ver docs/INDEX.md#i-02).
 
 ## Siguiente accion concreta
 
-Ejecutar `./scripts/gate.sh` completo y arreglar el primer check en rojo.
+Pedir confirmacion humana para construir las imagenes del zoo y jugar la partida de la
+DoD 5 contra una snake publica; despues, abrir la fase 1 con `/phase 1`.

@@ -26,8 +26,11 @@ FAST_CHECKS=(0 1 3 4 6 7 9)
 
 is_fast_check() {
     local needle="$1"
-    for check in "${FAST_CHECKS[@]}"; do
-        [[ "$check" == "$needle" ]] && return 0
+    # `local`: sin el, esta funcion pisaba la variable `check` del bucle principal y los
+    # venenos de los checks 2, 5, 8 y 10 se evaluaban contra el numero equivocado.
+    local candidate
+    for candidate in "${FAST_CHECKS[@]}"; do
+        [[ "$candidate" == "$needle" ]] && return 0
     done
     return 1
 }

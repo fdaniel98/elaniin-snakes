@@ -3,7 +3,7 @@ title: Harness - gate, hooks, subagentes, comandos y loop
 read_when: "antes de tocar scripts/, .claude/ o config/loop.json"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 5811
+size_bytes: 6039
 ---
 
 Modificar `scripts/gate.sh`, `config/loop.json` o `.claude/settings.json` exige
@@ -100,5 +100,9 @@ umbral numerico y artefacto verificable.
 - Antifraude que verifica el check 9: encadenamiento de commits, `duration_ms` minimo por
   clase, sha256 del log, `payload_sha256` no repetido, `checks_added` no vacio en toda
   iteracion que produce commit, y prueba de mutantes si las tres primeras salen limpias.
+
+Una iteracion en la que el gate falla queda **ANULADA**: sigue en el ledger, con
+`annulled: true` y `annulled_reason`, pero no cuenta para el minimo ni para los umbrales
+(ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0045).
 
 Un `findings: []` sin comandos ni log no es una iteracion limpia: es una fase fallida.
