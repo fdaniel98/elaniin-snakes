@@ -2,9 +2,8 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — PARCIAL: falta una corrida limpia del gate y la autoprueba tras arreglar git
-Gate: el check 10 (deploy real) PASA en 41 s; los checks 6, 8 y 9 fallaron por dos causas ya
-      reparadas (ver docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0080)
+Fase: 0 (Setup) — PARCIAL: solo falta reconfirmar los 4 venenos del check 9
+Gate: **12 checks PASS, ninguno en rojo** (2026-09-15, maquina de referencia, 229 s)
 Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.)
 Snake activa: v0-baseline
 
@@ -44,12 +43,10 @@ cerrado con 8 iteraciones, se conserva en `.loop/0/`.
       check 10 (`docker build` mas contenedor respondiendo) ni su veneno se ejecutaron
       ahi. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que
       separa la fase de COMPLETA.
-- [ ] **Configurar git una vez y volver a correr el gate y la autoprueba.** En la maquina
-      de referencia git rechaza el repo por `dubious ownership` y eso tumbaba tres checks
-      y los 22 venenos. Primero:
-      `git config --global --add safe.directory '/mnt/c/Users/Daniel L.Estevez/Desktop/battle-snakes-vibe-coding'`
-      y despues `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que falta
-      para los criterios 3 y 11.
+- [ ] **Reconfirmar el check 9:** `./scripts/gate-selftest.sh 9`. La corrida completa dio
+      19 venenos cazados y 3 fallidos, los tres del check 9 y por el mismo defecto, ya
+      reparado en el commit 891d799. Es lo unico que falta para el criterio 11; el 3 ya
+      esta (12 checks PASS).
 - [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
       dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
       (Docker Desktop, Settings, Resources, WSL integration).
@@ -87,7 +84,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr en WSL2 el `git config --global --add safe.directory` del bloque de arriba y luego
-`./scripts/gate.sh` y `./scripts/gate-selftest.sh`; con los dos en verde la fase 0 pasa a
+Correr `./scripts/gate-selftest.sh 9` en WSL2; con sus 4 venenos cazados la fase 0 pasa a
 COMPLETA y se abre la fase 1 (reglas Royale completas y test diferencial contra >=500
 partidas JSONL del CLI).
