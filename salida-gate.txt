@@ -1,0 +1,15 @@
+== gate (completo) ==
+CHECK 0 higiene-scripts PASS 1
+CHECK 1 build-release PASS -2
+CHECK 2 build-debug PASS 1
+CHECK 3 tests-release PASS 1
+CHECK 3 tests-debug PASS 4
+CHECK 4 clang-format PASS 1
+CHECK 5 clang-tidy PASS 93
+CHECK 6 lint-docs PASS 16
+CHECK 7 lint-deploy PASS 8
+CHECK 8 smoke-e2e PASS 2
+CHECK 9 lint-loop PASS 9
+CHECK 10 deploy-real PASS 93
+
+12 checks PASS, 3 tests PENDIENTES

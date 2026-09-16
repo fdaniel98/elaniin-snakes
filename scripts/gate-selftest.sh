@@ -47,6 +47,24 @@ is_fast_check() {
     return 1
 }
 
+# Ledger que el check 9 SI verifica: el del primer entregable declarado en el bloque
+# loop-deliverables de STATE.md. Elegirlo con `find ... | head -1` dependia del orden de
+# lectura del directorio, y en un checkout sobre NTFS devolvia el ledger de un entregable
+# fuera de ambito (docs/decisions/ADR-0008-ambito-del-loop.md#d-0071): el veneno caia en
+# un archivo que nadie lee y el gate pasaba con el veneno puesto.
+ledger_en_ambito() {
+    local fase slug
+    fase="$(grep -m1 -E '^Fase:' STATE.md | grep -oE '[0-9]+' | head -1)"
+    slug="$(awk '/<!-- BEGIN:loop-deliverables -->/{d=1; next}
+                 /<!-- END:loop-deliverables -->/{d=0}
+                 d && /^\| / && !/^\| *slug/ && !/^\|[-| ]*\|$/ {gsub(/ /,"",$2); print $2; exit}' \
+        FS='|' STATE.md)"
+    [[ -n "$fase" && -n "$slug" ]] || return 1
+    local ledger=".loop/${fase}/${slug}.ledger.json"
+    [[ -f "$ledger" ]] || return 1
+    echo "$ledger"
+}
+
 docker_available() {
     (command -v docker >/dev/null 2>&1 && docker version >/dev/null 2>&1) ||
         (command -v docker.exe >/dev/null 2>&1 && docker.exe version >/dev/null 2>&1)
@@ -181,8 +199,7 @@ poison_8() {
 poison_9() {
     # Ledger con dos iteraciones: por debajo del minimo.
     local ledger
-    ledger="$(find .loop -name '*.ledger.json' | head -1)"
-    [[ -n "$ledger" ]] || return 1
+    ledger="$(ledger_en_ambito)" || return 1
     python3 - "$ledger" <<'EOF'
 import json, sys
 path = sys.argv[1]
@@ -198,8 +215,7 @@ EOF
 poison_9b() {
     # Encadenamiento roto: commit_after(i1) deja de ser commit_before(i2).
     local ledger
-    ledger="$(find .loop -name '*.ledger.json' | head -1)"
-    [[ -n "$ledger" ]] || return 1
+    ledger="$(ledger_en_ambito)" || return 1
     python3 - "$ledger" <<'EOF'
 import json, sys
 path = sys.argv[1]
@@ -217,8 +233,7 @@ poison_9c() {
     # ADR-0007 deja en pie: las intermedias guardan lo que encontraron, la ultima de cada
     # clase tiene que cumplir. ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061
     local ledger
-    ledger="$(find .loop -name '*.ledger.json' | head -1)"
-    [[ -n "$ledger" ]] || return 1
+    ledger="$(ledger_en_ambito)" || return 1
     python3 - "$ledger" <<'EOF'
 import json, sys
 

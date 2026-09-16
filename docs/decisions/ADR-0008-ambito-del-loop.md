@@ -3,7 +3,7 @@ title: "ADR-0008: el loop se aplica a engine/ y snake/, no al harness ni a la do
 read_when: "al declarar un entregable con loop o al discutir cuanto proceso merece una tarea"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 2858
+size_bytes: 3404
 ---
 
 
@@ -47,6 +47,13 @@ Aprobado por el humano el 2026-09-15.
   iteraciones, se conserva en `.loop/0/` como historia de lo que encontro.
 - `gate-selftest.sh` gana `poison_9d`: declarar un entregable fuera de ambito tiene que
   hacer fallar el check 9.
+- Sacar un entregable del ambito dejo **inertes** tres venenos del check 9, que elegian a
+  quien envenenar con `find .loop -name '*.ledger.json' | head -1`: en un checkout sobre
+  NTFS eso devolvia el ledger del gate, que ya nadie verifica, y el gate pasaba con el
+  veneno puesto. Ahora los tres leen el primer entregable del bloque `loop-deliverables`
+  de `STATE.md`, que es exactamente lo que el check 9 mira. Lo encontro la autoprueba en
+  la maquina de referencia; en otra maquina el mismo `find` devolvia otro orden y los tres
+  pasaban.
 - Ampliar el ambito -meter `arena/` o `training-room/` cuando existan- es editar
   `deliverable_scope`, con la aprobacion y el ADR que exige la regla de oro 10.
 - La DoD de cada fase sigue exigiendo ledger `CLOSED` para sus entregables; lo que cambia

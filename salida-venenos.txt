@@ -1,0 +1,24 @@
+OK    check 0 (un .sh con CR): el gate lo caza
+OK    check 0 (un script sin bit de ejecucion en el indice de git): el gate lo caza
+OK    check 1 (error de sintaxis en el motor): el gate lo caza
+OK    check 2 (codigo que solo rompe el build debug): el gate lo caza
+OK    check 3 (un test que falla): el gate lo caza
+OK    check 4 (codigo sin formatear): el gate lo caza
+OK    check 5 (aviso de clang-tidy): el gate lo caza
+OK    check 5 (generador prohibido de la STL en un comentario de engine/): el gate lo caza
+OK    check 6 (doc sin front-matter): el gate lo caza
+OK    check 6 (cita a un anchor inexistente desde STATE.md): el gate lo caza
+OK    check 6 (size_bytes que no coincide con wc -c): el gate lo caza
+OK    check 6 (doc canonical sin last_verified): el gate lo caza
+OK    check 6 (enlace a un anchor inexistente del mismo archivo): el gate lo caza
+OK    check 6 (el mismo hecho escrito en dos documentos): el gate lo caza
+OK    check 6 (front-matter con un valor que no es YAML valido): el gate lo caza
+OK    check 7 (-march=native en un preset del que deploy hereda): el gate lo caza
+OK    check 8 (el servidor devuelve un movimiento ilegal): el gate lo caza
+FALLO check 9 (ledger con solo dos iteraciones): el gate paso con el veneno aplicado
+FALLO check 9 (ledger con el encadenamiento de commits roto): el gate paso con el veneno aplicado
+FALLO check 9 (ultima iteracion de una clase fuera de umbral): el gate paso con el veneno aplicado
+OK    check 9 (entregable declarado fuera del ambito del loop): el gate lo caza
+OK    check 10 (runtime distroless sin libstdc++): el gate lo caza
+
+venenos cazados: 19, fallidos: 3
