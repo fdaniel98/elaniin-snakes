@@ -2,8 +2,8 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — PARCIAL: solo falta reconfirmar los 4 venenos del check 9
-Gate: **12 checks PASS, ninguno en rojo** (2026-09-15, maquina de referencia, 229 s)
+Fase: 0 (Setup) — **COMPLETA** (2026-09-16)
+Gate: 12 checks PASS y 22 venenos cazados en la maquina de referencia
 Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.)
 Snake activa: v0-baseline
 
@@ -43,10 +43,9 @@ cerrado con 8 iteraciones, se conserva en `.loop/0/`.
       check 10 (`docker build` mas contenedor respondiendo) ni su veneno se ejecutaron
       ahi. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que
       separa la fase de COMPLETA.
-- [ ] **Reconfirmar el check 9:** `./scripts/gate-selftest.sh 9`. La corrida completa dio
-      19 venenos cazados y 3 fallidos, los tres del check 9 y por el mismo defecto, ya
-      reparado en el commit 891d799. Es lo unico que falta para el criterio 11; el 3 ya
-      esta (12 checks PASS).
+- [ ] **Abrir la fase 1.** Nada bloquea; la fase 0 cerro con los 14 criterios cumplidos.
+      Los 22 venenos se cazaron en dos corridas: 19 en la completa y los 4 del check 9
+      tras el arreglo del commit 891d799, no en una sola pasada.
 - [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
       dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
       (Docker Desktop, Settings, Resources, WSL integration).
@@ -84,6 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr `./scripts/gate-selftest.sh 9` en WSL2; con sus 4 venenos cazados la fase 0 pasa a
-COMPLETA y se abre la fase 1 (reglas Royale completas y test diferencial contra >=500
-partidas JSONL del CLI).
+Abrir la fase 1: reglas Royale completas (hazards, shrink, feeding, placements) y el test
+diferencial que reproduzca >=500 partidas JSONL del CLI oficial turno a turno sin
+divergencia. Proponer plan y esperar aprobacion antes de escribir codigo.
