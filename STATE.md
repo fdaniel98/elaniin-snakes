@@ -2,9 +2,9 @@
 
 ## Estado actual
 
-Fase: 0 (Setup) — **COMPLETA** (2026-09-16)
-Gate: 12 checks PASS y 22 venenos cazados en la maquina de referencia
-Loop: engine/src/rules.cpp → CLOSED (5 it.) · snake/src/brain_v0.cpp → CLOSED (3 it.)
+Fase: 1 (Motor) — **pendiente del gate completo en la maquina de referencia**
+Gate: verde en el contenedor salvo el check 10, que necesita registro de imagenes
+Loop: engine/src/rules.cpp → CLOSED (6 it.) en `.loop/1/`
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -29,26 +29,28 @@ dueño; editarla a mano es un fallo que el gate detecta.
 | slug | archivo | clases obligatorias |
 |---|---|---|
 | rules | engine/src/rules.cpp | correctness, robustness, perf |
-| brain-v0 | snake/src/brain_v0.cpp | correctness, robustness, perf |
 <!-- END:loop-deliverables -->
 
 Que entra aqui lo decide el ambito del loop
-(ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071). El ledger de `scripts/gate.sh`,
-cerrado con 8 iteraciones, se conserva en `.loop/0/`.
+(ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071). Los ledgers de la fase 0 se
+conservan en `.loop/0/`; el cerebro no es entregable de esta fase y no lleva ledger nuevo.
 
 ## Bloqueado / pendiente de decision humana
 
-- [ ] **Correr el gate completo y la autoprueba en la maquina de referencia.** El cierre
-      del loop se hizo en un contenedor sin acceso a registro de imagenes, asi que ni el
-      check 10 (`docker build` mas contenedor respondiendo) ni su veneno se ejecutaron
-      ahi. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`. Es lo unico que
-      separa la fase de COMPLETA.
-- [ ] **Abrir la fase 1.** Nada bloquea; la fase 0 cerro con los 14 criterios cumplidos.
-      Los 22 venenos se cazaron en dos corridas: 19 en la completa y los 4 del check 9
-      tras el arreglo del commit 891d799, no en una sola pasada.
-- [ ] **Integracion WSL de Docker Desktop**: no esta activada para `Ubuntu-24.04`, asi que
-      dentro de WSL solo hay `docker.exe`. El gate lo acepta, pero conviene activarla
-      (Docker Desktop, Settings, Resources, WSL integration).
+- [ ] **Correr el gate completo y la autoprueba en la maquina de referencia.** La fase 1
+      se construyo en el contenedor de la nube, donde el registro de imagenes esta
+      bloqueado: el check 10 (`docker build` mas contenedor respondiendo) y su veneno no
+      se han ejecutado. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`.
+- [ ] **Publicar la linea base de la fase 1 en la maquina de referencia.** Los numeros de
+      docs/performance.md#p-06 son del contenedor, con la mitad de nucleos: no sustituyen
+      a la tabla canonica ni se comparan con ella. Hace falta `./scripts/bench.sh` en
+      WSL2 para saber si la fase movio el rendimiento.
+- [ ] **El arnes de mutantes mentia, y eso alcanza a la fase 0.** Restaurar con `mv`
+      dejaba la mutacion de una cabecera dentro del binario, asi que los mutantes
+      posteriores a `m3` morian por el anterior. Los ledgers de la fase 0 publicaron
+      ratio 1.0 con esa lista y ese fallo. Esta arreglado desde el commit d877270, pero
+      el numero de la fase 0 sigue publicado: decidir si se re-mide o se anota como
+      medicion invalidada.
 
 ## Decisiones humanas del 2026-09-15
 
@@ -62,20 +64,21 @@ rechazo a estrechar los checks 5 y 7), umbrales por clase
 
 ## Hallazgos abiertos del loop
 
-- [ ] El maximo de `POST /move` esta muy por encima de su p99; causa y veredicto,
-      ver docs/performance.md#p-04. Conviene precalentar antes de medir en la fase 2.
-- [ ] `placements()` quedo `SIN_VERIFICAR` contra la fuente: el motor oficial no expone
-      placements y el JSONL no trae el turno de eliminacion (ver docs/rules.md#r-12). La
-      formula de rango compartido promediado es nuestra, no derivada.
-- [ ] La tabla canonica sigue siendo la del commit 8082d1d: parte del trabajo se hizo en
-      otra maquina y por eso no se publico medicion nueva (ver docs/performance.md#p-03).
-- [ ] `cold_start_ms_max` es un umbral nuevo sin veneno propio en `gate-selftest.sh`: el
-      veneno del check 8 cubre el movimiento ilegal, no el arranque en frio. Deuda
-      declarada en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
-- [ ] `royale_hazards()` sigue lanzando `logic_error`: es trabajo de la fase 1 y solo tiene
-      sentido en la arena (ver docs/rules.md#r-09).
-- [ ] Criterio 5 cerrado: v0 gana contra Eremetic Eric en 80 turnos, que murio de hambre
-      dentro del hazard (`docs/results/2026-09-15-v0-vs-eremetic-eric.md`).
+- [ ] La causa de eliminacion **no es verificable** contra el arbitro: el JSONL no la
+      expone (ver docs/rules.md#r-12). El diferencial comprueba quien muere y en que
+      turno, nunca por que, asi que la tabla de causas de muerte que pide el Training
+      Room de la fase 3 no tendra contraste externo.
+- [ ] El reparto de puestos de `placements()` sigue siendo una convencion propia. El
+      diferencial verifica el turno de eliminacion y que el reparto es valido -suma
+      n(n+1)/2, ningun rango fuera de rango-, pero el desempate promediado no se deriva
+      de la fuente porque la fuente no lo define.
+- [ ] La secuencia de lados del shrink es nuestra por decision
+      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091): una partida de la arena no
+      reproducira nunca una oficial casilla por casilla. Lo que si esta verificado contra
+      500 partidas reales es la forma del schedule.
+- [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
+      en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
+- [ ] El repositorio sigue sin remoto: 55 commits en un solo disco.
 
 ## Desviaciones del arbol de archivos
 
@@ -83,6 +86,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Abrir la fase 1: reglas Royale completas (hazards, shrink, feeding, placements) y el test
-diferencial que reproduzca >=500 partidas JSONL del CLI oficial turno a turno sin
-divergencia. Proponer plan y esperar aprobacion antes de escribir codigo.
+Correr `./scripts/gate.sh` y `./scripts/gate-selftest.sh` en la maquina de referencia, que
+es lo unico que falta para cerrar la fase 1, y decidir que se hace con el ratio de
+mutantes de la fase 0 que el arreglo del arnes invalida.

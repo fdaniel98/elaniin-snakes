@@ -2,8 +2,8 @@
 title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
-last_verified: 2026-09-15
-size_bytes: 3617
+last_verified: 2026-09-17
+size_bytes: 6089
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -65,6 +65,54 @@ Dos corridas con campos distintos en esta tabla **no se comparan**.
 | asignaciones dinamicas en `apply`/`legal_moves`/`decide` | 0 / 0 / 0 | 8082d1d | 2026-09-15 |
 <!-- END:perf-canonical -->
 
+## P-05 Politica de playout {#p-05}
+
+`playouts/s` no significa nada sin decir que se juega. El que mide `bm_playout`:
+
+| Aspecto | Valor |
+|---|---|
+| Eleccion de movimiento | uniforme entre las direcciones que devuelve `legal_moves` |
+| Si no queda ninguna legal | `up`, que es el ultimo escalon del fail-safe |
+| Serpientes | 4, desde la posicion de media partida del benchmark |
+| Aleatoriedad | `Rng` del repo con semilla fija 20260917 |
+| Comida y hazards | congelados: ni spawn ni shrink (ver docs/invariants.md#inv-09) |
+| Tope | 200 turnos, para que la medida no dependa de la suerte de una partida |
+
+El tope casi nunca se alcanza: con eleccion uniforme la partida se acaba sola en unos 32
+turnos, y ese numero se publica junto al playout porque es lo que dice cuantos `apply()`
+hay dentro de cada uno.
+
+## P-06 Maquina del contenedor de la nube {#p-06}
+
+La fase 1 se construyo en el contenedor de la nube, que **no es** la maquina de referencia
+de P-03: sus numeros van aparte y no sustituyen a la tabla canonica ni se comparan con
+ella.
+
+| Campo | Valor |
+|---|---|
+| Host | contenedor Linux, Intel Xeon a 2.10GHz |
+| CPU logicas visibles | 2 |
+| Memoria visible | 7 GB |
+| Compilador | clang 18.1.3 |
+| Fecha | 2026-09-17 |
+
+| metrica | valor | commit | fecha |
+|---|---|---|---|
+| `apply()/s` (1 hilo, bench-deployisa) | 5.42 M/s (184.6 ns) | cb2c4f1 | 2026-09-17 |
+| `legal_moves()/s` (1 hilo, bench-deployisa) | 18.07 M/s (55.3 ns) | cb2c4f1 | 2026-09-17 |
+| `playouts/s` (1 hilo, bench-deployisa, politica de P-05) | 80.6 k/s (12.40 us) | cb2c4f1 | 2026-09-17 |
+| turnos por playout | 31.9 | cb2c4f1 | 2026-09-17 |
+| `decide()/s` (1 hilo, bench-deployisa) | 1.18 M/s (851.5 ns) | cb2c4f1 | 2026-09-17 |
+| copias de estado/s | 88.44 M/s (11.3 ns) | cb2c4f1 | 2026-09-17 |
+| `POST /move` p50 (local, 15 fixtures x 20) | 0.40 ms | cb2c4f1 | 2026-09-17 |
+| `POST /move` p99 (local, 15 fixtures x 20) | 0.66 ms | cb2c4f1 | 2026-09-17 |
+| `POST /move` maximo (local, 15 fixtures x 20) | 2.10 ms | cb2c4f1 | 2026-09-17 |
+| arranque en frio | 2.82 ms | cb2c4f1 | 2026-09-17 |
+
+Dos maquinas con la mitad de nucleos y otra frecuencia dan numeros distintos: la caida de
+`apply()` frente a P-03 **no es una regresion medida**, es otra maquina. Para saber si la
+fase 1 movio el rendimiento hay que correr `./scripts/bench.sh` en la de referencia.
+
 ## P-04 Historico {#p-04}
 
 Una fila por medicion publicada, con su commit. Las salidas crudas de Google Benchmark
@@ -73,6 +121,7 @@ van a `docs/results/bench-*.json`, que queda fuera del lint de docs.
 | Fecha | Cambio | Metrica | Antes | Despues | Veredicto |
 |---|---|---|---|---|---|
 | 2026-09-15 | linea base inicial de la fase 0 (commit 8082d1d) | todas | - | ver tabla canonica | LINEA BASE |
+| 2026-09-17 | fase 1 en el contenedor de la nube (commit cb2c4f1) | todas | - | ver P-06 | SIN COMPARAR: otra maquina |
 
 El maximo de `POST /move` (23.88 ms) esta 30 veces por encima del p99 (0.79 ms): es la
 primera peticion, que paga el arranque del servidor y la carga del config. Queda como
