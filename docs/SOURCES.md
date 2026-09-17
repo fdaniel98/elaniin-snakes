@@ -4,7 +4,7 @@ read_when: "antes de afirmar algo sobre una herramienta externa o de re-verifica
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-15
-size_bytes: 3660
+size_bytes: 4622
 ---
 
 Este archivo lleva **fuentes**, no hechos: qué se consultó, en qué SHA, cuándo, y qué
@@ -35,11 +35,16 @@ documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven
 | `battlesnake play --help` con el CLI compilado del SHA fijado | 2026-09-15 | Flags y defaults coinciden con `cli/commands/play.go:97-117` |
 | Partida completa `battlesnake play -g royale -m royale` contra nuestra v0 | 2026-09-15 | 11 turnos, JSONL en `docs/results/2026-09-15-v0-vs-dummy.jsonl` |
 | Payload literal de `/move` capturado del arbitro | 2026-09-15 | `tests/fixtures/13-payload-literal-del-cli.json` |
+| Arbitro del SHA fijado compilado en el contenedor de la nube con `scripts/build-referee-mirrored.sh` | 2026-09-17 | Compila y juega. Siete dependencias **indirectas** del CLI (cobra, viper, fsnotify, websocket) se traen del espejo en GitHub del mismo modulo y la misma version que declara su `go.mod`, porque el proxy de egress deniega `proxy.golang.org`, `golang.org/x`, `gopkg.in` y `go.uber.org`. El motor de reglas -`rules/`, `maps/`, `client/`- sale del clon del SHA, sin espejo ni parche |
+| 48 partidas generadas con `scripts/gen-replays.sh` y reproducidas por el test diferencial | 2026-09-17 | 949 turnos y 2788 estados de serpiente sin divergencia; cobertura de las seis causas de eliminacion |
 
 ## S-03 Pendiente de verificar {#s-03}
 
 - Referencia de API en `docs.battlesnake.com`: nombre y unidad exactos del campo de
   latencia que exige la DoD de la fase 7 (ver docs/rules-parametros.md#r-99).
+- El JSONL **tampoco expone la causa de eliminacion**, solo que la serpiente desaparece:
+  los valores de `Elimination` del motor propio no son verificables contra el arbitro.
+  El diferencial comprueba **quien** muere y **en que turno**, no **por que**.
 - Que ruta de hazards ejecuta realmente el CLI con `-g royale -m royale`: el stage del
   pipeline y el hook del mapa calculan lo mismo, pero solo se ha verificado leyendo el
   codigo, no instrumentando una partida.
