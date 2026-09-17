@@ -73,7 +73,7 @@ public:
     /// Baraja de Fisher-Yates hacia atras, determinista y sin dependencias de la STL.
     template <typename T> constexpr void shuffle(T* data, std::size_t count) noexcept {
         for (std::size_t i = count; i > 1; --i) {
-            const std::size_t j = static_cast<std::size_t>(bounded(i));
+            const auto j = static_cast<std::size_t>(bounded(i));
             T tmp = data[i - 1];
             data[i - 1] = data[j];
             data[j] = tmp;
