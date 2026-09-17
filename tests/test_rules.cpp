@@ -2,9 +2,9 @@
 /// Cada caso cita el anchor de docs/rules.md que verifica. Los empates de 2, 3 y 4
 /// serpientes son obligatorios: el motor oficial no asigna orden entre ellas.
 
+#include <algorithm>
 #include <array>
 #include <span>
-#include <stdexcept>
 #include <vector>
 
 #include <engine/rules.hpp>
@@ -421,6 +421,122 @@ TEST_CASE("refresh_occupancy: el bitboard de ocupacion casa con los cuerpos vivo
     REQUIRE(s.bodies.count() == 3);
 }
 
-TEST_CASE("royale_hazards sigue pendiente de la fase 1", "[.pending][rules][r-09]") {
-    REQUIRE_THROWS_AS((engine::royale_hazards<11, 11>(1, 30, 25)), std::logic_error);
+/// Rectangulo sin hazard de un bitboard, o `ok=false` si el complemento no lo es.
+template <int W, int H> struct RectanguloLibre {
+    bool ok{};
+    int min_x{W};
+    int max_x{-1};
+    int min_y{H};
+    int max_y{-1};
+
+    [[nodiscard]] int bordes_movidos() const {
+        return min_x + (W - 1 - max_x) + min_y + (H - 1 - max_y);
+    }
+};
+
+template <int W, int H>
+[[nodiscard]] RectanguloLibre<W, H> rectangulo_libre(const engine::Bitboard<W, H>& hazards) {
+    RectanguloLibre<W, H> r;
+    for (int x = 0; x < W; ++x) {
+        for (int y = 0; y < H; ++y) {
+            if (!hazards.test(engine::Bitboard<W, H>::index_of(x, y))) {
+                r.min_x = std::min(r.min_x, x);
+                r.max_x = std::max(r.max_x, x);
+                r.min_y = std::min(r.min_y, y);
+                r.max_y = std::max(r.max_y, y);
+            }
+        }
+    }
+    if (r.max_x < 0) {
+        r.ok = true;
+        return r;
+    }
+    for (int x = 0; x < W; ++x) {
+        for (int y = 0; y < H; ++y) {
+            const bool dentro = x >= r.min_x && x <= r.max_x && y >= r.min_y && y <= r.max_y;
+            if (dentro == hazards.test(engine::Bitboard<W, H>::index_of(x, y))) {
+                return r;
+            }
+        }
+    }
+    r.ok = true;
+    return r;
+}
+
+TEST_CASE("royale_hazards: nada antes del primer shrink", "[rules][r-09]") {
+    // `turn < shrinkEveryNTurns` no genera ningun hazard. ver docs/rules.md#r-09
+    for (int turno = 0; turno < 25; ++turno) {
+        REQUIRE(engine::royale_hazards<11, 11>(12345, turno, 25).count() == 0);
+    }
+    REQUIRE(engine::royale_hazards<11, 11>(12345, 25, 25).count() > 0);
+}
+
+TEST_CASE("royale_hazards: complemento de un rectangulo con un borde por shrink", "[rules][r-09]") {
+    // Es la misma propiedad que el test diferencial comprueba sobre los hazards reales
+    // del arbitro: si nuestro generador la cumple y los logs tambien, el modelo casa
+    // aunque la secuencia de lados no sea la suya.
+    // ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0093
+    for (std::uint64_t semilla = 1; semilla <= 50; ++semilla) {
+        for (int cadencia : {1, 2, 5, 25}) {
+            for (int turno = 0; turno <= 40; ++turno) {
+                const auto hazards = engine::royale_hazards<11, 11>(semilla, turno, cadencia);
+                const auto r = rectangulo_libre<11, 11>(hazards);
+                INFO("semilla " << semilla << " cadencia " << cadencia << " turno " << turno);
+                REQUIRE(r.ok);
+                if (turno < cadencia) {
+                    REQUIRE(hazards.count() == 0);
+                    continue;
+                }
+                const int shrinks = turno / cadencia;
+                if (r.max_x >= 0) {
+                    REQUIRE(r.bordes_movidos() == shrinks);
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("royale_hazards: el rectangulo solo encoge", "[rules][r-09]") {
+    // Monotono y anidado: lo que fue hazard lo sigue siendo. ver docs/rules.md#r-09
+    for (std::uint64_t semilla = 1; semilla <= 20; ++semilla) {
+        auto previos = engine::royale_hazards<11, 11>(semilla, 0, 3);
+        for (int turno = 1; turno <= 60; ++turno) {
+            const auto ahora = engine::royale_hazards<11, 11>(semilla, turno, 3);
+            INFO("semilla " << semilla << " turno " << turno);
+            // `previos sin ahora` vacio equivale a previos incluido en ahora.
+            REQUIRE(previos.without(ahora).count() == 0);
+            previos = ahora;
+        }
+    }
+}
+
+TEST_CASE("royale_hazards: determinista y sin estado global", "[rules][r-09][inv-08]") {
+    const auto a = engine::royale_hazards<19, 19>(777, 31, 7);
+    (void)engine::royale_hazards<19, 19>(999, 100, 3);
+    const auto b = engine::royale_hazards<19, 19>(777, 31, 7);
+    REQUIRE(a == b);
+
+    // Semillas distintas dan schedules distintos: si no, el parametro sobra.
+    int distintos = 0;
+    for (std::uint64_t semilla = 1; semilla <= 20; ++semilla) {
+        if (!(engine::royale_hazards<11, 11>(semilla, 20, 5) ==
+              engine::royale_hazards<11, 11>(semilla + 100, 20, 5))) {
+            ++distintos;
+        }
+    }
+    REQUIRE(distintos >= 15);
+}
+
+TEST_CASE("royale_hazards: cadencia invalida devuelve el tablero limpio", "[rules][r-09]") {
+    // El motor oficial devuelve error y aborta la partida (`maps/royale.go:50-52`);
+    // aqui no hay a quien devolverlo, asi que se responde sin hazards y quien llama
+    // valida el parametro. ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091
+    REQUIRE(engine::royale_hazards<11, 11>(1, 50, 0).count() == 0);
+    REQUIRE(engine::royale_hazards<11, 11>(1, 50, -3).count() == 0);
+}
+
+TEST_CASE("royale_hazards: el tablero entero puede acabar en hazard", "[rules][r-09]") {
+    // Con mas shrinks que lados el rectangulo se invierte y no queda nada seguro.
+    const auto hazards = engine::royale_hazards<7, 7>(3, 400, 1);
+    REQUIRE(hazards.count() == 7 * 7);
 }

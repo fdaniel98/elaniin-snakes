@@ -10,6 +10,7 @@
 /// ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101
 
 #include <array>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -35,7 +36,11 @@ struct CasoDeCorpus {
 /// por tanto que instanciacion del motor hay que usar.
 [[nodiscard]] std::vector<CasoDeCorpus> corpus() {
     std::vector<CasoDeCorpus> casos;
-    const fs::path raiz{BSR_CORPUS_DIR};
+    // Por defecto, el corpus commiteado. La corrida de >=500 partidas de la DoD apunta
+    // aqui con BSR_CORPUS_DIR sin recompilar.
+    // ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101
+    const char* desde_entorno = std::getenv("BSR_CORPUS_DIR");
+    const fs::path raiz{desde_entorno != nullptr ? desde_entorno : BSR_CORPUS_DIR};
     const fs::path indice = raiz / "index.json";
     if (!fs::exists(indice)) {
         return casos;
@@ -147,4 +152,61 @@ TEST_CASE("diferencial: replay del corpus sin divergencia", "[differential]") {
     // casos que mas facilmente se quedan fuera. ver docs/rules.md#r-08 y docs/rules.md#r-12
     REQUIRE(empates >= 1);
     REQUIRE(simultaneas >= 1);
+}
+
+TEST_CASE("diferencial: los hazards del arbitro son el complemento de un rectangulo",
+          "[differential][r-09]") {
+    // No se compara el schedule -nuestra secuencia de lados no es la del arbitro
+    // (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091)-, sino la propiedad que si
+    // es derivable del log: complemento de un rectangulo, anidado y monotono, con tantos
+    // bordes movidos como shrinks lleva la partida. ver docs/rules.md#r-09
+    int turnos_con_hazard = 0;
+
+    for (const auto& caso : corpus()) {
+        const auto partida = replay::cargar(caso.jsonl, caso.moves);
+        REQUIRE(partida);
+        if (partida->cabecera.value("map", std::string{}) != "royale") {
+            continue;
+        }
+        const int cadencia =
+            partida->cabecera["ruleset"]["settings"]["royale"].value("shrinkEveryNTurns", 25);
+        REQUIRE(cadencia >= 1);
+
+        int previos = -1;
+        for (const auto& linea : partida->turnos) {
+            const int turno = linea.value("turn", 0);
+            const int hazards = static_cast<int>(linea["board"]["hazards"].size());
+
+            if (turno < cadencia) {
+                // Antes del primer shrink no hay hazard alguno.
+                INFO(caso.id << " turno " << turno);
+                REQUIRE(hazards == 0);
+                continue;
+            }
+            if (hazards > 0) {
+                ++turnos_con_hazard;
+            }
+            // El rectangulo solo encoge: el numero de casillas en hazard nunca baja.
+            INFO(caso.id << " turno " << turno);
+            REQUIRE(hazards >= previos);
+            previos = hazards;
+
+            const int esperados = turno / cadencia;
+            if (caso.width == 7) {
+                const auto r = replay::rectangulo_de(replay::hazards_de<7, 7>(linea));
+                REQUIRE(r.ok);
+                REQUIRE(r.bordes_movidos(7, 7) == esperados);
+            } else if (caso.width == 19) {
+                const auto r = replay::rectangulo_de(replay::hazards_de<19, 19>(linea));
+                REQUIRE(r.ok);
+                REQUIRE(r.bordes_movidos(19, 19) == esperados);
+            } else {
+                const auto r = replay::rectangulo_de(replay::hazards_de<11, 11>(linea));
+                REQUIRE(r.ok);
+                REQUIRE(r.bordes_movidos(11, 11) == esperados);
+            }
+        }
+    }
+
+    REQUIRE(turnos_con_hazard >= 100);
 }

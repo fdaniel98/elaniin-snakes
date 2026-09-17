@@ -62,14 +62,21 @@ template <int W, int H, int MaxSnakes>
 template <int W, int H, int MaxSnakes>
 [[nodiscard]] PlacementsT<MaxSnakes> placements(const GameState<W, H, MaxSnakes>& s) noexcept;
 
-/// Casillas de hazard de royale tras `turn` turnos, dadas la semilla de la partida y
-/// `shrink_every_n_turns`.
+/// Casillas de hazard de royale en el estado del turno `turn`, dadas la semilla de la
+/// partida y `shrink_every_n_turns`.
 ///
-/// [FASE 1] Solo tiene sentido en la arena in-process: el payload de `/move` no trae
-/// la semilla, asi que en partida real el lado del proximo shrink no es conocible.
-/// ver docs/rules.md#r-09
+/// `turn` es el turno del estado que se quiere, que en el Go es `lastBoardState.Turn + 1`
+/// porque el contador lo incrementa el arbitro despues del hook del mapa
+/// (`maps/royale.go:47`, `cli/commands/play.go:432`). ver docs/rules.md#r-02
+///
+/// Solo tiene sentido en la arena in-process: el payload de `/move` no trae la semilla,
+/// asi que en partida real el lado del proximo shrink no es conocible. Ademas la
+/// secuencia de lados es la del `Rng` del repo y no la del `math/rand` de Go, asi que
+/// coincide la forma del schedule, no que borde toca cada vez.
+/// ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091
 template <int W, int H>
-[[nodiscard]] Bitboard<W, H> royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_turns);
+[[nodiscard]] Bitboard<W, H>
+royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_turns) noexcept;
 
 extern template Direction default_move<7, 7, 4>(const GameState<7, 7, 4>&, SnakeId) noexcept;
 extern template Direction default_move<11, 11, 4>(const GameState<11, 11, 4>&, SnakeId) noexcept;
@@ -91,8 +98,8 @@ extern template PlacementsT<4> placements<7, 7, 4>(const GameState<7, 7, 4>&) no
 extern template PlacementsT<4> placements<11, 11, 4>(const GameState<11, 11, 4>&) noexcept;
 extern template PlacementsT<4> placements<19, 19, 4>(const GameState<19, 19, 4>&) noexcept;
 
-extern template Bitboard<7, 7> royale_hazards<7, 7>(std::uint64_t, int, int);
-extern template Bitboard<11, 11> royale_hazards<11, 11>(std::uint64_t, int, int);
-extern template Bitboard<19, 19> royale_hazards<19, 19>(std::uint64_t, int, int);
+extern template Bitboard<7, 7> royale_hazards<7, 7>(std::uint64_t, int, int) noexcept;
+extern template Bitboard<11, 11> royale_hazards<11, 11>(std::uint64_t, int, int) noexcept;
+extern template Bitboard<19, 19> royale_hazards<19, 19>(std::uint64_t, int, int) noexcept;
 
 } // namespace engine

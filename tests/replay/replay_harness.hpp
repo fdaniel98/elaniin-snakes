@@ -182,6 +182,76 @@ movimiento_aceptado(const RespuestaCruda& respuesta) {
     return ids;
 }
 
+/// Rectangulo no-hazard de un tablero, o `ok=false` si las casillas sin hazard no
+/// forman un rectangulo.
+///
+/// Es la propiedad del mapa royale que SI se puede comprobar contra un log oficial sin
+/// reproducir el `math/rand` de Go: el hazard es el complemento de un rectangulo, y el
+/// numero de bordes movidos respecto al tablero entero es `turn / shrinkEveryNTurns`.
+/// ver docs/rules.md#r-09 y docs/decisions/ADR-0010-rng-del-shrink.md#d-0093
+struct Rectangulo {
+    bool ok{};
+    int min_x{};
+    int max_x{};
+    int min_y{};
+    int max_y{};
+
+    [[nodiscard]] int bordes_movidos(int ancho, int alto) const {
+        return min_x + (ancho - 1 - max_x) + min_y + (alto - 1 - max_y);
+    }
+};
+
+template <int W, int H>
+[[nodiscard]] Rectangulo rectangulo_de(const engine::Bitboard<W, H>& hazards) {
+    Rectangulo r;
+    int min_x = W;
+    int max_x = -1;
+    int min_y = H;
+    int max_y = -1;
+    for (int x = 0; x < W; ++x) {
+        for (int y = 0; y < H; ++y) {
+            if (!hazards.test(engine::Bitboard<W, H>::index_of(x, y))) {
+                min_x = std::min(min_x, x);
+                max_x = std::max(max_x, x);
+                min_y = std::min(min_y, y);
+                max_y = std::max(max_y, y);
+            }
+        }
+    }
+    if (max_x < 0) {
+        // Tablero entero en hazard: rectangulo vacio, que el Go tambien admite.
+        r.ok = true;
+        r.min_x = W;
+        r.max_x = -1;
+        r.min_y = H;
+        r.max_y = -1;
+        return r;
+    }
+    for (int x = 0; x < W; ++x) {
+        for (int y = 0; y < H; ++y) {
+            const bool dentro = x >= min_x && x <= max_x && y >= min_y && y <= max_y;
+            if (dentro == hazards.test(engine::Bitboard<W, H>::index_of(x, y))) {
+                return r; // ok sigue en false: el complemento no es un rectangulo
+            }
+        }
+    }
+    r.ok = true;
+    r.min_x = min_x;
+    r.max_x = max_x;
+    r.min_y = min_y;
+    r.max_y = max_y;
+    return r;
+}
+
+/// Hazards de una linea del JSONL, como bitboard.
+template <int W, int H> [[nodiscard]] engine::Bitboard<W, H> hazards_de(const json& turno) {
+    engine::Bitboard<W, H> board;
+    for (const auto& punto : turno["board"]["hazards"]) {
+        board.set(engine::Bitboard<W, H>::index_of(punto.value("x", 0), punto.value("y", 0)));
+    }
+    return board;
+}
+
 template <int W, int H, int MaxSnakes>
 [[nodiscard]] bool carga_estado(const json& turno,
                                 const std::vector<std::string>& ids,

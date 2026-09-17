@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <stdexcept>
 
+#include <engine/rng.hpp>
 #include <engine/rules.hpp>
 
 namespace engine {
@@ -338,14 +338,60 @@ PlacementsT<MaxSnakes> placements(const GameState<W, H, MaxSnakes>& s) noexcept 
 }
 
 template <int W, int H>
-Bitboard<W, H> royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_turns) {
-    (void)seed;
-    (void)turn;
-    (void)shrink_every_n_turns;
-    // El schedule de shrink solo es reproducible dentro de la arena in-process, porque
-    // depende del `math/rand` de Go y la semilla no viaja en el payload de /move.
-    // ver docs/rules.md#r-09 y docs/rules-parametros.md#r-99
-    throw std::logic_error("no implementado: fase 1");
+Bitboard<W, H> royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_turns) noexcept {
+    Bitboard<W, H> hazards;
+
+    // El motor oficial devuelve error con una cadencia menor que 1 y el pipeline aborta
+    // la partida (`maps/royale.go:50-52`). Aqui no hay a quien devolver el error: se
+    // responde el tablero sin hazards y la arena valida el parametro antes de llamar.
+    if (shrink_every_n_turns < 1) {
+        return hazards;
+    }
+    // Antes del primer shrink no hay hazard alguno. ver docs/rules.md#r-09
+    if (turn < shrink_every_n_turns) {
+        return hazards;
+    }
+
+    // Cada turno se regenera desde cero desde la semilla de la partida, nunca
+    // incrementalmente: por eso el generador se construye aqui y no se conserva.
+    // El `Rng` es el del repo, no el `math/rand` de Go, asi que la cadencia y la forma
+    // son las oficiales pero la secuencia de lados es nuestra.
+    // ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091
+    Rng rng(seed);
+
+    const int num_shrinks = turn / shrink_every_n_turns;
+    int min_x = 0;
+    int max_x = W - 1;
+    int min_y = 0;
+    int max_y = H - 1;
+    for (int i = 0; i < num_shrinks; ++i) {
+        // Un solo borde por shrink, con repeticion. ver docs/rules.md#r-09
+        switch (rng.bounded(4)) {
+            case 0:
+                ++min_x;
+                break;
+            case 1:
+                --max_x;
+                break;
+            case 2:
+                ++min_y;
+                break;
+            default:
+                --max_y;
+                break;
+        }
+    }
+
+    // El hazard es el complemento del rectangulo, que puede quedar vacio si se encogio
+    // mas veces que ancho tiene el tablero.
+    for (int x = 0; x < W; ++x) {
+        for (int y = 0; y < H; ++y) {
+            if (x < min_x || x > max_x || y < min_y || y > max_y) {
+                hazards.set(Bitboard<W, H>::index_of(x, y));
+            }
+        }
+    }
+    return hazards;
 }
 
 template Direction default_move<7, 7, 4>(const GameState<7, 7, 4>&, SnakeId) noexcept;
@@ -368,8 +414,8 @@ template PlacementsT<4> placements<7, 7, 4>(const GameState<7, 7, 4>&) noexcept;
 template PlacementsT<4> placements<11, 11, 4>(const GameState<11, 11, 4>&) noexcept;
 template PlacementsT<4> placements<19, 19, 4>(const GameState<19, 19, 4>&) noexcept;
 
-template Bitboard<7, 7> royale_hazards<7, 7>(std::uint64_t, int, int);
-template Bitboard<11, 11> royale_hazards<11, 11>(std::uint64_t, int, int);
-template Bitboard<19, 19> royale_hazards<19, 19>(std::uint64_t, int, int);
+template Bitboard<7, 7> royale_hazards<7, 7>(std::uint64_t, int, int) noexcept;
+template Bitboard<11, 11> royale_hazards<11, 11>(std::uint64_t, int, int) noexcept;
+template Bitboard<19, 19> royale_hazards<19, 19>(std::uint64_t, int, int) noexcept;
 
 } // namespace engine
