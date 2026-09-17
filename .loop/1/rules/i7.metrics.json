@@ -1,0 +1,12 @@
+{
+  "diverge": 5,
+  "sin_verificar": 1,
+  "ok": 16,
+  "fixtures_pass": 15,
+  "fixtures_total": 15,
+  "auditor": "rules-auditor (subagente independiente)",
+  "diff_auditado": "84be82b..HEAD",
+  "diverge_reparados": 5,
+  "diverge_descartados": 0,
+  "sin_verificar_reparados": 1
+}

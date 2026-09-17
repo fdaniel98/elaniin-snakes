@@ -1,7 +1,7 @@
 {
   "deliverable": "engine/src/rules.cpp",
   "phase": 1,
-  "status": "CLOSED",
+  "status": "BLOQUEADO",
   "thresholds_sha256": "575427a81771ee2d41c2f33a5639873e8b815b26ff9fc918f2f5d0963bb46a31",
   "iterations": [
     {
@@ -281,6 +281,164 @@
         "./build/debug/bin/unit_tests [deadline]",
         "./scripts/mutants.sh"
       ]
+    },
+    {
+      "n": 7,
+      "class": "correctness",
+      "agent": "rules-auditor",
+      "commit_before": "4d44cf36c3d364bcf7c1dc6b6e9d73c66e5772c5",
+      "commit_after": "ab0ccf4ae23058b6a11a9c30947f730470182de9",
+      "cmd": "subagente rules-auditor sobre el diff 84be82b..HEAD contra rules@87e094e2",
+      "exit_code": 0,
+      "started_at": "2026-09-17T09:30:00Z",
+      "duration_ms": 339653,
+      "log_sha256": "c24d68488686a48fac16bb85ea300de81b3ac1b961e6ff2aca07e7157106a946",
+      "payload_sha256": "0030ea94b248570c4c41d47849f3440e14985a093d77e44eb550a6599f9a86e1",
+      "metrics": {
+        "diverge": 5,
+        "sin_verificar": 1,
+        "ok": 16,
+        "fixtures_pass": 15,
+        "fixtures_total": 15,
+        "auditor": "rules-auditor (subagente independiente)",
+        "diff_auditado": "84be82b..HEAD",
+        "diverge_reparados": 5,
+        "diverge_descartados": 0,
+        "sin_verificar_reparados": 1
+      },
+      "checks_added": [
+        "tests/test_differential.cpp::replay: el nombre del campo move no distingue mayusculas, el valor si"
+      ],
+      "findings": [
+        {
+          "id": "F-109",
+          "sev": "mayor",
+          "cite": "tests/replay/replay_harness.hpp",
+          "desc": "el replay rechazaba {\"Move\":\"left\"}, que el arbitro si aplica porque encoding/json casa el nombre del campo sin distinguir mayusculas (client/models.go:101-104). Inalcanzable con el corpus actual, pero rompe la afirmacion de que el arnes reproduce getSnakeUpdate",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-110",
+          "sev": "mayor",
+          "cite": "engine/include/engine/rules.hpp",
+          "desc": "el contrato de apply() decia 'orden de fases identico al del pipeline oficial' y enumeraba seis de siete; la septima (royale.go:14, spawn de hazards) queda fuera a proposito y nada lo decia",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-111",
+          "sev": "mayor",
+          "cite": "engine/src/royale_map.cpp",
+          "desc": "el comentario prometia que la arena valida la cadencia antes de llamar; arena/ no existe todavia, asi que es una precondicion sin comprobar (maps/royale.go:50-52)",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-112",
+          "sev": "menor",
+          "cite": "docs/rules.md",
+          "desc": "R-09 llamaba 'identico' a royale.go:17-62 frente a maps/royale.go: difieren en la guarda IsInitialization y en el orden del ClearHazards",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-113",
+          "sev": "menor",
+          "cite": "engine/src/royale_map.cpp",
+          "desc": "con semilla 0 el motor oficial cae a su RNG global no reproducible (settings.go:47-52) y el nuestro es determinista; la divergencia es deliberada pero no estaba escrita",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-114",
+          "sev": "menor",
+          "cite": "docs/SOURCES.md",
+          "desc": "la corrida de 500 partidas que sostiene la DoD no estaba registrada en ningun doc canonical: desde el arbol solo se veian las 48 commiteadas",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "class": "context",
+      "agent": "context-curator",
+      "commit_before": "ab0ccf4ae23058b6a11a9c30947f730470182de9",
+      "commit_after": "ab0ccf4ae23058b6a11a9c30947f730470182de9",
+      "cmd": "subagente context-curator sobre el diff 84be82b..HEAD",
+      "exit_code": 0,
+      "started_at": "2026-09-17T09:40:00Z",
+      "duration_ms": 390561,
+      "log_sha256": "d23b392820c9726c369e4c37b1a3139c4bb1b844bae69da23ffb5f22e5e84134",
+      "payload_sha256": "ef93a03435d279341eccd0f9a097401481eb103845aed9a59b6742294aa43dc5",
+      "metrics": {
+        "frontmatter_invalid": 0,
+        "broken_anchors": 0,
+        "orphan_anchors": 77,
+        "duplicated_facts": 4,
+        "size_bytes_mismatch": 0,
+        "last_verified_max_age_days": 0,
+        "auditor": "context-curator (subagente independiente)",
+        "hallazgos_mayores": 3,
+        "hallazgos_menores": 10,
+        "reparados": 13,
+        "auditado_sobre": "4d44cf36c3d364bcf7c1dc6b6e9d73c66e5772c5"
+      },
+      "checks_added": [
+        "docs/SOURCES.md#s-02: fila de la corrida de 500 partidas con su comando"
+      ],
+      "findings": [
+        {
+          "id": "F-115",
+          "sev": "mayor",
+          "cite": "docs/invariants.md",
+          "desc": "INV-08 seguia exigiendo un Rng& explicito y la excepcion de royale_hazards vivia solo en el ADR",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-116",
+          "sev": "mayor",
+          "cite": "docs/decisions/ADR-0011-corpus-del-diferencial.md",
+          "desc": "citaba rules.md#r-12 para un hecho que R-12 no afirmaba (que el JSONL no trae los movimientos); el anchor resolvia, asi que el lint no lo veia",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-117",
+          "sev": "menor",
+          "cite": "docs/decisions/ADR-0010-rng-del-shrink.md",
+          "desc": "tres hechos de R-09 reenunciados en vez de enlazados; lint_dupes excluye docs/decisions por diseño y no los mide",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-118",
+          "sev": "menor",
+          "cite": "docs/context-packs/implementar-regla.md",
+          "desc": "tras el split, el pack de reglas no nombraba engine/src/royale_map.cpp: una tarea sobre el shrink cargaba el archivo equivocado",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        },
+        {
+          "id": "F-119",
+          "sev": "menor",
+          "cite": "docs/performance.md",
+          "desc": "P-05 y P-06 quedaron delante de P-04, y citas fuera de la sintaxis de docs/INDEX.md#i-03 que el lint no cuenta",
+          "estado": "REPARADO",
+          "fixed_in": "ab0ccf4ae23058b6a11a9c30947f730470182de9"
+        }
+      ],
+      "nota": "i7 e i8 corrieron EN PARALELO sobre el mismo arbol (el commit_before de i7) y sus arreglos entraron juntos en ab0ccf4ae23058b6a11a9c30947f730470182de9. El ledger es lineal y no sabe expresar dos auditorias simultaneas: i8 se ancla al commit del arreglo y su metrica auditado_sobre dice sobre que arbol miro de verdad.",
+      "commands_run": [
+        "subagente context-curator sobre el diff 84be82b..HEAD",
+        "./scripts/lint-docs.sh",
+        "./scripts/docs_meta.sh --check",
+        "./scripts/docs_meta.sh --budget",
+        "./scripts/lint_dupes.py --max 0"
+      ]
     }
-  ]
+  ],
+  "blocked_reason": "Techo de 8 iteraciones alcanzado sin cumplir la condicion de cierre. Las dos auditorias independientes del criterio 14 (i7 y i8) encontraron 11 hallazgos reales, todos reparados en ab0ccf4ae23058b6a11a9c30947f730470182de9, pero el cierre exige que las DOS ultimas iteraciones no tengan hallazgos y compartan commit_after, y eso necesita dos rondas limpias mas: i9 y i10, por encima del techo de config/loop.json. Escalado humano segun la regla del techo."
 }

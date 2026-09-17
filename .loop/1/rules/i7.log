@@ -1,0 +1,18 @@
+== i7 correctness: auditoria independiente con el subagente rules-auditor ==
+Criterio 14 de la DoD. El auditor recibio el diff 84be82b..HEAD y el clon del SHA fijado
+en /tmp/rules; NO recibio ningun resumen escrito por quien hizo el trabajo.
+
+Salida del subagente (tabla completa resumida a los veredictos distintos de OK):
+
+| regla | veredicto | detalle |
+|---|---|---|
+| cadencia < 1 en royale_hazards | DIVERGE | el comentario prometia que "la arena valida el parametro antes de llamar"; arena/ es solo README.md, asi que es una precondicion sin comprobar. maps/royale.go:50-52 |
+| semilla 0 | DIVERGE | el Go no re-siembra con seed 0 y cae a su RNG global (settings.go:47-52); el nuestro es determinista y la divergencia no estaba escrita |
+| rules.md#r-09 "identico a royale.go:17-62" | DIVERGE | royale.go:18-20 tiene la guarda IsInitialization y royale.go:21 limpia hazards antes de las guardas, no despues |
+| movimiento_aceptado y el campo move | DIVERGE | encoding/json casa el nombre del campo sin distinguir mayusculas (client/models.go:101-104), asi que el arbitro aplica {"Move":"left"} y el arnes lo descartaba |
+| rules.hpp: "orden de fases identico al del pipeline oficial" | DIVERGE | enumera seis de las siete fases; la septima (spawn de hazards, royale.go:14) no la ejecuta apply() y royale_hazards() no tiene llamante |
+| "verificado contra 500 partidas reales" en STATE.md | SIN_VERIFICAR | el corpus commiteado son 48 partidas; la corrida de 500 no estaba registrada en ningun doc canonical |
+
+diverge=5 sin_verificar=1 ok=16
+
+Todos reparados en ab0ccf4ae23058b6a11a9c30947f730470182de9.

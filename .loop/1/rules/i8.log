@@ -1,0 +1,23 @@
+== i8 context: auditoria independiente con el subagente context-curator ==
+Criterio 14 de la DoD. Mismo diff, sin resumen del autor.
+
+| archivo | problema | severidad |
+|---|---|---|
+| STATE.md | la evidencia de la DoD (500 partidas) no era trazable desde docs/: SOURCES solo registraba 48 | mayor |
+| docs/invariants.md#inv-08 | la excepcion de royale_hazards vivia solo en el ADR; quien lea INV-08 no se entera | mayor |
+| docs/decisions/ADR-0011 | citaba rules.md#r-12 para un hecho que R-12 no afirma (que el JSONL no trae los movimientos) | mayor |
+| STATE.md | el hallazgo de la causa de eliminacion reenunciaba R-12 casi frase por frase | menor |
+| docs/decisions/ADR-0010 | reenunciaba tres hechos de R-09 en vez de enlazarlos | menor |
+| docs/SOURCES.md | la biblioteca estandar de Go se uso como fuente del ADR-0010 sin fila propia | menor |
+| docs/rules.md, SOURCES.md, architecture.md | last_verified sin actualizar pese a reescribirse secciones | menor |
+| .loop/1/rules/i4.metrics.json | last_verified_max_age_days publicaba 0 cuando la edad real era 3 | menor |
+| STATE.md | "55 commits" quedo obsoleto en tres commits | menor |
+| varios .cpp/.hpp | citas fuera de la sintaxis fijada en docs/INDEX.md#i-03: el lint no las cuenta | menor |
+| docs/performance.md | P-05 y P-06 quedaron delante de P-04 | menor |
+| docs/context-packs/implementar-regla.md | el pack no nombraba engine/src/royale_map.cpp tras el split | menor |
+| docs/INDEX.md#i-02 | el presupuesto de arranque queda a 239 bytes del techo | menor |
+
+frontmatter_invalid=0 broken_anchors=0 orphan_anchors=77 duplicated_facts=4 size_bytes_mismatch=0
+
+Todos reparados en ab0ccf4ae23058b6a11a9c30947f730470182de9, salvo el margen del
+presupuesto de arranque, que queda anotado en STATE.

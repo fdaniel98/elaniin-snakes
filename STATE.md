@@ -2,9 +2,10 @@
 
 ## Estado actual
 
-Fase: 1 (Motor) — **pendiente del gate completo en la maquina de referencia**
-Gate: verde en el contenedor salvo el check 10, que necesita registro de imagenes
-Loop: engine/src/rules.cpp → CLOSED (6 it.) en `.loop/1/`
+Fase: 1 (Motor) — **PARCIAL**: la DoD se cumple, el loop no cierra
+Gate: checks 0-8 y 10 en verde en el contenedor (el 10 SKIP, sin registro de imagenes);
+el check 9 falla a proposito porque el ledger esta BLOQUEADO
+Loop: engine/src/rules.cpp → **BLOQUEADO** en el techo de 8 iteraciones, en `.loop/1/`
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -36,6 +37,17 @@ Que entra aqui lo decide el ambito del loop
 conservan en `.loop/0/`; el cerebro no es entregable de esta fase y no lleva ledger nuevo.
 
 ## Bloqueado / pendiente de decision humana
+
+- [ ] **El loop de `engine/src/rules.cpp` ha tocado el techo de 8 iteraciones sin
+      cerrar.** Las dos auditorias del criterio 14 -`rules-auditor` y `context-curator`
+      sobre el diff de la fase, sin leer ningun resumen del autor- encontraron 11
+      hallazgos reales: 5 divergencias contra la fuente y 4 hechos duplicados, entre
+      ellos que el replay rechazaba un movimiento que el arbitro si aplica. Todos estan
+      reparados en `ab0ccf4`, pero cerrar exige dos rondas limpias mas (i9 y i10), y eso
+      pasa del techo de `config/loop.json`. Tres salidas, y la decision es humana:
+      subir el techo con su ADR, aceptar el cierre con una ronda limpia en vez de dos
+      (tambien con ADR, porque relaja la regla), o correr i9 e i10 en la maquina de
+      referencia y volver a mirar.
 
 - [ ] **Correr el gate completo y la autoprueba en la maquina de referencia.** La fase 1
       se construyo en el contenedor de la nube, donde el registro de imagenes esta

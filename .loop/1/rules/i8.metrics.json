@@ -1,0 +1,13 @@
+{
+  "frontmatter_invalid": 0,
+  "broken_anchors": 0,
+  "orphan_anchors": 77,
+  "duplicated_facts": 4,
+  "size_bytes_mismatch": 0,
+  "last_verified_max_age_days": 0,
+  "auditor": "context-curator (subagente independiente)",
+  "hallazgos_mayores": 3,
+  "hallazgos_menores": 10,
+  "reparados": 13,
+  "auditado_sobre": "4d44cf36c3d364bcf7c1dc6b6e9d73c66e5772c5"
+}
