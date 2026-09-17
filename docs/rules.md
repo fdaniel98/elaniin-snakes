@@ -4,7 +4,7 @@ read_when: "antes de tocar engine/src/rules.cpp, de escribir un fixture o de dis
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-14
-size_bytes: 12949
+size_bytes: 13366
 ---
 
 Toda afirmacion de este archivo cita `archivo.go:linea` del SHA del front-matter. Lo no verificable
@@ -212,8 +212,14 @@ En busqueda, el spawn de comida se ignora (ver [invariants.md#inv-09](invariants
 
 El motor Go **no expone placements**. El arbitro solo emite ganador y empate
 (`cli/commands/output.go:18-22,54-58`), y el JSONL **no incluye** `EliminatedOnTurn`
-(`client/models.go:33-45`), aunque el estado interno si lo guarde (`board.go:43`,
-`board.go:595-599`).
+**ni la causa de eliminacion**: la serpiente del log solo lleva id, nombre, latencia,
+salud, cuerpo, cabeza, longitud, grito, escuadra y personalizacion
+(`client/models.go:31-43`), aunque el estado interno si guarde ambas cosas
+(`board.go:43`, `board.go:595-599`).
+
+Consecuencia para el test diferencial: se puede verificar **quien** desaparece y **en que
+turno**, nunca **por que**. Los valores de `Elimination` del motor propio -y con ellos la
+tabla de causas de muerte del Training Room- no tienen contraste externo.
 
 Por tanto: el orden final se deriva del turno en que cada serpiente desaparece del JSONL, y las que
 mueren en el mismo turno **no tienen orden asignado por el motor**. Nuestro `placements()` usa rango

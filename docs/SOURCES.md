@@ -4,7 +4,7 @@ read_when: "antes de afirmar algo sobre una herramienta externa o de re-verifica
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-15
-size_bytes: 4622
+size_bytes: 4367
 ---
 
 Este archivo lleva **fuentes**, no hechos: qué se consultó, en qué SHA, cuándo, y qué
@@ -42,9 +42,6 @@ documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven
 
 - Referencia de API en `docs.battlesnake.com`: nombre y unidad exactos del campo de
   latencia que exige la DoD de la fase 7 (ver docs/rules-parametros.md#r-99).
-- El JSONL **tampoco expone la causa de eliminacion**, solo que la serpiente desaparece:
-  los valores de `Elimination` del motor propio no son verificables contra el arbitro.
-  El diferencial comprueba **quien** muere y **en que turno**, no **por que**.
 - Que ruta de hazards ejecuta realmente el CLI con `-g royale -m royale`: el stage del
   pipeline y el hook del mapa calculan lo mismo, pero solo se ha verificado leyendo el
   codigo, no instrumentando una partida.

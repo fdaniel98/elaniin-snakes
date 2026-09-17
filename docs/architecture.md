@@ -3,7 +3,7 @@ title: Arquitectura y dependencias entre modulos
 read_when: "antes de mover codigo entre modulos o de añadir una dependencia"
 authority: canonical
 last_verified: 2026-09-15
-size_bytes: 3368
+size_bytes: 4108
 ---
 
 ## A-01 Grafo de dependencias {#a-01}
@@ -72,3 +72,13 @@ mas, y solo si el perfil demuestra que el parseo es un cuello de botella real.
 - `third_party/cpp-httplib/`: ver docs/decisions/ADR-0003-dependencias.md.
 - `docs/rules-parametros.md`: `docs/rules.md` se partio en dos para no pasarse del
   presupuesto por tarea (ver docs/INDEX.md#i-02).
+- `engine/src/royale_map.cpp`: los hazards del mapa royale van aparte del pipeline del
+  turno, como en la fuente, que separa `standard.go` de `maps/royale.go`.
+- `tests/replay/`: el test diferencial necesita tres piezas que no son tests -proxy
+  grabador, snake de caos y la cabecera del replay- y ninguna cabe en `arena/`, que es
+  in-process y de la fase 4.
+- `tests/corpus/`: dato de prueba versionado, generado y nunca editado a mano
+  (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101).
+- `scripts/gen-replays.sh` y `scripts/build-referee-mirrored.sh`: generar el corpus exige
+  orquestar al arbitro oficial, y compilarlo donde el proxy de modulos de Go esta
+  bloqueado exige su propio script (ver docs/SOURCES.md#s-02).
