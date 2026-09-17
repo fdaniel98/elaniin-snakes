@@ -1,0 +1,11 @@
+{"body":"{\"move\":\"down\",\"shout\":\"\"}","elapsed_ms":0.529,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"16b71048-3bd6-47c3-b019-47d0991d3574","status":200,"timeout":500,"turn":0}
+{"body":"{\"move\": \"down\", \"shout\": \"\"}","elapsed_ms":0.787,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"80523cf1-599a-4fe6-970d-8af43df749f5","status":200,"timeout":500,"turn":0}
+{"body":"{\"move\":\"left\",\"shout\":\"\"}","elapsed_ms":0.506,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"16b71048-3bd6-47c3-b019-47d0991d3574","status":200,"timeout":500,"turn":1}
+{"body":"{\"move\": \"right\", \"shout\": \"\"}","elapsed_ms":0.757,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"80523cf1-599a-4fe6-970d-8af43df749f5","status":200,"timeout":500,"turn":1}
+{"body":"{\"move\":\"up\",\"shout\":\"\"}","elapsed_ms":0.436,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"16b71048-3bd6-47c3-b019-47d0991d3574","status":200,"timeout":500,"turn":2}
+{"body":"{no es json","elapsed_ms":0.717,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"80523cf1-599a-4fe6-970d-8af43df749f5","status":200,"timeout":500,"turn":2}
+{"body":"{\"move\": \"up\", \"shout\": \"\"}","elapsed_ms":0.717,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"80523cf1-599a-4fe6-970d-8af43df749f5","status":200,"timeout":500,"turn":3}
+{"body":"{\"move\":\"up\",\"shout\":\"\"}","elapsed_ms":0.795,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"16b71048-3bd6-47c3-b019-47d0991d3574","status":200,"timeout":500,"turn":3}
+{"body":"{\"move\":\"left\",\"shout\":\"\"}","elapsed_ms":0.424,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"16b71048-3bd6-47c3-b019-47d0991d3574","status":200,"timeout":500,"turn":4}
+{"body":"{\"move\": \"down\", \"shout\": \"\"}","elapsed_ms":1.108,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"80523cf1-599a-4fe6-970d-8af43df749f5","status":200,"timeout":500,"turn":4}
+{"body":"{\"move\":\"up\",\"shout\":\"\"}","elapsed_ms":0.545,"game":"52632b3a-2d4d-4589-9ba6-6fc5c177801f","snake":"16b71048-3bd6-47c3-b019-47d0991d3574","status":200,"timeout":500,"turn":5}

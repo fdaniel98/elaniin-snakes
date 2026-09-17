@@ -1,0 +1,11 @@
+{"body":"{no es json","elapsed_ms":1.245,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"d3d02cc7-7c85-494a-83b7-286889966f35","status":200,"timeout":500,"turn":0}
+{"body":"{\"move\":\"up\",\"shout\":\"\"}","elapsed_ms":1.079,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"82f7847a-87c4-419c-b73e-9764d1babbf9","status":200,"timeout":500,"turn":0}
+{"body":"{\"move\": \"left\", \"shout\": \"\"}","elapsed_ms":1.955,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"5f5c0405-3e7a-4495-bde2-bb7c7a652bb0","status":200,"timeout":500,"turn":0}
+{"body":"{\"move\": \"right\", \"shout\": \"\"}","elapsed_ms":1.491,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"31e54462-1ddd-4c6f-b6b2-94bfcfd300c0","status":200,"timeout":500,"turn":0}
+{"body":"{\"error\": \"caos\"}","elapsed_ms":1.105,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"31e54462-1ddd-4c6f-b6b2-94bfcfd300c0","status":500,"timeout":500,"turn":1}
+{"body":"{\"move\": \"up\", \"shout\": \"\"}","elapsed_ms":1.107,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"5f5c0405-3e7a-4495-bde2-bb7c7a652bb0","status":200,"timeout":500,"turn":1}
+{"body":"{no es json","elapsed_ms":1.377,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"d3d02cc7-7c85-494a-83b7-286889966f35","status":200,"timeout":500,"turn":1}
+{"body":"{\"move\":\"up\",\"shout\":\"\"}","elapsed_ms":1.338,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"82f7847a-87c4-419c-b73e-9764d1babbf9","status":200,"timeout":500,"turn":1}
+{"body":"{\"move\": \"up\", \"shout\": \"\"}","elapsed_ms":0.637,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"5f5c0405-3e7a-4495-bde2-bb7c7a652bb0","status":200,"timeout":500,"turn":2}
+{"body":"{\"move\": \"right\", \"shout\": \"\"}","elapsed_ms":0.771,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"d3d02cc7-7c85-494a-83b7-286889966f35","status":200,"timeout":500,"turn":2}
+{"body":"{\"move\": \"left\", \"shout\": \"\"}","elapsed_ms":0.757,"game":"b48c3603-55fd-426e-8a9f-2997fa5f8ac8","snake":"d3d02cc7-7c85-494a-83b7-286889966f35","status":200,"timeout":500,"turn":3}

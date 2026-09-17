@@ -12,9 +12,11 @@ add_executable(unit_tests
 )
 
 target_link_libraries(unit_tests PRIVATE engine snake_brain bsr_warnings Catch2::Catch2WithMain)
+target_include_directories(unit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(unit_tests PRIVATE
   BSR_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
   BSR_CONFIG_DIR="${CMAKE_SOURCE_DIR}/snake/config"
+  BSR_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus"
 )
 
 # Los tests [.pending] quedan registrados y visibles, pero no corren por defecto.

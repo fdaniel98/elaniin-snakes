@@ -1,0 +1,16 @@
+{"body":"{\"move\": \"right\", \"shout\": \"\"}","elapsed_ms":1.743,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"c4fa5279-4104-4090-816e-e7909ace925a","status":200,"timeout":500,"turn":0}
+{"body":"{\"move\": \"down\", \"shout\": \"\"}","elapsed_ms":1.533,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"5c4fe5da-6cba-4619-96a1-f9b5bdb5b8d4","status":200,"timeout":500,"turn":0}
+{"body":"{\"move\": \"left\", \"shout\": \"\"}","elapsed_ms":1.661,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"d0fb5309-b788-41e5-9307-564171a2d8f6","status":200,"timeout":500,"turn":0}
+{"body":"{no es json","elapsed_ms":1.127,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"0f7b6ce5-7696-4e10-a074-f5991a07e91e","status":200,"timeout":500,"turn":0}
+{"body":"{\"error\": \"caos\"}","elapsed_ms":0.814,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"5c4fe5da-6cba-4619-96a1-f9b5bdb5b8d4","status":500,"timeout":500,"turn":1}
+{"body":"{\"move\": \"diagonal\"}","elapsed_ms":0.734,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"d0fb5309-b788-41e5-9307-564171a2d8f6","status":200,"timeout":500,"turn":1}
+{"body":"{\"move\": \"down\", \"shout\": \"\"}","elapsed_ms":2.097,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"c4fa5279-4104-4090-816e-e7909ace925a","status":200,"timeout":500,"turn":1}
+{"body":"{\"move\": \"right\", \"shout\": \"\"}","elapsed_ms":1.788,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"0f7b6ce5-7696-4e10-a074-f5991a07e91e","status":200,"timeout":500,"turn":1}
+{"body":"{\"move\": \"diagonal\"}","elapsed_ms":0.953,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"0f7b6ce5-7696-4e10-a074-f5991a07e91e","status":200,"timeout":500,"turn":2}
+{"body":"{\"move\": \"down\", \"shout\": \"\"}","elapsed_ms":1.198,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"c4fa5279-4104-4090-816e-e7909ace925a","status":200,"timeout":500,"turn":2}
+{"body":"{\"move\": \"down\", \"shout\": \"\"}","elapsed_ms":1.114,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"d0fb5309-b788-41e5-9307-564171a2d8f6","status":200,"timeout":500,"turn":2}
+{"body":"{\"move\": \"left\", \"shout\": \"\"}","elapsed_ms":0.914,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"0f7b6ce5-7696-4e10-a074-f5991a07e91e","status":200,"timeout":500,"turn":3}
+{"body":"{\"move\": \"left\", \"shout\": \"\"}","elapsed_ms":1.048,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"c4fa5279-4104-4090-816e-e7909ace925a","status":200,"timeout":500,"turn":3}
+{"body":"{\"move\": \"right\", \"shout\": \"\"}","elapsed_ms":1.087,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"c4fa5279-4104-4090-816e-e7909ace925a","status":200,"timeout":500,"turn":4}
+{"body":"{\"move\": \"down\", \"shout\": \"\"}","elapsed_ms":1.197,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"d0fb5309-b788-41e5-9307-564171a2d8f6","status":200,"timeout":500,"turn":4}
+{"body":"{\"move\": \"diagonal\"}","elapsed_ms":1.026,"game":"008e5f82-b2ba-4a49-89b5-bc240eadf8f7","snake":"d0fb5309-b788-41e5-9307-564171a2d8f6","status":200,"timeout":500,"turn":5}
