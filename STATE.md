@@ -38,41 +38,26 @@ conservan en `.loop/0/`; el cerebro no es entregable de esta fase y no lleva led
 
 ## Bloqueado / pendiente de decision humana
 
-- [ ] **El loop de `engine/src/rules.cpp` ha tocado el techo de 8 iteraciones sin
-      cerrar.** Las dos auditorias del criterio 14 -`rules-auditor` y `context-curator`
-      sobre el diff de la fase, sin leer ningun resumen del autor- encontraron 11
-      hallazgos reales: 5 divergencias contra la fuente y 4 hechos duplicados, entre
-      ellos que el replay rechazaba un movimiento que el arbitro si aplica. Todos estan
-      reparados en `ab0ccf4`, pero cerrar exige dos rondas limpias mas (i9 y i10), y eso
-      pasa del techo de `config/loop.json`. Tres salidas, y la decision es humana:
-      subir el techo con su ADR, aceptar el cierre con una ronda limpia en vez de dos
-      (tambien con ADR, porque relaja la regla), o correr i9 e i10 en la maquina de
-      referencia y volver a mirar.
+- [ ] **El loop toco el techo de 8 iteraciones sin cerrar.** Las auditorias del criterio
+      14 encontraron 11 hallazgos, reparados en `ab0ccf4`; cerrar exige dos rondas
+      limpias mas. El motivo completo, en `blocked_reason` de
+      `.loop/1/rules.ledger.json`. Tres salidas, y la decision es humana: subir el techo
+      con su ADR, aceptar el cierre con una ronda limpia en vez de dos (tambien con ADR,
+      porque relaja la regla), o correr i9 e i10 en la maquina de referencia.
 
-- [ ] **Correr el gate completo y la autoprueba en la maquina de referencia.** La fase 1
-      se construyo en el contenedor de la nube, donde el registro de imagenes esta
-      bloqueado: el check 10 (`docker build` mas contenedor respondiendo) y su veneno no
-      se han ejecutado. En WSL2: `./scripts/gate.sh` y `./scripts/gate-selftest.sh`.
-- [ ] **Publicar la linea base de la fase 1 en la maquina de referencia.** Los numeros de
-      docs/performance.md#p-06 son del contenedor, con la mitad de nucleos: no sustituyen
-      a la tabla canonica ni se comparan con ella. Hace falta `./scripts/bench.sh` en
-      WSL2 para saber si la fase movio el rendimiento.
-- [ ] **El arnes de mutantes mentia, y eso alcanza a la fase 0.** Restaurar con `mv`
-      dejaba la mutacion de una cabecera dentro del binario, asi que los mutantes
-      posteriores a `m3` morian por el anterior. Los ledgers de la fase 0 publicaron
-      ratio 1.0 con esa lista y ese fallo. Esta arreglado desde el commit d877270, pero
-      el numero de la fase 0 sigue publicado: decidir si se re-mide o se anota como
-      medicion invalidada.
+- [ ] **Gate completo y autoprueba en la maquina de referencia.** El contenedor no tiene
+      registro de imagenes, asi que el check 10 y su veneno no se han ejecutado.
+- [ ] **Linea base de la fase 1 en la maquina de referencia:** `./scripts/bench.sh` en
+      WSL2. Lo medido hasta ahora, en ver docs/performance.md#p-06, es de otra maquina.
+- [ ] **El arnes de mutantes mentia y eso alcanza a la fase 0:** los ledgers de la fase 0
+      publicaron ratio 1.0 con el fallo dentro (arreglado en `d877270`). Decidir si se
+      re-mide o se anota como medicion invalidada.
 
-## Decisiones humanas del 2026-09-15
+## Decisiones humanas
 
-Cinco, todas con su ADR, que es donde vive el contenido: ajustes del check 9
-(ver docs/decisions/ADR-0005-cierre-del-loop.md#d-0043), duplicados medidos y techo
-(ver docs/decisions/ADR-0006-umbral-de-duplicados.md#d-0052, que tambien recoge el
-rechazo a estrechar los checks 5 y 7), umbrales por clase
-(ver docs/decisions/ADR-0007-umbrales-por-clase.md#d-0061), ambito del loop
-(ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071) y arranque en frio
-(ver docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0081).
+Cada una con su ADR, que es donde vive el contenido: `docs/decisions/`. Las de la fase 1
+son el Rng propio del shrink (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091) y el
+corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101).
 
 ## Hallazgos abiertos del loop
 
