@@ -28,6 +28,11 @@ MUTANTS=(
     "m4|snake/src/brain_v0.cpp|s/if (seg == last \&\& !other.tail_is_stacked()) {/if (seg == last) {/|el cerebro trata toda cola como libre"
     "m5|engine/src/rules.cpp|s/- health_loss_per_turn/- 0/|el hambre deja de restar salud"
     "m6|engine/src/rules.cpp|s/std::clamp(health, 0, max_health)/std::clamp(health, 1, max_health)/|el daño de hazard nunca puede matar"
+    "m7|engine/src/royale_map.cpp|s/if (turn < shrink_every_n_turns) {/if (false) {/|hay hazards antes del primer shrink"
+    "m8|engine/src/royale_map.cpp|s/const int num_shrinks = turn \/ shrink_every_n_turns;/const int num_shrinks = turn \/ shrink_every_n_turns + 1;/|el rectangulo encoge un shrink de mas"
+    "m9|engine/src/royale_map.cpp|s/Rng rng(seed);/Rng rng(1);/|el schedule de shrink ignora la semilla"
+    "m10|engine/src/royale_map.cpp|s/++min_x;/++min_x, ++min_y;/|un shrink mueve dos bordes en vez de uno"
+    "m11|tests\/replay\/replay_harness.hpp|s/if (respuesta.status != 200) {/if (false) {/|el replay acepta respuestas que el arbitro rechazo"
 )
 
 echo "== preparando copia limpia en $WORK =="
