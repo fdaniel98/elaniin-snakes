@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include "replay/replay_harness.hpp"
@@ -209,4 +210,45 @@ TEST_CASE("diferencial: los hazards del arbitro son el complemento de un rectang
     }
 
     REQUIRE(turnos_con_hazard >= 100);
+}
+
+TEST_CASE("diferencial: placements reparte exactamente n(n+1)/2 en partidas reales",
+          "[differential][r-12]") {
+    // El rango compartido promediado es nuestro, no derivado: el arbitro no expone
+    // placements ni el turno de eliminacion (ver docs/rules.md#r-12). Lo que si se
+    // puede exigir es que sea un reparto valido: la suma de los rangos de n serpientes
+    // tiene que ser 1+2+...+n sea cual sea el patron de empates, y ninguna serpiente
+    // viva puede quedar por detras de una muerta.
+    int partidas = 0;
+    int con_empate = 0;
+
+    for (const auto& caso : corpus()) {
+        const auto partida = replay::cargar(caso.jsonl, caso.moves);
+        REQUIRE(partida);
+
+        replay::Rangos rangos;
+        if (caso.width == 7) {
+            rangos = replay::rangos_finales<7, 7, 4>(*partida);
+        } else if (caso.width == 19) {
+            rangos = replay::rangos_finales<19, 19, 4>(*partida);
+        } else {
+            rangos = replay::rangos_finales<11, 11, 4>(*partida);
+        }
+        if (rangos.count == 0) {
+            continue;
+        }
+        ++partidas;
+        con_empate += rangos.hay_empate ? 1 : 0;
+
+        const double esperada =
+            static_cast<double>(rangos.count) * static_cast<double>(rangos.count + 1) / 2.0;
+        INFO(caso.id << ": suma " << rangos.suma << " con " << rangos.count << " serpientes");
+        REQUIRE(rangos.suma == Catch::Approx(esperada));
+        REQUIRE(rangos.minimo >= 1.0F);
+        REQUIRE(rangos.maximo <= static_cast<float>(rangos.count));
+    }
+
+    REQUIRE(partidas >= 25);
+    // Si ninguna partida acaba en empate, el reparto promediado no se ha ejercitado.
+    REQUIRE(con_empate >= 1);
 }

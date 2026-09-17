@@ -326,12 +326,23 @@ template <int W, int H, int MaxSnakes>
     return true;
 }
 
+/// Resumen del reparto final de puestos de una partida reproducida.
+struct Rangos {
+    int count{};
+    double suma{};
+    float minimo{};
+    float maximo{};
+    bool hay_empate{};
+};
+
 /// Reproduce la partida entera desde el turno 0 y devuelve todo lo que no cuadra.
 ///
 /// No se recarga el estado en cada turno: se arranca del turno 0 y se encadena `apply()`,
 /// asi que un error de un turno se arrastra y se ve. Lo unico que se inyecta del log es
 /// la comida y los hazards, porque los genera el RNG de Go.
-template <int W, int H, int MaxSnakes> [[nodiscard]] Resultado reproduce(const Partida& partida) {
+template <int W, int H, int MaxSnakes>
+[[nodiscard]] Resultado reproduce(const Partida& partida,
+                                  engine::GameState<W, H, MaxSnakes>* estado_final = nullptr) {
     using Estado = engine::GameState<W, H, MaxSnakes>;
     using Board = typename Estado::Board;
 
@@ -497,7 +508,49 @@ template <int W, int H, int MaxSnakes> [[nodiscard]] Resultado reproduce(const P
         }
     }
 
+    if (estado_final != nullptr) {
+        *estado_final = estado;
+    }
     return resultado;
+}
+
+/// Reproduce la partida entera y devuelve su estado final, o nullopt si no se pudo
+/// cargar el turno 0.
+template <int W, int H, int MaxSnakes>
+[[nodiscard]] std::optional<engine::GameState<W, H, MaxSnakes>>
+reproduce_estado_final(const Partida& partida) {
+    engine::GameState<W, H, MaxSnakes> estado{};
+    const auto resultado = reproduce<W, H, MaxSnakes>(partida, &estado);
+    if (!resultado.divergencias.empty() && resultado.turnos_comparados == 0) {
+        return std::nullopt;
+    }
+    return estado;
+}
+
+/// Reproduce la partida y devuelve el reparto de puestos del estado final.
+template <int W, int H, int MaxSnakes> [[nodiscard]] Rangos rangos_finales(const Partida& partida) {
+    Rangos salida;
+    const auto estado = reproduce_estado_final<W, H, MaxSnakes>(partida);
+    if (!estado) {
+        return salida;
+    }
+
+    const auto p = engine::placements(*estado);
+    salida.count = p.count;
+    salida.minimo = p.rank[0];
+    salida.maximo = p.rank[0];
+    for (int i = 0; i < p.count; ++i) {
+        const float r = p.rank[static_cast<unsigned>(i)];
+        salida.suma += static_cast<double>(r);
+        salida.minimo = std::min(salida.minimo, r);
+        salida.maximo = std::max(salida.maximo, r);
+        for (int j = i + 1; j < p.count; ++j) {
+            if (r == p.rank[static_cast<unsigned>(j)]) {
+                salida.hay_empate = true;
+            }
+        }
+    }
+    return salida;
 }
 
 } // namespace replay

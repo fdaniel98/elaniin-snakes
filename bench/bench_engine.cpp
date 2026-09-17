@@ -9,8 +9,10 @@
 
 #include <array>
 #include <chrono>
+#include <span>
 #include <vector>
 
+#include <engine/rng.hpp>
 #include <engine/rules.hpp>
 #include <engine/state.hpp>
 
@@ -101,9 +103,57 @@ void bm_decide(benchmark::State& bench) {
 
 } // namespace
 
+/// Un playout completo con la politica que declara docs/performance.md#p-05: eleccion
+/// UNIFORME entre las direcciones de `legal_moves`, 4 serpientes, semilla fija, sin
+/// modelar el spawn de comida (ver docs/invariants.md#inv-09) ni el shrink de hazards.
+/// Cuando no queda ninguna legal se juega `up`, que es lo que hace el fail-safe.
+/// El tope de turnos existe para que la medida no dependa de la suerte de una partida.
+int playout(State state, engine::Rng& rng) {
+    constexpr int tope_de_turnos = 200;
+    int turnos = 0;
+
+    while (turnos < tope_de_turnos && !engine::is_terminal(state)) {
+        std::array<Direction, 4> moves{};
+        for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {
+            const engine::MoveMask mask =
+                engine::legal_moves(state, static_cast<engine::SnakeId>(i));
+            std::array<Direction, 4> candidatas{};
+            int n = 0;
+            for (int d = 0; d < engine::direction_count; ++d) {
+                const auto dir = static_cast<Direction>(d);
+                if (engine::mask_has(mask, dir)) {
+                    candidatas[static_cast<unsigned>(n++)] = dir;
+                }
+            }
+            moves[static_cast<unsigned>(i)] =
+                n > 0
+                    ? candidatas[static_cast<unsigned>(rng.bounded(static_cast<std::uint64_t>(n)))]
+                    : Direction::up;
+        }
+        engine::apply(state, std::span<const Direction>(moves.data(), state.snake_count));
+        ++turnos;
+    }
+    return turnos;
+}
+
+void bm_playout(benchmark::State& bench) {
+    const State base = midgame();
+    engine::Rng rng(20260917);
+    int turnos = 0;
+    for (auto _ : bench) {
+        turnos += playout(base, rng);
+    }
+    // `playouts/s` es el inverso del tiempo por iteracion; `turnos` evita que el
+    // compilador se lleve el trabajo por delante y deja ver cuanto dura un playout.
+    bench.counters["turnos_por_playout"] =
+        benchmark::Counter(static_cast<double>(turnos) / static_cast<double>(bench.iterations()));
+    benchmark::DoNotOptimize(turnos);
+}
+
 BENCHMARK(bm_apply);
 BENCHMARK(bm_legal_moves);
 BENCHMARK(bm_copy_state);
 BENCHMARK(bm_decide);
+BENCHMARK(bm_playout);
 
 BENCHMARK_MAIN();
