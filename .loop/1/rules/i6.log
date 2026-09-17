@@ -1,0 +1,17 @@
+== i6 robustness (repeticion tras el blocker de i2) ==
+commit verificado: 7607427
+-- ctest debug (ASan + UBSan) --
+100% tests passed, 0 tests failed out of 78
+
+Total Test time (real) =   2.96 sec
+-- fuzz de apply y del cerebro --
+All tests passed (241350 assertions in 2 test cases)
+
+-- fail-safe, cuatro escalones --
+All tests passed (16 assertions in 1 test case)
+
+-- deadline artificial de 5 ms --
+All tests passed (45 assertions in 1 test case)
+
+-- mutantes --
+mutantes=11 validos=11 muertos=11 patrones_rotos=0 ratio=1.0000

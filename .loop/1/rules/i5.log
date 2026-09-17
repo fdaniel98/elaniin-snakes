@@ -1,0 +1,17 @@
+== i5 correctness (repeticion tras el blocker de i2) ==
+commit verificado: 7607427
+-- replay del corpus commiteado --
+All tests passed (2471 assertions in 5 test cases)
+
+-- replay de las 500 partidas de la DoD --
+All tests passed (27041 assertions in 5 test cases)
+
+-- reglas y fixtures --
+All tests passed (257806 assertions in 27 test cases)
+
+All tests passed (97 assertions in 3 test cases)
+
+-- suite completa en release --
+100% tests passed, 0 tests failed out of 78
+
+Total Test time (real) =   0.45 sec

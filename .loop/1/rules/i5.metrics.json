@@ -1,0 +1,24 @@
+{
+  "partidas_corpus": 48,
+  "partidas_dod": 500,
+  "turnos_comparados": 10387,
+  "serpientes_comparadas": 29921,
+  "movimientos_por_defecto": 489,
+  "causas_cubiertas": {
+    "hambre": 41,
+    "pared": 487,
+    "propia": 604,
+    "rival": 15,
+    "cabeza": 120,
+    "hazard": 437
+  },
+  "diverge": 0,
+  "sin_verificar": 0,
+  "fixtures_pass": 15,
+  "fixtures_total": 15,
+  "reverifica": "i1",
+  "commit_verificado": "7607427a64c95ce9428c005970c14f1ac9b57935",
+  "tests_totales_release": 78,
+  "aserciones_reglas": 257806,
+  "aserciones_diferencial_dod": 27041
+}

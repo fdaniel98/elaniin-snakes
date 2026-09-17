@@ -1,0 +1,286 @@
+{
+  "deliverable": "engine/src/rules.cpp",
+  "phase": 1,
+  "status": "CLOSED",
+  "thresholds_sha256": "575427a81771ee2d41c2f33a5639873e8b815b26ff9fc918f2f5d0963bb46a31",
+  "iterations": [
+    {
+      "n": 1,
+      "class": "correctness",
+      "agent": "rules-auditor",
+      "commit_before": "84be82b190a345a731cd6183632f5c46970e5528",
+      "commit_after": "9dc63ed32e93fbc757520f0065d13f480e960bc2",
+      "cmd": "./scripts/gen-replays.sh --games 500 && unit_tests [differential]",
+      "exit_code": 0,
+      "started_at": "2026-09-17T06:40:00Z",
+      "duration_ms": 5820000,
+      "log_sha256": "27c3c7928b862d9d2ec0a85e1c5053a4820bfbe87d40851d98839b6dd3fb1cbe",
+      "payload_sha256": "83b45c4bbce36fb29115686bda7c4fd0a0a833cbe86d74cd0df5649a36bff4f8",
+      "metrics": {
+        "partidas_corpus": 48,
+        "partidas_dod": 500,
+        "turnos_comparados": 10387,
+        "serpientes_comparadas": 29921,
+        "movimientos_por_defecto": 489,
+        "causas_cubiertas": {
+          "hambre": 41,
+          "pared": 487,
+          "propia": 604,
+          "rival": 15,
+          "cabeza": 120,
+          "hazard": 437
+        },
+        "diverge": 0,
+        "sin_verificar": 0,
+        "fixtures_pass": 15,
+        "fixtures_total": 15
+      },
+      "checks_added": [
+        "tests/test_differential.cpp::diferencial: replay del corpus sin divergencia",
+        "tests/test_differential.cpp::diferencial: los hazards del arbitro son el complemento de un rectangulo",
+        "tests/test_differential.cpp::diferencial: placements reparte exactamente n(n+1)/2 en partidas reales",
+        "tests/test_rules.cpp::royale_hazards: complemento de un rectangulo con un borde por shrink"
+      ],
+      "findings": [
+        {
+          "id": "F-101",
+          "sev": "blocker",
+          "cite": "tests/corpus",
+          "desc": "el primer corpus de 32 partidas reprodujo 680 turnos limpios cubriendo solo 2 de las 6 causas de eliminacion; un mutante que rompia el empate de longitudes pasaba entero sin que nada lo viera",
+          "estado": "REPARADO",
+          "fixed_in": "b4d6c973481783dcb192be84e91eb52a1d82caee"
+        },
+        {
+          "id": "F-102",
+          "sev": "mayor",
+          "cite": "tests/test_differential.cpp",
+          "desc": "con 12 shrinks sobre 11x11 el rectangulo degenera y el tablero entero queda en hazard; el predicado exigia 12 bordes movidos y media 44 (g00123 turno 36, solo visible en la corrida de 500)",
+          "estado": "REPARADO",
+          "fixed_in": "9dc63ed32e93fbc757520f0065d13f480e960bc2"
+        },
+        {
+          "id": "F-103",
+          "sev": "menor",
+          "cite": "docs/rules.md",
+          "desc": "R-12 no decia que el JSONL tampoco expone la causa de eliminacion, solo el turno",
+          "estado": "REPARADO",
+          "fixed_in": "edf36028e7a48023b48fb4dba17b79e3e757eeea"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "9dc63ed32e93fbc757520f0065d13f480e960bc2",
+      "commit_after": "cb2c4f10ca4d6778921ff2cb23cecf00a4a49570",
+      "cmd": "ctest debug (ASan+UBSan) + [fuzz] + ./scripts/mutants.sh",
+      "exit_code": 0,
+      "started_at": "2026-09-17T07:30:00Z",
+      "duration_ms": 4260000,
+      "log_sha256": "f16c151f7c958bef9f274068544c35d82c5c39aded7e6de70a3902ef672f2dbc",
+      "payload_sha256": "9cefddc4fce3e8e7b7a4279ee2ee59163acd5793e4e3175c204e0b31ad947606",
+      "metrics": {
+        "sanitizer_findings": 0,
+        "fuzz_states": 12000,
+        "illegal_moves": 0,
+        "deadline_violations": 0,
+        "failsafe_levels_covered": 4,
+        "mutants": 11,
+        "mutants_valid": 11,
+        "mutants_killed": 11,
+        "mutants_killed_ratio": 1.0,
+        "mutants_broken_patterns": 0
+      },
+      "checks_added": [
+        "tests/test_rules.cpp::fuzz: apply con direcciones arbitrarias mantiene los invariantes",
+        "tests/test_rules.cpp::royale_hazards: vectores de referencia del schedule propio",
+        "tests/test_rules.cpp::royale_hazards: al llegar justo a la cadencia ya hay hazard",
+        "tests/test_differential.cpp::replay: solo se acepta lo que el arbitro acepta",
+        "tests/fixtures/15-cola-apilada-que-tienta.json"
+      ],
+      "findings": [
+        {
+          "id": "F-104",
+          "sev": "blocker",
+          "cite": "scripts/mutants.sh",
+          "desc": "restaurar con mv devuelve la fecha original al fichero: tras un mutante de cabecera ninja no reconstruye y la mutacion se queda dentro del binario, asi que todo mutante posterior muere por el anterior. Ratio real 0.6364, no 1.0000; invalida tambien el ratio publicado en los ledgers de la fase 0",
+          "estado": "REPARADO",
+          "fixed_in": "d877270d08b71168ac6eaa383aba77d9694d147a"
+        },
+        {
+          "id": "F-105",
+          "sev": "mayor",
+          "cite": "tests/test_rules.cpp",
+          "desc": "ningun test fijaba el schedule propio del shrink: cambiar la semilla de royale_hazards no rompia nada, porque la secuencia no es verificable contra el arbitro por decision propia (ADR-0010). Reparado con vectores de referencia",
+          "estado": "REPARADO",
+          "fixed_in": "d877270d08b71168ac6eaa383aba77d9694d147a"
+        },
+        {
+          "id": "F-106",
+          "sev": "mayor",
+          "cite": "tests/test_differential.cpp",
+          "desc": "ninguna asercion cubria las ramas de rechazo del arbitro: el replay podia aceptar respuestas con status distinto de 200 o mas lentas que el timeout y el corpus de 48 partidas pasaba igual",
+          "estado": "REPARADO",
+          "fixed_in": "d877270d08b71168ac6eaa383aba77d9694d147a"
+        },
+        {
+          "id": "F-107",
+          "sev": "menor",
+          "cite": "snake/src/brain_v0.cpp",
+          "desc": "la condicion tail_is_stacked de blocked_cells es redundante -el segmento length-2 ya marca esa casilla-, asi que su mutante era equivalente y no medi­a nada; queda documentada y el mutante sustituido",
+          "estado": "REPARADO",
+          "fixed_in": "d877270d08b71168ac6eaa383aba77d9694d147a"
+        },
+        {
+          "id": "F-108",
+          "sev": "menor",
+          "cite": "scripts/mutants.sh",
+          "desc": "un mutante que no compila se contaba como muerto, cuando no lo mato ninguna asercion sino el compilador",
+          "estado": "REPARADO",
+          "fixed_in": "d877270d08b71168ac6eaa383aba77d9694d147a"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "class": "perf",
+      "agent": "perf-analyst",
+      "commit_before": "cb2c4f10ca4d6778921ff2cb23cecf00a4a49570",
+      "commit_after": "7607427a64c95ce9428c005970c14f1ac9b57935",
+      "cmd": "./scripts/bench.sh --quick + scripts/smoke.py + [inv-03]",
+      "exit_code": 0,
+      "started_at": "2026-09-17T08:20:00Z",
+      "duration_ms": 900000,
+      "log_sha256": "e3fe3baa3df632929675f2a437a96b266932557fb8e8802c51fd329ff0d21f70",
+      "payload_sha256": "14b7b04899ac78c3e987cc9871201dacfeaba4628a8c686c70647c4466b31aa5",
+      "metrics": {
+        "fixtures": 15,
+        "requests": 300,
+        "p50_move_ms": 0.4,
+        "p99_move_ms": 0.66,
+        "max_move_ms": 2.1,
+        "cold_start_ms": 2.82,
+        "timeouts": 0,
+        "illegal_moves": 0,
+        "hot_path_allocs": 0,
+        "apply_per_second": 5423406,
+        "legal_moves_per_second": 18071369,
+        "playouts_per_second": 80614,
+        "turnos_por_playout": 31.9,
+        "decide_per_second": 1175752,
+        "copy_state_per_second": 88435769
+      },
+      "checks_added": [
+        "bench/bench_engine.cpp::bm_playout",
+        "docs/performance.md#p-05 (politica de playout declarada)"
+      ],
+      "findings": []
+    },
+    {
+      "n": 4,
+      "class": "context",
+      "agent": "context-curator",
+      "commit_before": "7607427a64c95ce9428c005970c14f1ac9b57935",
+      "commit_after": "7607427a64c95ce9428c005970c14f1ac9b57935",
+      "cmd": "./scripts/lint-docs.sh",
+      "exit_code": 0,
+      "started_at": "2026-09-17T08:40:00Z",
+      "duration_ms": 120000,
+      "log_sha256": "997180b4d780303ab6e1e6a28ba00afde22a640b19e5b47dca4e0644c79e8c2e",
+      "payload_sha256": "5c14900add3922a7877ff04e0a79dce4ce3fb54290cfb037854525e45cae89e0",
+      "metrics": {
+        "frontmatter_invalid": 0,
+        "broken_anchors": 0,
+        "size_bytes_mismatch": 0,
+        "duplicated_facts": 0,
+        "last_verified_max_age_days": 0,
+        "citas_resueltas": 224
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        "./scripts/docs_meta.sh --check",
+        "./scripts/docs_meta.sh --budget",
+        "./scripts/lint_dupes.py",
+        "./scripts/sync_state.sh --check",
+        "./scripts/lint-docs.sh"
+      ]
+    },
+    {
+      "n": 5,
+      "class": "correctness",
+      "agent": "rules-auditor",
+      "commit_before": "7607427a64c95ce9428c005970c14f1ac9b57935",
+      "commit_after": "7607427a64c95ce9428c005970c14f1ac9b57935",
+      "cmd": "unit_tests [differential] sobre el corpus commiteado y sobre las 500 partidas",
+      "exit_code": 0,
+      "started_at": "2026-09-17T08:50:00Z",
+      "duration_ms": 600000,
+      "log_sha256": "535bae58185c324c44c670fbc57b5d00767518a1c9e403b6ac9318d6b0f414b2",
+      "payload_sha256": "717c076cfd1e986475824871c185915f14559efd61f89e55cf03661c1a3bd873",
+      "metrics": {
+        "partidas_corpus": 48,
+        "partidas_dod": 500,
+        "turnos_comparados": 10387,
+        "serpientes_comparadas": 29921,
+        "movimientos_por_defecto": 489,
+        "causas_cubiertas": {
+          "hambre": 41,
+          "pared": 487,
+          "propia": 604,
+          "rival": 15,
+          "cabeza": 120,
+          "hazard": 437
+        },
+        "diverge": 0,
+        "sin_verificar": 0,
+        "fixtures_pass": 15,
+        "fixtures_total": 15
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        "./build/release/bin/unit_tests [differential]",
+        "BSR_CORPUS_DIR=/tmp/corpus500 ./build/release/bin/unit_tests [differential]",
+        "./build/release/bin/unit_tests [rules]",
+        "./build/release/bin/unit_tests [fixtures]",
+        "ctest --preset release"
+      ]
+    },
+    {
+      "n": 6,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "7607427a64c95ce9428c005970c14f1ac9b57935",
+      "commit_after": "7607427a64c95ce9428c005970c14f1ac9b57935",
+      "cmd": "ctest debug (ASan+UBSan) + [fuzz] + fail-safe + deadline + mutantes",
+      "exit_code": 0,
+      "started_at": "2026-09-17T09:05:00Z",
+      "duration_ms": 480000,
+      "log_sha256": "6c8cfa2e2f1857611a6e67984ac3ea30339dbb28d0cd3e6b0d2a5697d8b5bdc7",
+      "payload_sha256": "6870efc1784d85aadc00aa67ce454a1cc0887671e5b4397e5068eb1840013d1b",
+      "metrics": {
+        "sanitizer_findings": 0,
+        "fuzz_states": 12000,
+        "illegal_moves": 0,
+        "deadline_violations": 0,
+        "failsafe_levels_covered": 4,
+        "mutants": 11,
+        "mutants_valid": 11,
+        "mutants_killed": 11,
+        "mutants_killed_ratio": 1.0,
+        "mutants_broken_patterns": 0
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        "ctest --preset debug",
+        "./build/debug/bin/unit_tests [fuzz]",
+        "./build/debug/bin/unit_tests fail-safe*",
+        "./build/debug/bin/unit_tests [deadline]",
+        "./scripts/mutants.sh"
+      ]
+    }
+  ]
+}

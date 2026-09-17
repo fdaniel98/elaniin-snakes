@@ -1,0 +1,12 @@
+== i1 correctness: replay diferencial contra el arbitro oficial ==
+-- corpus commiteado (tests/corpus) --
+  turnos comparados: 949, serpientes: 2788, movimientos por defecto: 49,
+  eliminaciones por causa: hambre=5 pared=51 propia=58 rival=2 cabeza=7 hazard=
+All tests passed (2471 assertions in 5 test cases)
+-- corpus de la DoD: 500 partidas regeneradas (/tmp/corpus500) --
+  turnos comparados: 10387, serpientes: 29921, movimientos por defecto: 489,
+  eliminaciones por causa: hambre=41 pared=487 propia=604 rival=15 cabeza=120
+All tests passed (27041 assertions in 5 test cases)
+-- fixtures --
+All tests passed (97 assertions in 3 test cases)
+

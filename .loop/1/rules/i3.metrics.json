@@ -1,0 +1,17 @@
+{
+  "fixtures": 15,
+  "requests": 300,
+  "p50_move_ms": 0.4,
+  "p99_move_ms": 0.66,
+  "max_move_ms": 2.1,
+  "cold_start_ms": 2.82,
+  "timeouts": 0,
+  "illegal_moves": 0,
+  "hot_path_allocs": 0,
+  "apply_per_second": 5423406,
+  "legal_moves_per_second": 18071369,
+  "playouts_per_second": 80614,
+  "turnos_por_playout": 31.9,
+  "decide_per_second": 1175752,
+  "copy_state_per_second": 88435769
+}

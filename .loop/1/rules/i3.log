@@ -1,0 +1,15 @@
+== i3 perf: benchmark y latencia de /move ==
+-- bench-deployisa --
+bm_apply_mean  184.57561602765355 ns  items/s=5423406.7291496899
+bm_legal_moves_mean  55.336575650821359 ns  items/s=18071369.244758338
+bm_copy_state_mean  11.313455203657067 ns  items/s=88435769.182841524
+bm_decide_mean  851.47279351534780 ns  items/s=1175752.8692061550
+bm_playout_mean  12404.806697489930 ns  items/s=0
+playouts/s = 1e9/12404.8 = 80614
+-- smoke (15 fixtures x 20) --
+fixtures=15 peticiones=300 p50=0.42ms p99=1.13ms max=2.67ms arranque_en_frio=2.59ms
+OK   todos los movimientos legales y dentro del presupuesto
+-- asignaciones en el hot path (inv-03) --
+All tests passed (5 assertions in 1 test case)
+
+[1]+  Terminated              PORT=8096 ./build/release/bin/battlesnake-server > /tmp/s3.log 2>&1
