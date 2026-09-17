@@ -9,6 +9,7 @@
 /// regeneran con `scripts/gen-replays.sh`.
 /// ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101
 
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <filesystem>
@@ -79,6 +80,27 @@ struct CasoDeCorpus {
         return replay::reproduce<19, 19, 4>(*partida);
     }
     return replay::reproduce<11, 11, 4>(*partida);
+}
+
+/// Comprueba el rectangulo de un tablero de hazards contra el numero de shrinks que le
+/// tocan.
+///
+/// Con suficientes shrinks el rectangulo se **degenera**: basta con que los W que caben
+/// en un eje salgan del mismo lado para que `minX > maxX` y el tablero entero quede en
+/// hazard (`maps/royale.go:80-86` no impide que se cruce). A partir de ahi el numero de
+/// bordes movidos ya no se puede leer de la forma, porque todas las formas son la misma.
+/// Lo encontro la corrida de 500 partidas: g00123 turno 36, 12 shrinks sobre 11x11.
+template <int W, int H>
+void comprueba_rectangulo(const engine::Bitboard<W, H>& hazards, int shrinks) {
+    const auto r = replay::rectangulo_de(hazards);
+    REQUIRE(r.ok);
+    if (r.max_x < 0) {
+        // Degenerado: solo se puede exigir que hubiera shrinks de sobra para cerrarlo.
+        REQUIRE(hazards.count() == W * H);
+        REQUIRE(shrinks >= std::min(W, H));
+        return;
+    }
+    REQUIRE(r.bordes_movidos(W, H) == shrinks);
 }
 
 } // namespace
@@ -194,17 +216,11 @@ TEST_CASE("diferencial: los hazards del arbitro son el complemento de un rectang
 
             const int esperados = turno / cadencia;
             if (caso.width == 7) {
-                const auto r = replay::rectangulo_de(replay::hazards_de<7, 7>(linea));
-                REQUIRE(r.ok);
-                REQUIRE(r.bordes_movidos(7, 7) == esperados);
+                comprueba_rectangulo<7, 7>(replay::hazards_de<7, 7>(linea), esperados);
             } else if (caso.width == 19) {
-                const auto r = replay::rectangulo_de(replay::hazards_de<19, 19>(linea));
-                REQUIRE(r.ok);
-                REQUIRE(r.bordes_movidos(19, 19) == esperados);
+                comprueba_rectangulo<19, 19>(replay::hazards_de<19, 19>(linea), esperados);
             } else {
-                const auto r = replay::rectangulo_de(replay::hazards_de<11, 11>(linea));
-                REQUIRE(r.ok);
-                REQUIRE(r.bordes_movidos(11, 11) == esperados);
+                comprueba_rectangulo<11, 11>(replay::hazards_de<11, 11>(linea), esperados);
             }
         }
     }
