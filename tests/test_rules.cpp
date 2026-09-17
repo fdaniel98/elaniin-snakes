@@ -7,6 +7,7 @@
 #include <span>
 #include <vector>
 
+#include <engine/rng.hpp>
 #include <engine/rules.hpp>
 #include <engine/state.hpp>
 
@@ -587,4 +588,78 @@ TEST_CASE("royale_hazards: el tablero entero puede acabar en hazard", "[rules][r
     // Con mas shrinks que lados el rectangulo se invierte y no queda nada seguro.
     const auto hazards = engine::royale_hazards<7, 7>(3, 400, 1);
     REQUIRE(hazards.count() == 7 * 7);
+}
+
+TEST_CASE("fuzz: apply con direcciones arbitrarias mantiene los invariantes",
+          "[fuzz][rules][inv-01][inv-02]") {
+    // `apply()` acepta cualquier direccion, incluida la inmediatamente mortal
+    // (ver docs/rules.md#r-03), asi que el fuzz manda direcciones al azar sin filtrar:
+    // es exactamente lo que hace el arbitro cuando una snake responde cualquier cosa.
+    // Lo que se exige no es que la partida tenga sentido, sino que el estado siga siendo
+    // coherente: longitudes, ocupacion y segmentos dentro del tablero.
+    engine::Rng rng(20260917);
+    int estados = 0;
+    int partidas_terminadas = 0;
+
+    for (int partida = 0; partida < 3000; ++partida) {
+        State s;
+        s.snake_count = static_cast<std::uint8_t>(2 + rng.bounded(3));
+        s.rules.hazard_damage_per_turn = static_cast<std::int32_t>(rng.bounded(30));
+
+        for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
+            const auto x = static_cast<std::int8_t>(1 + rng.bounded(9));
+            const auto y = static_cast<std::int8_t>(1 + rng.bounded(9));
+            s.snakes[static_cast<unsigned>(i)].spawn(
+                cell(x, y), 3, static_cast<int>(1 + rng.bounded(100)));
+        }
+        for (int f = 0; f < 5; ++f) {
+            s.food.set(static_cast<int>(rng.bounded(11 * 11)));
+        }
+        for (int h = 0; h < 12; ++h) {
+            s.hazards.set(static_cast<int>(rng.bounded(11 * 11)));
+        }
+        s.refresh_occupancy();
+
+        for (int paso = 0; paso < 60; ++paso) {
+            std::array<Direction, 4> moves{};
+            for (auto& move : moves) {
+                move = static_cast<Direction>(rng.bounded(engine::direction_count));
+            }
+            const Status status =
+                engine::apply(s, std::span<const Direction>(moves.data(), s.snake_count));
+            ++estados;
+
+            engine::Bitboard<11, 11> vistos;
+            for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
+                const auto& snake = s.snakes[static_cast<unsigned>(i)];
+                if (!engine::is_alive(snake.status)) {
+                    // Una serpiente eliminada lleva su turno; viva, no.
+                    REQUIRE(snake.eliminated_on_turn >= 0);
+                    continue;
+                }
+                REQUIRE(snake.eliminated_on_turn == -1);
+                REQUIRE(snake.length >= 1);
+                REQUIRE(snake.length <= State::body_capacity);
+                REQUIRE(snake.health <= engine::max_health);
+                for (int seg = 0; seg < static_cast<int>(snake.length); ++seg) {
+                    const int celda = snake.segment(seg);
+                    REQUIRE(celda >= 0);
+                    REQUIRE(celda < State::cells);
+                    vistos.set(celda);
+                }
+            }
+            // INV-02: la ocupacion casa con los cuerpos vivos, sin sobrar ni faltar.
+            REQUIRE(s.bodies == vistos);
+
+            if (status == Status::game_over) {
+                ++partidas_terminadas;
+                break;
+            }
+            REQUIRE(status == Status::ok);
+        }
+    }
+
+    REQUIRE(estados >= 10000);
+    // Si ninguna partida termina, el fuzz no esta llegando a los finales.
+    REQUIRE(partidas_terminadas >= 2000);
 }

@@ -1,7 +1,7 @@
 {
   "mutants": 11,
   "mutants_valid": 11,
-  "mutants_killed": 7,
+  "mutants_killed": 11,
   "mutants_broken_patterns": 0,
-  "mutants_killed_ratio": 0.6364
+  "mutants_killed_ratio": 1.0000
 }
