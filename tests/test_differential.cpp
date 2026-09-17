@@ -306,3 +306,28 @@ TEST_CASE("replay: solo se acepta lo que el arbitro acepta", "[differential][r-0
     REQUIRE(replay::movimiento_aceptado(respuesta(200, 499.9, R"({"move":"down"})")) ==
             engine::Direction::down);
 }
+
+TEST_CASE("replay: el nombre del campo move no distingue mayusculas, el valor si",
+          "[differential][r-03]") {
+    // `encoding/json` de Go casa el nombre del campo sin distinguir mayusculas, asi que
+    // el arbitro aplica `{"Move":"left"}`. Rechazarlo aqui haria que el replay se
+    // separase del arbitro justo en el turno que mas importa. El valor, en cambio, se
+    // compara literal. ver docs/rules.md#r-03
+    auto crudo = [](const std::string& cuerpo) {
+        replay::RespuestaCruda r;
+        r.status = 200;
+        r.elapsed_ms = 1.0;
+        r.timeout = 500;
+        r.body = cuerpo;
+        return r;
+    };
+
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"Move":"left"})")) == engine::Direction::left);
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"MOVE":"down"})")) == engine::Direction::down);
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"mOvE":"right"})")) == engine::Direction::right);
+    // El valor si distingue: "Left" no es una de las cuatro literales.
+    REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"Move":"Left"})")));
+    // Y un campo que solo se parece no cuenta.
+    REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"moves":"left"})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"mov":"left"})")));
+}

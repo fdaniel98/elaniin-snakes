@@ -64,21 +64,21 @@ rechazo a estrechar los checks 5 y 7), umbrales por clase
 
 ## Hallazgos abiertos del loop
 
-- [ ] La causa de eliminacion **no es verificable** contra el arbitro: el JSONL no la
-      expone (ver docs/rules.md#r-12). El diferencial comprueba quien muere y en que
-      turno, nunca por que, asi que la tabla de causas de muerte que pide el Training
-      Room de la fase 3 no tendra contraste externo.
+- [ ] La tabla de causas de muerte que pide el Training Room de la fase 3 no va a tener
+      contraste externo: ver docs/rules.md#r-12.
 - [ ] El reparto de puestos de `placements()` sigue siendo una convencion propia. El
       diferencial verifica el turno de eliminacion y que el reparto es valido -suma
       n(n+1)/2, ningun rango fuera de rango-, pero el desempate promediado no se deriva
       de la fuente porque la fuente no lo define.
 - [ ] La secuencia de lados del shrink es nuestra por decision
       (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091): una partida de la arena no
-      reproducira nunca una oficial casilla por casilla. Lo que si esta verificado contra
-      500 partidas reales es la forma del schedule.
+      reproducira nunca una oficial casilla por casilla. La forma del schedule si esta
+      verificada contra partidas reales (ver docs/SOURCES.md#s-02).
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
-- [ ] El repositorio sigue sin remoto: 55 commits en un solo disco.
+- [ ] El repositorio sigue sin remoto: toda la historia vive en un solo disco.
+- [ ] `royale_hazards()` no tiene llamante todavia y su precondicion -cadencia >= 1- no
+      la comprueba nadie: la arena de la fase 4 tendra que validarla antes de llamar.
 
 ## Desviaciones del arbol de archivos
 

@@ -3,16 +3,15 @@ title: "ADR-0010: el shrink de royale usa el Rng propio, no el math/rand de Go"
 read_when: "antes de tocar royale_hazards, de modelar hazards en la arena, o de comparar una partida propia con una oficial"
 authority: canonical
 last_verified: 2026-09-17
-size_bytes: 3303
+size_bytes: 3084
 ---
 
 
 ## D-0090 Contexto {#d-0090}
 
 `royale_hazards()` lanzaba `logic_error` desde la fase 0 y es trabajo de la fase 1. La
-regla que tiene que implementar esta verificada contra la fuente: el rectangulo se encoge
-un solo borde por shrink, el generador se resiembra siempre al turno 0, y los hazards son
-el complemento del rectangulo (ver docs/rules.md#r-09).
+regla que tiene que implementar ya esta verificada contra la fuente y documentada con sus
+citas: ver docs/rules.md#r-09.
 
 Lo que no esta decidido es **de donde sale el lado de cada shrink**. El motor oficial lo
 saca de `rand.New(rand.NewSource(seed))`, que es el generador de retardo de Fibonacci de
@@ -54,6 +53,5 @@ argumentos-.
 - El test diferencial **inyecta** comida y hazards del log, como ya preveia
   docs/rules-parametros.md#r-99. Esta decision no lo cambia: lo confirma.
 - Como `royale_hazards()` se queda sin contraste externo, el corpus del diferencial
-  comprueba en su lugar una propiedad que si es derivable del log sin reproducir el RNG:
-  que los hazards de cada turno son el complemento de un rectangulo anidado en el del
-  turno anterior, con exactamente `turn / shrinkEveryNTurns` bordes movidos.
+  comprueba en su lugar la unica propiedad del shrink que si es derivable de un log sin
+  reproducir el RNG, la que enuncia ver docs/rules.md#r-09.

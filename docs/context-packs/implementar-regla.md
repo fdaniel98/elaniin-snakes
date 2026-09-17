@@ -1,9 +1,9 @@
 ---
 title: "Pack: implementar o corregir una regla"
-read_when: "antes de tocar engine/src/rules.cpp o de añadir un fixture de reglas"
+read_when: "antes de tocar engine/src/rules.cpp o engine/src/royale_map.cpp, o de añadir un fixture de reglas"
 authority: derived
-last_verified: 2026-09-15
-size_bytes: 1826
+last_verified: 2026-09-17
+size_bytes: 1975
 ---
 
 
@@ -18,8 +18,9 @@ size_bytes: 1826
 <!-- END:pack-load -->
 
 No abras `snake/` para esto: una regla del juego no depende del cerebro.
-Dos archivos se abren mas tarde, no al arrancar, porque no caben en el presupuesto de
-la tarea (ver docs/INDEX.md#i-02): la representacion del cuerpo, en
+Tres archivos se abren mas tarde, no al arrancar, porque no caben en el presupuesto de
+la tarea (ver docs/INDEX.md#i-02): `engine/src/royale_map.cpp`, si y solo si la regla es
+del mapa -hazards y shrink-, y en vez de `rules.cpp`, no ademas; la representacion del cuerpo, en
 engine/include/engine/state.hpp, cuando necesites tocar el ring buffer; y el archivo de
 tests de reglas, cuando vayas a escribir el caso.
 

@@ -2,7 +2,7 @@
 title: Arquitectura y dependencias entre modulos
 read_when: "antes de mover codigo entre modulos o de añadir una dependencia"
 authority: canonical
-last_verified: 2026-09-15
+last_verified: 2026-09-17
 size_bytes: 4108
 ---
 

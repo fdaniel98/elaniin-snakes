@@ -32,8 +32,14 @@ template <int W, int H, int MaxSnakes>
 
 /// Aplica un turno completo con movimientos **simultaneos** y muta `s` (copy-make).
 ///
-/// Orden de fases identico al del pipeline oficial: fin de partida, movimiento,
-/// hambre, daño de hazard, alimentacion, eliminacion. ver docs/rules.md#r-02
+/// Orden de fases identico al del pipeline oficial en las seis primeras: fin de partida,
+/// movimiento, hambre, daño de hazard, alimentacion, eliminacion. ver docs/rules.md#r-02
+///
+/// La septima, la que genera hazards, se queda FUERA a proposito: depende de la semilla
+/// de la partida, que no viaja en el payload de `/move`, asi que en servidor no es
+/// calculable. `apply()` no la ejecuta y `GameState` no guarda semilla; quien quiera la
+/// partida completa -la arena de la fase 4- llama a `royale_hazards()` entre turnos.
+/// ver docs/rules.md#r-09
 ///
 /// `apply` NO filtra direcciones: acepta la inmediatamente mortal. Filtrar aqui
 /// impediria reproducir los logs del arbitro en el test diferencial.

@@ -65,6 +65,21 @@ Dos corridas con campos distintos en esta tabla **no se comparan**.
 | asignaciones dinamicas en `apply`/`legal_moves`/`decide` | 0 / 0 / 0 | 8082d1d | 2026-09-15 |
 <!-- END:perf-canonical -->
 
+## P-04 Historico {#p-04}
+
+Una fila por medicion publicada, con su commit. Las salidas crudas de Google Benchmark
+van a `docs/results/bench-*.json`, que queda fuera del lint de docs.
+
+| Fecha | Cambio | Metrica | Antes | Despues | Veredicto |
+|---|---|---|---|---|---|
+| 2026-09-15 | linea base inicial de la fase 0 (commit 8082d1d) | todas | - | ver tabla canonica | LINEA BASE |
+| 2026-09-17 | fase 1 en el contenedor de la nube (commit cb2c4f1) | todas | - | ver P-06 | SIN COMPARAR: otra maquina |
+
+El maximo de `POST /move` (23.88 ms) esta 30 veces por encima del p99 (0.79 ms): es la
+primera peticion, que paga el arranque del servidor y la carga del config. Queda como
+hallazgo abierto de la clase `perf`, no como regresion: el presupuesto de la fase 0 son
+50 ms de p99 y 150 ms de maximo, y ambos se cumplen con margen.
+
 ## P-05 Politica de playout {#p-05}
 
 `playouts/s` no significa nada sin decir que se juega. El que mide `bm_playout`:
@@ -112,18 +127,3 @@ ella.
 Dos maquinas con la mitad de nucleos y otra frecuencia dan numeros distintos: la caida de
 `apply()` frente a P-03 **no es una regresion medida**, es otra maquina. Para saber si la
 fase 1 movio el rendimiento hay que correr `./scripts/bench.sh` en la de referencia.
-
-## P-04 Historico {#p-04}
-
-Una fila por medicion publicada, con su commit. Las salidas crudas de Google Benchmark
-van a `docs/results/bench-*.json`, que queda fuera del lint de docs.
-
-| Fecha | Cambio | Metrica | Antes | Despues | Veredicto |
-|---|---|---|---|---|---|
-| 2026-09-15 | linea base inicial de la fase 0 (commit 8082d1d) | todas | - | ver tabla canonica | LINEA BASE |
-| 2026-09-17 | fase 1 en el contenedor de la nube (commit cb2c4f1) | todas | - | ver P-06 | SIN COMPARAR: otra maquina |
-
-El maximo de `POST /move` (23.88 ms) esta 30 veces por encima del p99 (0.79 ms): es la
-primera peticion, que paga el arranque del servidor y la carga del config. Queda como
-hallazgo abierto de la clase `perf`, no como regresion: el presupuesto de la fase 0 son
-50 ms de p99 y 150 ms de maximo, y ambos se cumplen con margen.

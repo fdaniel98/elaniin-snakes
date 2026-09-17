@@ -2,8 +2,8 @@
 title: Invariantes verificables del codigo
 read_when: "antes de cambiar engine/, snake/ o cualquier estructura de datos del estado"
 authority: canonical
-last_verified: 2026-09-15
-size_bytes: 5545
+last_verified: 2026-09-17
+size_bytes: 5828
 ---
 
 Un invariante sin verificacion mecanica es una nota, no un invariante. Cada fila dice
@@ -84,6 +84,11 @@ El motor no tiene estado global de RNG: toda aleatoriedad recibe un `Rng&`. Bajo
 libc++, asi que la arena dejaria de ser reproducible entre maquinas.
 **Como se verifica:** check 5 del gate (grep sobre `engine/` y `arena/`) y los vectores
 de referencia de `tests/test_rng.cpp`.
+
+**Excepcion declarada:** `royale_hazards()` recibe la semilla, no el `Rng&`, y construye
+uno local, igual que hace `settings.GetRand(0)` en la fuente. No hay estado global y el
+resultado sigue dependiendo solo de los argumentos.
+ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091
 
 ## INV-09 La busqueda ignora el spawn de comida {#inv-09}
 

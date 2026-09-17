@@ -3,8 +3,8 @@ title: Fuentes externas verificadas
 read_when: "antes de afirmar algo sobre una herramienta externa o de re-verificar una regla"
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
-last_verified: 2026-09-15
-size_bytes: 4367
+last_verified: 2026-09-17
+size_bytes: 5097
 ---
 
 Este archivo lleva **fuentes**, no hechos: qué se consultó, en qué SHA, cuándo, y qué
@@ -26,6 +26,7 @@ documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven
 | `github.com/coreyja/battlesnake-rs` | `d3a9bed45789f00918ea25df6025ed4e01462ae3` | 2026-09-15 | Que su contenedor sirve todas sus snakes en un solo puerto y elige por ruta (`web-axum/src/main.rs:170`), y que su runtime es `debian:stable-slim` sin escrituras | `zoo/manifests/eremetic-eric.toml` |
 | `github.com/smallsco/robosnake` | `72de4ab9dd99186cb5c5ba657d5d1320b60121f0` | 2026-09-15 | Que su `CMD` hace `sed -i` sobre la config de nginx, incompatible con `--read-only` | `zoo/README.md` |
 | `github.com/BattlesnakeOfficial/snake-zoo` | `6c2edcdb6e35a5ccc03a9cdd80e4af74e9baf4a8` | 2026-09-14 | Formato del manifest TOML, requisito de Rust, y que su runner lanza contenedores sin aislamiento (`src/docker.rs:80-91`) | `zoo/README.md` |
+| `math/rand` de la biblioteca estandar de Go | go1.24.7 | 2026-09-17 | Que el generador del motor oficial es un retardo de Fibonacci con tabla de 607 constantes no regenerable (`rng.go:14`, `gen_cooked.go:81`), que es el coste real de la alternativa descartada | ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0092 |
 | `cpp-httplib` | v0.18.7 (MIT) | 2026-09-15 | Cabecera unica vendorizada en `third_party/` | ver docs/decisions/ADR-0003-dependencias.md |
 
 ## S-02 Ejecutado en esta maquina, no solo leido {#s-02}
@@ -36,7 +37,8 @@ documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven
 | Partida completa `battlesnake play -g royale -m royale` contra nuestra v0 | 2026-09-15 | 11 turnos, JSONL en `docs/results/2026-09-15-v0-vs-dummy.jsonl` |
 | Payload literal de `/move` capturado del arbitro | 2026-09-15 | `tests/fixtures/13-payload-literal-del-cli.json` |
 | Arbitro del SHA fijado compilado en el contenedor de la nube con `scripts/build-referee-mirrored.sh` | 2026-09-17 | Compila y juega. Siete dependencias **indirectas** del CLI (cobra, viper, fsnotify, websocket) se traen del espejo en GitHub del mismo modulo y la misma version que declara su `go.mod`, porque el proxy de egress deniega `proxy.golang.org`, `golang.org/x`, `gopkg.in` y `go.uber.org`. El motor de reglas -`rules/`, `maps/`, `client/`- sale del clon del SHA, sin espejo ni parche |
-| 48 partidas generadas con `scripts/gen-replays.sh` y reproducidas por el test diferencial | 2026-09-17 | 949 turnos y 2788 estados de serpiente sin divergencia; cobertura de las seis causas de eliminacion |
+| 48 partidas generadas con `scripts/gen-replays.sh --games 48 --out tests/corpus` y reproducidas por el test diferencial | 2026-09-17 | 949 turnos y 2788 estados de serpiente sin divergencia; cobertura de las seis causas de eliminacion. Es el corpus commiteado |
+| 500 partidas con `scripts/gen-replays.sh --games 500 --seed-base 500000` y replay con `BSR_CORPUS_DIR` | 2026-09-17 | 10387 turnos y 29921 estados de serpiente sin divergencia, tambien bajo ASan y UBSan. Es la evidencia de la DoD de la fase 1; no se commitea (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101) y se regenera con ese comando |
 
 ## S-03 Pendiente de verificar {#s-03}
 

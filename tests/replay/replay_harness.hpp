@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstdint>
 #include <fstream>
 #include <map>
@@ -166,11 +167,27 @@ movimiento_aceptado(const RespuestaCruda& respuesta) {
         return std::nullopt;
     }
     const json cuerpo = json::parse(respuesta.body, nullptr, false);
-    if (cuerpo.is_discarded() || !cuerpo.is_object() || !cuerpo.contains("move") ||
-        !cuerpo["move"].is_string()) {
+    if (cuerpo.is_discarded() || !cuerpo.is_object()) {
         return std::nullopt;
     }
-    return direccion_de(cuerpo["move"].get<std::string>());
+    // `encoding/json` de Go casa el nombre del campo SIN distinguir mayusculas
+    // (`client/models.go:102` declara `json:"move"`), asi que el arbitro acepta
+    // `{"Move":"left"}` y nosotros tenemos que aceptarlo tambien. El VALOR si distingue:
+    // la comparacion contra las cuatro literales es textual (`cli/commands/play.go:501`).
+    for (const auto& [clave, valor] : cuerpo.items()) {
+        if (clave.size() != 4) {
+            continue;
+        }
+        std::string minusculas = clave;
+        for (char& c : minusculas) {
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        }
+        if (minusculas != "move" || !valor.is_string()) {
+            continue;
+        }
+        return direccion_de(valor.get<std::string>());
+    }
+    return std::nullopt;
 }
 
 /// Orden estable de serpientes: el del turno 0, que es el unico donde estan todas.
@@ -188,7 +205,7 @@ movimiento_aceptado(const RespuestaCruda& respuesta) {
 /// Es la propiedad del mapa royale que SI se puede comprobar contra un log oficial sin
 /// reproducir el `math/rand` de Go: el hazard es el complemento de un rectangulo, y el
 /// numero de bordes movidos respecto al tablero entero es `turn / shrinkEveryNTurns`.
-/// ver docs/rules.md#r-09 y docs/decisions/ADR-0010-rng-del-shrink.md#d-0093
+/// ver docs/rules.md#r-09 y ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0093
 struct Rectangulo {
     bool ok{};
     int min_x{};
@@ -491,7 +508,7 @@ template <int W, int H, int MaxSnakes>
 
         // La comida que nos queda tiene que ser un subconjunto de la del arbitro: la
         // diferencia es lo que aparecio de nuevo, que no modelamos.
-        // ver docs/rules.md#r-07 y docs/rules.md#r-10
+        // ver docs/rules.md#r-07 y ver docs/rules.md#r-10
         Board comida_log;
         for (const auto& punto : siguiente["board"]["food"]) {
             comida_log.set(Board::index_of(punto.value("x", 0), punto.value("y", 0)));

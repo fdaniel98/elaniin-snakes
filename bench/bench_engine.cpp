@@ -103,7 +103,7 @@ void bm_decide(benchmark::State& bench) {
 
 } // namespace
 
-/// Un playout completo con la politica que declara docs/performance.md#p-05: eleccion
+/// Un playout completo con la politica que declara ver docs/performance.md#p-05: eleccion
 /// UNIFORME entre las direcciones de `legal_moves`, 4 serpientes, semilla fija, sin
 /// modelar el spawn de comida (ver docs/invariants.md#inv-09) ni el shrink de hazards.
 /// Cuando no queda ninguna legal se juega `up`, que es lo que hace el fail-safe.

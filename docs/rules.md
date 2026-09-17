@@ -3,8 +3,8 @@ title: Reglas de Royale derivadas del codigo Go
 read_when: "antes de tocar engine/src/rules.cpp, de escribir un fixture o de discutir mecanicas del juego"
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
-last_verified: 2026-09-14
-size_bytes: 13366
+last_verified: 2026-09-17
+size_bytes: 13962
 ---
 
 Toda afirmacion de este archivo cita `archivo.go:linea` del SHA del front-matter. Lo no verificable
@@ -155,7 +155,10 @@ Consecuencias:
 
 ## R-09 Hazards de Royale: rectangulo que se encoge {#r-09}
 
-`maps/royale.go:40-88`, identico a `royale.go:17-62`:
+`maps/royale.go:40-88`. El stage 7 del pipeline (`royale.go:17-62`) calcula lo mismo con
+dos diferencias de forma: tiene la guarda `IsInitialization` (`royale.go:18-20`) y limpia
+los hazards antes de las guardas en vez de despues (`royale.go:21` frente a
+`maps/royale.go:59`). Con el orden real de turnos ambos dan el mismo conjunto:
 
 - Antes del turno `shrinkEveryNTurns` no hay hazard alguno (`maps/royale.go:54-56`).
 - Cada turno se **borran todos los hazards y se regeneran desde cero** (`maps/royale.go:59`).
@@ -216,6 +219,11 @@ El motor Go **no expone placements**. El arbitro solo emite ganador y empate
 salud, cuerpo, cabeza, longitud, grito, escuadra y personalizacion
 (`client/models.go:31-43`), aunque el estado interno si guarde ambas cosas
 (`board.go:43`, `board.go:595-599`).
+
+El JSONL **tampoco trae los movimientos**: la respuesta de cada serpiente
+(`client/models.go:99-103`) no se serializa en ningun sitio del log, que solo lleva
+estados de tablero. Se pueden derivar por diferencia de cabezas entre turnos, salvo
+precisamente para la que muere, que ya no aparece en el turno siguiente.
 
 Consecuencia para el test diferencial: se puede verificar **quien** desaparece y **en que
 turno**, nunca **por que**. Los valores de `Elimination` del motor propio -y con ellos la
