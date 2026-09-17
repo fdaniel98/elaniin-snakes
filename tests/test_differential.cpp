@@ -268,3 +268,41 @@ TEST_CASE("diferencial: placements reparte exactamente n(n+1)/2 en partidas real
     // Si ninguna partida acaba en empate, el reparto promediado no se ha ejercitado.
     REQUIRE(con_empate >= 1);
 }
+
+TEST_CASE("replay: solo se acepta lo que el arbitro acepta", "[differential][r-03]") {
+    // Reproduce `getSnakeUpdate` (cli/commands/play.go:455-513). Cada rama de rechazo
+    // tiene su caso: si una se cayera, el replay aplicaria un movimiento que el arbitro
+    // nunca aplico y la partida dejaria de ser la misma. ver docs/rules.md#r-03
+    auto respuesta = [](int status, double ms, const std::string& cuerpo) {
+        replay::RespuestaCruda r;
+        r.status = status;
+        r.elapsed_ms = ms;
+        r.timeout = 500;
+        r.body = cuerpo;
+        return r;
+    };
+
+    REQUIRE(replay::movimiento_aceptado(respuesta(200, 1.0, R"({"move":"left"})")) ==
+            engine::Direction::left);
+    REQUIRE(replay::movimiento_aceptado(respuesta(200, 1.0, R"({"move":"up","shout":"x"})")) ==
+            engine::Direction::up);
+
+    // Status distinto de 200.
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(500, 1.0, R"({"move":"left"})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(404, 1.0, R"({"move":"left"})")));
+    // Mas lento que el timeout del cliente HTTP del arbitro.
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 500.0, R"({"move":"left"})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 801.5, R"({"move":"left"})")));
+    // JSON roto.
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 1.0, "{no es json")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 1.0, "")));
+    // Direccion que no es una de las cuatro literales.
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 1.0, R"({"move":"diagonal"})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 1.0, R"({"move":"UP"})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 1.0, R"({"shout":"sin move"})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(respuesta(200, 1.0, R"({"move":3})")));
+
+    // Justo por debajo del timeout si vale: el limite es >=, como el del cliente.
+    REQUIRE(replay::movimiento_aceptado(respuesta(200, 499.9, R"({"move":"down"})")) ==
+            engine::Direction::down);
+}

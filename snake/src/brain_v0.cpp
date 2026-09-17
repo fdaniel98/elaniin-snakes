@@ -31,6 +31,12 @@ constexpr int direction_count = engine::direction_count;
 /// buffer, nunca de un flag "comio el turno anterior": en el spawn los tres segmentos
 /// estan apilados y en constrictor la cola no avanza jamas.
 /// ver docs/rules.md#r-04
+///
+/// La condicion `!tail_is_stacked()` es REDUNDANTE y se deja por ser explicita: cuando
+/// la cola esta apilada, el segmento `length - 2` ocupa esa misma casilla y ya la marca.
+/// Lo descubrio la prueba de mutantes: quitarla no cambia ningun resultado, asi que no
+/// es un mutante vivo sino un mutante equivalente. Quien la borre no rompe nada hoy,
+/// pero deja el codigo dependiendo de que el ring buffer duplique el ultimo segmento.
 Board blocked_cells(const State& state) noexcept {
     Board blocked;
     for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {

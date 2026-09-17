@@ -527,6 +527,54 @@ TEST_CASE("royale_hazards: determinista y sin estado global", "[rules][r-09][inv
     REQUIRE(distintos >= 15);
 }
 
+TEST_CASE("royale_hazards: vectores de referencia del schedule propio", "[rules][r-09]") {
+    // La secuencia de lados es nuestra y no es verificable contra el arbitro
+    // (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091), asi que sin esto nada
+    // detecta que cambie. Son vectores de referencia como los del RNG: fijan el
+    // comportamiento propio para que una modificacion accidental se vea.
+    struct Caso {
+        std::uint64_t semilla;
+        int turno;
+        int cadencia;
+        int hazards;
+        int min_x;
+        int max_x;
+        int min_y;
+        int max_y;
+    };
+
+    const std::array<Caso, 3> casos{{
+        {20260917, 12, 3, 41, 1, 10, 2, 9},
+        {7, 25, 25, 11, 0, 9, 0, 10},
+        {99, 40, 5, 72, 3, 9, 4, 10},
+    }};
+
+    for (const auto& caso : casos) {
+        const auto hazards =
+            engine::royale_hazards<11, 11>(caso.semilla, caso.turno, caso.cadencia);
+        const auto r = rectangulo_libre<11, 11>(hazards);
+        INFO("semilla " << caso.semilla << " turno " << caso.turno);
+        REQUIRE(r.ok);
+        REQUIRE(hazards.count() == caso.hazards);
+        REQUIRE(r.min_x == caso.min_x);
+        REQUIRE(r.max_x == caso.max_x);
+        REQUIRE(r.min_y == caso.min_y);
+        REQUIRE(r.max_y == caso.max_y);
+    }
+}
+
+TEST_CASE("royale_hazards: al llegar justo a la cadencia ya hay hazard", "[rules][r-09]") {
+    // El corte es `turn < shrinkEveryNTurns`, no `<=`: en el turno de la cadencia ya
+    // hay un shrink aplicado (`maps/royale.go:54-56,64`). ver docs/rules.md#r-09
+    for (int cadencia : {2, 3, 5, 25}) {
+        for (std::uint64_t semilla = 1; semilla <= 10; ++semilla) {
+            INFO("cadencia " << cadencia << " semilla " << semilla);
+            REQUIRE(engine::royale_hazards<11, 11>(semilla, cadencia - 1, cadencia).count() == 0);
+            REQUIRE(engine::royale_hazards<11, 11>(semilla, cadencia, cadencia).count() > 0);
+        }
+    }
+}
+
 TEST_CASE("royale_hazards: cadencia invalida devuelve el tablero limpio", "[rules][r-09]") {
     // El motor oficial devuelve error y aborta la partida (`maps/royale.go:50-52`);
     // aqui no hay a quien devolverlo, asi que se responde sin hazards y quien llama
