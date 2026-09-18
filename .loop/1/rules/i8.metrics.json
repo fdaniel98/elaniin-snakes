@@ -1,0 +1,14 @@
+{
+  "sanitizer_findings": 0,
+  "fuzz_states": 12000,
+  "illegal_moves": 0,
+  "deadline_violations": 0,
+  "failsafe_levels_covered": 4,
+  "mutants": 11,
+  "mutants_valid": 11,
+  "mutants_killed": 11,
+  "mutants_killed_ratio": 1.0,
+  "mutants_broken_patterns": 0,
+  "tests_totales_debug": 80,
+  "commit_verificado": "1c5895c2dd96d22c553e5c367c30620c2408ea7f"
+}

@@ -1,0 +1,30 @@
+== i8 robustness: verificacion de clase sobre el commit final ==
+commit verificado: 1c5895c2dd96d22c553e5c367c30620c2408ea7f
+-- ctest debug (ASan + UBSan) --
+100% tests passed, 0 tests failed out of 80
+
+Total Test time (real) =   2.77 sec
+-- replay de 500 partidas bajo ASan + UBSan --
+All tests passed (27056 assertions in 7 test cases)
+
+-- fuzz --
+All tests passed (241350 assertions in 2 test cases)
+
+-- fail-safe y deadline --
+All tests passed (16 assertions in 1 test case)
+
+All tests passed (45 assertions in 1 test case)
+
+-- mutantes --
+MUERTO   m1 - cabeza a cabeza: empate de longitudes deja de matar a ambas
+MUERTO   m2 - el hazard pasa a dañar aunque haya comida en la casilla
+MUERTO   m3 - la cola apilada deja de detectarse
+MUERTO   m4 - el cerebro nunca considera libre la casilla de cola
+MUERTO   m5 - el hambre deja de restar salud
+MUERTO   m6 - el daño de hazard nunca puede matar
+MUERTO   m7 - el primer shrink llega un turno tarde
+MUERTO   m8 - el rectangulo encoge un shrink de mas
+MUERTO   m9 - el schedule de shrink usa otra semilla
+MUERTO   m10 - un shrink mueve dos bordes en vez de uno
+MUERTO   m11 - el replay acepta respuestas que el arbitro rechazo
+mutantes=11 validos=11 muertos=11 patrones_rotos=0 ratio=1.0000

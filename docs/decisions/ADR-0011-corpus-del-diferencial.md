@@ -3,16 +3,16 @@ title: "ADR-0011: corpus del test diferencial, commiteado pequeño y regenerable
 read_when: "antes de tocar tests/corpus, scripts/gen-replays.sh o el test diferencial"
 authority: canonical
 last_verified: 2026-09-17
-size_bytes: 3495
+size_bytes: 3469
 ---
 
 
 ## D-0100 Contexto {#d-0100}
 
 La DoD de la fase 1 pide >=500 partidas reproducidas sin divergencia. Una partida son dos
-ficheros: el JSONL del arbitro y el log del proxy grabador, porque el JSONL **no trae los
-movimientos** y la serpiente que muere desaparece del turno siguiente
-(ver docs/rules.md#r-12), justo el caso que hay que verificar.
+ficheros: el JSONL del arbitro y el log del proxy grabador, porque el log del arbitro por
+si solo no permite reconstruir la partida (ver docs/rules.md#r-12) justo en el caso que
+hay que verificar.
 
 500 partidas ocupan del orden de decenas de MB en el arbol de trabajo. Correrlas todas en
 cada gate multiplicaria por varios los cuatro minutos que cuesta hoy.

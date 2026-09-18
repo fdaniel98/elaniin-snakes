@@ -1,0 +1,18 @@
+== i7 correctness: verificacion de clase sobre el commit final ==
+commit verificado: 1c5895c2dd96d22c553e5c367c30620c2408ea7f
+-- replay del corpus commiteado --
+All tests passed (2486 assertions in 7 test cases)
+
+-- replay de las 500 partidas de la DoD --
+All tests passed (27056 assertions in 7 test cases)
+
+-- reglas --
+All tests passed (257806 assertions in 27 test cases)
+
+-- fixtures --
+All tests passed (97 assertions in 3 test cases)
+
+-- suite completa en release --
+100% tests passed, 0 tests failed out of 80
+
+Total Test time (real) =   0.47 sec

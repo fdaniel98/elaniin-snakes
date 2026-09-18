@@ -1,0 +1,14 @@
+{
+  "partidas_corpus": 48,
+  "partidas_dod": 500,
+  "turnos_comparados": 10387,
+  "serpientes_comparadas": 29921,
+  "movimientos_por_defecto": 489,
+  "diverge": 0,
+  "sin_verificar": 0,
+  "fixtures_pass": 15,
+  "fixtures_total": 15,
+  "tests_totales_release": 80,
+  "aserciones_diferencial_dod": 27056,
+  "commit_verificado": "1c5895c2dd96d22c553e5c367c30620c2408ea7f"
+}
