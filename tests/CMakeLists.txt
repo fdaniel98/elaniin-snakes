@@ -9,6 +9,7 @@ add_executable(unit_tests
   test_ruleset_parse.cpp
   test_brain_v0.cpp
   test_differential.cpp
+  test_voronoi.cpp
 )
 
 target_link_libraries(unit_tests PRIVATE engine snake_brain bsr_warnings Catch2::Catch2WithMain)
