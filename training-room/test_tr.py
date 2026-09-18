@@ -276,6 +276,12 @@ texto = rep.md(datos)
 comprueba("## T-02" in texto and "v0-baseline" in texto, "el markdown lleva la clasificacion")
 comprueba("p-valores" in texto, "el reporte declara que no da veredicto ni p-valores")
 comprueba("2.500" in texto, "el puesto compartido llega al reporte sin redondearse a entero")
+# T-03 agrupa por punto de salida, no por el orden de los argumentos: ese orden no decide
+# donde sale nadie (el arbitro recorre un mapa de Go). Y si no hay JSONL, lo dice.
+comprueba("punto de salida" in texto and "asiento 0" not in texto,
+          "T-03 agrupa por punto de salida, no por asiento")
+comprueba("Sin datos" in texto,
+          "sin JSONL, T-03 declara que falta la comprobacion en vez de salir vacia")
 pagina = rep.html(datos)
 comprueba(pagina.count("prefers-color-scheme") >= 2 and 'data-theme="dark"' in pagina,
           "el HTML trae modo oscuro por las dos vias, no solo la del sistema")

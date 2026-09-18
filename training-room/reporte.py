@@ -52,10 +52,38 @@ def recoge(salida, binario_causas):
                COUNT(*), AVG(p.turnos_sobrevividos)
         FROM participantes p JOIN partidas g ON g.id=p.partida_id
         WHERE g.arbitro_rc=0 GROUP BY p.slug ORDER BY 2""")
-    d["asientos"] = consulta(db, """
-        SELECT p.asiento, p.slug, AVG(p.puesto), COUNT(*)
-        FROM participantes p JOIN partidas g ON g.id=p.partida_id
-        WHERE g.arbitro_rc=0 GROUP BY p.asiento, p.slug ORDER BY p.slug, p.asiento""")
+    # El "asiento" es el orden de los argumentos del arbitro, y NO decide donde sale cada
+    # serpiente: el arbitro recorre un `map[string]SnakeState` de Go, cuyo orden de
+    # iteracion esta aleatorizado por especificacion (`cli/commands/play.go:349-352`), y
+    # ademas baraja los puntos de salida (`board.go:200-223`). Comprobado sobre estas
+    # mismas partidas: cada posicion de argumento acabo en 8 puntos de salida distintos.
+    # Agrupar por asiento era un test que no podia fallar. Se agrupa por el punto de
+    # salida REAL, que se lee del turno 0 de cada JSONL.
+    salidas = {}
+    for pid, in db.execute("SELECT id FROM partidas WHERE arbitro_rc=0"):
+        jsonl = salida / f"{pid}.jsonl"
+        if not jsonl.exists() or jsonl.stat().st_size == 0:
+            continue
+        lineas = [l for l in jsonl.read_text(encoding="utf-8", errors="replace").splitlines()
+                  if l.strip()]
+        if len(lineas) < 2:
+            continue
+        try:
+            turno0 = json.loads(lineas[1])
+        except ValueError:
+            continue
+        for sn in turno0.get("board", {}).get("snakes", []):
+            cabeza = sn.get("head", {})
+            salidas[(pid, sn.get("name"))] = (cabeza.get("x"), cabeza.get("y"))
+    puestos = {(r[0], r[1]): r[2] for r in db.execute(
+        "SELECT partida_id, slug, puesto FROM participantes")}
+    por_salida = {}
+    for clave, pos in salidas.items():
+        pu = puestos.get(clave)
+        if pu is None:
+            continue
+        por_salida.setdefault(pos, []).append((clave[1], pu))
+    d["salidas"] = por_salida
     d["latencias"] = consulta(db, """
         SELECT l.slug, AVG(l.p50), AVG(l.p95), AVG(l.p99), MAX(l.maximo),
                SUM(l.timeouts), SUM(l.movimientos)
@@ -121,19 +149,32 @@ def md(d):
     a("Puesto medio con **rango compartido promediado** para las eliminadas en el mismo")
     a("turno, nunca por indice de asiento (ver docs/rules.md#r-12).")
     a("")
-    a("## T-03 Efecto del asiento {#t-03}")
+    a("## T-03 Efecto del punto de salida {#t-03}")
     a("")
-    a("La rotacion existe para que el asiento no se confunda con la snake. Si funciona,")
-    a("estas filas son planas; si no lo son, el resto del reporte no vale.")
+    a("Si una casilla de salida favoreciera, el puesto medio de cualquier snake saliendo")
+    a("de ella se separaria de 2.5. Si estas filas son planas, la posicion inicial no esta")
+    a("contaminando la comparacion; si no lo son, el resto del reporte no vale.")
     a("")
-    a("| snake | asiento 0 | 1 | 2 | 3 |")
+    a("**No se agrupa por el orden de los argumentos.** Ese orden no decide donde sale")
+    a("nadie: el arbitro recorre un mapa de Go, cuyo orden de iteracion esta aleatorizado")
+    a("por especificacion (`cli/commands/play.go:349-352`), y ademas baraja los puntos de")
+    a("salida (`board.go:200-223`). Agrupar por asiento era un test que no podia fallar.")
+    a("")
+    if not d.get("salidas"):
+        # Una tabla vacia sin decir por que es una perdida silenciosa, que es justo lo que
+        # este reporte no puede permitirse.
+        a("**Sin datos:** no hay JSONL junto a la base, asi que no se pueden leer los")
+        a("puntos de salida. La comparacion de arriba queda SIN esta comprobacion.")
+        a("")
+    a("| punto de salida | puesto medio (cualquiera) | n | puesto medio nuestro | n |")
     a("|---|---|---|---|---|")
-    por_slug = {}
-    for asiento, slug, puesto, n in d["asientos"]:
-        por_slug.setdefault(slug, {})[asiento] = puesto
-    for slug in sorted(por_slug):
-        fila = por_slug[slug]
-        a("| " + slug + " | " + " | ".join(f"{fila.get(i, float('nan')):.3f}" for i in range(4)) + " |")
+    for pos in sorted(d.get("salidas", {})):
+        filas = d["salidas"][pos]
+        todos = [pu for _slug, pu in filas]
+        nuestras = [pu for slug, pu in filas if slug == "v0-baseline"]
+        media_n = f"{sum(nuestras) / len(nuestras):.3f}" if nuestras else "-"
+        a(f"| ({pos[0]}, {pos[1]}) | {sum(todos) / len(todos):.3f} | {len(todos)} | "
+          f"{media_n} | {len(nuestras)} |")
     a("")
     a("## T-04 Latencia y timeouts {#t-04}")
     a("")
