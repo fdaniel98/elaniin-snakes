@@ -351,6 +351,59 @@ faltan = set(tr.configs_disponibles()) - {p.stem for p in
                                           (tr.RAIZ / "snake/config").glob("*.json")}
 comprueba(not faltan, "la lista que se le ofrece al usuario sale del disco, no de una constante")
 
+# --- no se reanuda una corrida con otra topologia ----------------------------------
+# Las 10 primeras partidas de torneo-cuellos se jugaron con --paralelo 2 y el resto iba a
+# jugarse en serie. Mezcladas en el mismo SQLite no se ve en ninguna tabla, y la mitad
+# paralela sale con nuestro puesto inflado porque los rivales pierden 7x mas peticiones.
+tmp_topo = Path(tempfile.mkdtemp())
+db_topo = tr.abre_db(tmp_topo / "torneo.sqlite")
+db_topo.execute(
+    "INSERT INTO partidas (id, gauntlet, semilla, jsonl, asiento_nuestro, turnos, "
+    "arbitro_rc, empezada_en, topologia, rng_version) VALUES "
+    "('g00000','g',1,'x',0,10,0,'t',?,'r')",
+    (json.dumps({"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 2}),))
+db_topo.commit()
+
+try:
+    tr.comprueba_topologia(db_topo, {"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 1})
+    comprueba(False, "reanudar con otro --paralelo aborta")
+except SystemExit:
+    comprueba(True, "reanudar con otro --paralelo aborta")
+
+try:
+    tr.comprueba_topologia(db_topo, {"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 2})
+    comprueba(True, "con la misma topologia se reanuda sin protestar")
+except SystemExit:
+    comprueba(False, "con la misma topologia se reanuda sin protestar")
+
+try:
+    tr.comprueba_topologia(db_topo, {"nucleos": 4, "hilos_por_nucleo": "1", "paralelo": 2})
+    comprueba(False, "y cambiar de maquina tambien aborta, no solo el paralelo")
+except SystemExit:
+    comprueba(True, "y cambiar de maquina tambien aborta, no solo el paralelo")
+
+db_vacia = tr.abre_db(Path(tempfile.mkdtemp()) / "t.sqlite")
+try:
+    tr.comprueba_topologia(db_vacia, {"nucleos": 8, "paralelo": 1})
+    comprueba(True, "una corrida nueva no tiene nada con que chocar")
+except SystemExit:
+    comprueba(False, "una corrida nueva no tiene nada con que chocar")
+
+# El caso de torneo-v1: las corridas viejas no llevaban el campo `paralelo` porque son
+# anteriores a la funcion. Eso es paralelo 1, no "desconocido".
+db_vieja = tr.abre_db(Path(tempfile.mkdtemp()) / "t.sqlite")
+db_vieja.execute(
+    "INSERT INTO partidas (id, gauntlet, semilla, jsonl, asiento_nuestro, turnos, "
+    "arbitro_rc, empezada_en, topologia, rng_version) VALUES "
+    "('g00000','g',1,'x',0,10,0,'t',?,'r')",
+    (json.dumps({"nucleos": 8, "hilos_por_nucleo": "1"}),))
+db_vieja.commit()
+try:
+    tr.comprueba_topologia(db_vieja, {"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 2})
+    comprueba(False, "una corrida sin campo `paralelo` cuenta como serie, y 2 no es 1")
+except SystemExit:
+    comprueba(True, "una corrida sin campo `paralelo` cuenta como serie, y 2 no es 1")
+
 # --- la basura de la corrida anterior se limpia sola --------------------------------
 # Una corrida en serie deja `tr-ours` en el 9700; la siguiente con --paralelo 2 quiere
 # `tr-ours-w0` en el MISMO 9700 y chocaba contra un contenedor de hace tres horas.

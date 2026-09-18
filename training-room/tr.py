@@ -205,6 +205,32 @@ def construye_la_nuestra(docker, commit, hash_cfg, config, seco):
     return img
 
 
+CAMPOS_QUE_INVALIDAN = ("paralelo", "nucleos", "hilos_por_nucleo")
+
+
+def comprueba_topologia(db, topo_ahora):
+    """Reanudar una corrida con otra topologia la convierte en dos corridas en un fichero.
+
+    Con `--paralelo 2` los rivales pierden 7 veces mas peticiones que en serie, y cada
+    timeout suyo es un movimiento por defecto que suele matarlos: la mitad paralela sale
+    con nuestro puesto inflado. Mezclada con la mitad en serie dentro del mismo SQLite,
+    eso no se ve en ninguna tabla. Por eso se aborta en vez de avisar: el reporte que
+    saldria de ahi es peor que no tener reporte.
+    """
+    fila = db.execute("SELECT topologia FROM partidas WHERE arbitro_rc = 0 LIMIT 1").fetchone()
+    if not fila:
+        return
+    antes = json.loads(fila[0])
+    distintos = [c for c in CAMPOS_QUE_INVALIDAN
+                 if antes.get(c, 1 if c == "paralelo" else None) != topo_ahora.get(c)]
+    if distintos:
+        muere("esta corrida ya tiene partidas jugadas con OTRA topologia: "
+              + "; ".join(f"{c}: {antes.get(c, 1 if c == 'paralelo' else '?')} -> "
+                          f"{topo_ahora.get(c)}" for c in distintos)
+              + ".\n  Mezclarlas en el mismo SQLite es un torneo que nadie puede leer. "
+                "Usa otro --out, o repite la topologia anterior.")
+
+
 def libera_nuestros_contenedores(docker):
     """Borra TODO contenedor de nuestro espacio de nombres (`tr-ours*`, `zoo-*`) antes de
     empezar, y devuelve los que borro.
@@ -587,6 +613,7 @@ def cmd_match(args):
         ya_jugadas = {fila[0] for fila in db.execute(
             "SELECT id FROM partidas WHERE arbitro_rc = 0")}
         if ya_jugadas:
+            comprueba_topologia(db, topo)
             print(f"OK   {len(ya_jugadas)} partidas ya estaban jugadas; se reanuda")
         pendientes = [p for p in plan if p["id"] not in ya_jugadas]
         print(f"{len(pendientes)} partidas por jugar")
