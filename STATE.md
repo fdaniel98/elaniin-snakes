@@ -2,8 +2,8 @@
 
 ## Estado actual
 
-Fase: 2 (Servidor endurecido) — pendiente de las 200 partidas en la maquina de referencia
-Gate: la fase 1 cerro con 12 checks PASS y 25 venenos cazados alli
+Fase: 2 (Servidor endurecido) — pendiente solo de la autoprueba en la maquina de referencia
+Gate: 12 checks PASS y 200 partidas sin un timeout en la maquina de referencia
 Loop: snake/src/server.cpp → en `.loop/2/`; el de la fase 1 quedo CLOSED en `.loop/1/`
 Snake activa: v0-baseline
 
@@ -46,6 +46,10 @@ corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-
 
 ## Hallazgos abiertos del loop
 
+- [ ] El maximo que mide el arbitro son 169 ms y el de nuestro codigo 0.388: 168 ms que no
+      son el cerebro. Medido y sin tocar; importa al recalibrar el margen de red en la
+      fase 7 (ver docs/performance.md#p-07).
+
 - [ ] El servidor sigue siendo agotable con tantas conexiones a medio abrir como hilos
       tiene el pool (64): entonces una peticion legitima espera hasta el read timeout de
       2 s. Acotado, no eliminado; en la fase 7 hay un balanceador delante.
@@ -71,6 +75,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr `./scripts/soak.sh --games 200` en la maquina de referencia: es la DoD de la fase 2
-y lo unico que falta. Los numeros del contenedor, con la mitad de nucleos, no sirven para
-publicar (ver docs/performance.md#p-06).
+Cerrar la fase 2 cuando termine `gate-selftest.sh` en la maquina de referencia: el gate ya
+paso alli con 12 checks y las 200 partidas dieron 0 timeouts.

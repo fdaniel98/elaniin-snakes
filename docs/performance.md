@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 7389
+size_bytes: 8062
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -82,9 +82,9 @@ hallazgo abierto de la clase `perf`, no como regresion: el presupuesto de la fas
 
 ## P-07 Soak del servidor {#p-07}
 
-La DoD de la fase 2 pide 0 timeouts en 200 partidas locales y el p99 publicado. Los
-numeros de abajo son de **40 partidas en el contenedor** (ver P-06), no de la maquina de
-referencia: sirven para saber que el instrumento funciona, no como linea base.
+La DoD de la fase 2 pide 0 timeouts en 200 partidas locales y el p99 publicado. Lo de
+abajo son las **200 partidas en la maquina de referencia** (ver P-03), que es la medicion
+que vale.
 
 Que mide cada cosa, porque se confunden con facilidad:
 
@@ -96,13 +96,24 @@ Que mide cada cosa, porque se confunden con facilidad:
 
 | metrica | valor | commit | fecha |
 |---|---|---|---|
-| partidas jugadas / pedidas | 40 / 40 | f8af0de | 2026-09-18 |
-| timeouts | 0 | f8af0de | 2026-09-18 |
-| respuestas que el arbitro rechazo | 0 | f8af0de | 2026-09-18 |
-| computo interno p50 / p99 / maximo | 0.063 / 0.541 / 1.509 ms | f8af0de | 2026-09-18 |
-| latencia del arbitro p50 / p99 / maximo | 0 / 1 / 8 ms | f8af0de | 2026-09-18 |
-| arranque en frio, maximo | 2 ms | f8af0de | 2026-09-18 |
-| movimientos medidos | 2376 | f8af0de | 2026-09-18 |
+| partidas jugadas / pedidas | 200 / 200 | bb99e84 | 2026-09-18 |
+| timeouts | 0 | bb99e84 | 2026-09-18 |
+| respuestas que el arbitro rechazo | 0 | bb99e84 | 2026-09-18 |
+| computo interno p50 / p95 / p99 / maximo | 0.048 / 0.065 / 0.08 / 0.388 ms | bb99e84 | 2026-09-18 |
+| latencia del arbitro p50 / p95 / p99 / maximo | 0 / 1 / 6 / 169 ms | bb99e84 | 2026-09-18 |
+| arranque en frio p50 / p99 / maximo | 1 / 5 / 9 ms | bb99e84 | 2026-09-18 |
+| movimientos medidos | 11903 | bb99e84 | 2026-09-18 |
+
+El numero que hay que mirar de estos no es el p99: es que **el maximo del arbitro, 169 ms,
+son 434 veces el maximo de nuestro codigo, 0.388 ms**. Los 168 ms restantes no son el
+cerebro decidiendo: son transporte y planificacion en una maquina con ocho nucleos
+haciendo otras cosas. Queda lejisimos del timeout de 500 ms, y aun asi es un tercio del
+presupuesto gastado en algo que no controlamos desde el codigo.
+
+Importa para la fase 7, donde el margen de red de 100 ms se recalibra con RTT real: el
+margen no lo consume solo la red, tambien el sistema operativo debajo. Aqui queda medido y
+sin tocar, porque optimizar lo que no se ha perfilado seria justo lo que la regla de oro 2
+prohibe.
 
 ## P-05 Politica de playout {#p-05}
 
