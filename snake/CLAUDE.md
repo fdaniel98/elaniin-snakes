@@ -24,7 +24,11 @@ tests usen exactamente el mismo `decide` que el servidor (ver docs/architecture.
   consume el motor y no sirve como sonda.
 - Rutas desconocidas: 404 sin parsear el cuerpo.
 - `POST /move` **nunca** devuelve 5xx (ver docs/invariants.md#inv-12): payload invalido,
-  tablero sin instanciacion o serpiente propia ausente caen al fail-safe con `WARN`.
+  tablero de otro tamaño o serpiente propia ausente caen al fail-safe con `WARN`. El
+  check 8 lo comprueba con 14 payloads adversos, no solo con fixtures validos.
+- **El servidor juega 11x11 y nada mas.** El motor conoce tres tamaños, el cerebro uno;
+  en cualquier otro se responde el ultimo escalon del fail-safe. Es una decision, no una
+  carencia: ver docs/decisions/ADR-0014-el-servidor-es-11x11.md#d-0131.
 - Una linea de log por movimiento, parseable: turno, ruleset, escalon del fail-safe,
   candidatos, valor y microsegundos.
 
