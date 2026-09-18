@@ -1,0 +1,35 @@
+{
+  "_comment": "v0 + cuellos, y NADA MAS. Es v0 con la penalizacion de salas de una sola puerta encendida: territory.version sigue en 0. Existe separado de v2.json porque v2 mezcla los cuellos con el territorio de v1, que ya se midio y se rechazo (ver docs/strategy.md#s-v1r), y un experimento con dos variables a la vez no dice cual de las dos hizo que. ver docs/strategy.md#s-cuellos",
+  "time": {
+    "network_margin_ms": 100,
+    "safety_margin_ms": 50,
+    "max_compute_ms": 350
+  },
+  "food": {
+    "seek_below": 50,
+    "seek_below_in_hazard": 75,
+    "free_food_distance": 2,
+    "weight": 6.0
+  },
+  "space": {
+    "min_space_ratio": 1.0,
+    "weight": 100.0,
+    "tail_escape": true,
+    "worst_case_weight": 150.0,
+    "worst_case_max_cuellos": 24
+  },
+  "head": {
+    "avoid_equal_or_longer": 80.0,
+    "prefer_shorter": 8.0
+  },
+  "hazard": {
+    "weight": 20.0,
+    "low_health_multiplier": 4.0
+  },
+  "territory": {
+    "version": 0,
+    "weight": 120.0,
+    "contested_weight": 0.0,
+    "hazard_value_pct": 50
+  }
+}

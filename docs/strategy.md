@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 4811
+size_bytes: 6361
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -61,6 +61,31 @@ siente productivo y no mueve el marcador.
 El codigo se conserva entero y seleccionable (`territory.version = 1`): cuando exista
 busqueda, una evaluacion mejor en las hojas si deberia notarse, y entonces esta medicion
 es la linea base contra la que comparar.
+
+### S-CUELLOS Hipotesis: no entrar donde solo hay una puerta {#s-cuellos}
+
+**Hipotesis falsable:** si 132 de 178 muertes nuestras no tenian ninguna salida ese turno,
+no morimos por elegir mal el turno que morimos: entramos en regiones que el rival cierra
+despues. Penalizar el movimiento cuyo espacio se desploma al tapar UNA casilla deberia
+subir el puesto medio contra `gauntlet-v1`.
+
+**Que se mide:** `snake/config/cuellos.json`, que es v0 con `space.worst_case_weight` a
+150 y `territory.version` en **0**. Una sola variable. `v2.json` -cuellos MAS el territorio
+de v1- no se mide todavia a proposito: v1 ya se rechazo (ver docs/strategy.md#s-v1r) y
+medir los dos juntos no diria cual de los dos hizo que.
+
+**Protocolo:** 60 partidas, `--seed-base 1`, o sea las semillas 1..15 con rotacion de los
+4 asientos. Son los MISMOS 15 bloques que las primeras 60 partidas de `torneo-v1`, asi que
+la comparacion es pareada por bloque (ver docs/results/torneo-v1/). Metrica primaria
+unica: diferencia pareada de puesto medio por bloque. Lo demas es descriptivo y va sin
+p-valores.
+
+**Lo que este tamaño puede y no puede ver:** 15 bloques solo resuelven un efecto grande.
+La medicion de v1 enseño que 0.05 de puesto medio pide cientos de bloques; este run no
+pretende resolver 0.05, pretende ver si los cuellos mueven la aguja de forma visible. Un
+resultado dentro del ruido **no** significa que la idea sea mala, significa que no cabe en
+el presupuesto de tiempo de esta semana y que la decision se toma con busqueda, no con mas
+partidas de heuristica.
 
 ## S-V2 Busqueda multijugador {#s-v2}
 
