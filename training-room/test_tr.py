@@ -182,6 +182,40 @@ comprueba(inc["status"] == 0, "una queja sobre otra snake no se nos apunta")
 inc_otra = tr.incidencias_de(ruta_log, "http://127.0.0.1:9701/otra")
 comprueba(inc_otra["status"] == 1, "la queja se apunta a quien le toca")
 
+# ---------------------------------------------------------------- reanaliza
+# El test que faltaba. `reanaliza` dijo "recalculadas 800 filas" sin tocar ninguna: los
+# grupos de la expresion regular estaban cruzados y el WHERE no casaba con nada. Aqui se
+# monta una corrida en miniatura con un log del arbitro con su forma REAL y se exige que
+# la fila quede con el valor, no que el script diga que la toco.
+import types
+
+dir_run = Path(tempfile.mkdtemp())
+(dir_run / "g00000.ref.log").write_text(
+    'INFO 03:02:08.578366 Snake ID: id0 URL: http://127.0.0.1:9700, Name: "v0-baseline"\n'
+    'INFO 03:02:08.579560 Snake ID: ida URL: http://127.0.0.1:9701/a, Name: "a"\n'
+    'WARN Request to http://127.0.0.1:9700/move failed\n'
+    'ERROR context deadline exceeded\n'
+    'WARN Request to http://127.0.0.1:9700/end failed\n'
+    'ERROR context deadline exceeded\n', encoding="utf-8")
+db3 = tr.abre_db(dir_run / "torneo.sqlite")
+db3.execute("INSERT INTO partidas VALUES ('g00000','t',1,'x.jsonl',0,10,0,'ahora','{}','x')")
+for slug in ("v0-baseline", "a"):
+    db3.execute("INSERT INTO latencias VALUES ('g00000',?,0,0,0,0,NULL,10)", (slug,))
+db3.commit()
+db3.close()
+
+rc = tr.cmd_reanaliza(types.SimpleNamespace(out=str(dir_run)))
+db3 = tr.abre_db(dir_run / "torneo.sqlite")
+valores = dict(db3.execute("SELECT slug, timeouts FROM latencias").fetchall())
+comprueba(rc == 0, "reanaliza sale con 0 cuando modifica filas")
+comprueba(valores.get("v0-baseline") == 1, "el timeout de /move llega a la fila correcta")
+comprueba(valores.get("a") == 0, "una snake sin quejas queda en 0, no en NULL")
+
+vacio = Path(tempfile.mkdtemp())
+tr.abre_db(vacio / "torneo.sqlite").close()
+comprueba(tr.cmd_reanaliza(types.SimpleNamespace(out=str(vacio))) == 1,
+          "un recalculo que no modifica nada FALLA en vez de decir que hizo algo")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")

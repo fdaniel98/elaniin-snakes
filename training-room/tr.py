@@ -519,31 +519,43 @@ def cmd_reanaliza(args):
 
     Existe porque una metrica que falto la primera vez no puede costar cinco horas de
     torneo: los JSONL y los logs del arbitro estan en disco, y todo lo que este programa
-    calcula sale de ahi."""
+    calcula sale de ahi.
+
+    Informa de FILAS MODIFICADAS, no de vueltas del bucle. La primera version contaba
+    iteraciones y dijo "recalculadas 800 filas" sin haber tocado ninguna, porque el
+    emparejamiento de grupos de la expresion regular estaba cruzado y ningun `WHERE`
+    casaba. Un contador que no puede quedarse en cero no mide nada."""
+    import re
+
     salida = Path(args.out)
     db = abre_db(salida / "torneo.sqlite")
-    urls_por_partida = {}
-    for pid, in db.execute("SELECT id FROM partidas"):
+    # `Snake ID: <uuid> URL: <url>, Name: "<nombre>"`, tal cual lo imprime el arbitro al
+    # arrancar cada partida. El `slug` de la base es el --name que le pasamos, o sea el
+    # tercer grupo; la url con la que se buscan las quejas es el segundo.
+    LINEA = re.compile(r'Snake ID:\s+(\S+)\s+URL:\s+(\S+?), Name: "([^"]+)"')
+
+    modificadas = 0
+    sin_log = 0
+    for (pid,) in db.execute("SELECT id FROM partidas").fetchall():
         reflog = salida / f"{pid}.ref.log"
         if not reflog.exists():
+            sin_log += 1
             continue
-        # Las urls se recuperan del propio log del arbitro, que las imprime al arrancar.
-        import re
-        urls = {}
-        for sid, url in re.findall(r"Snake ID:\s+\S+\s+URL:\s+(\S+?), Name: \"([^\"]+)\"",
-                                   reflog.read_text(encoding="utf-8", errors="replace")):
-            urls[url] = sid
-        urls_por_partida[pid] = {nombre: u for u, nombre in urls.items()}
-
-    tocadas = 0
-    for pid, slugs in urls_por_partida.items():
-        for slug, url in slugs.items():
-            inc = incidencias_de(salida / f"{pid}.ref.log", url)
-            db.execute("UPDATE latencias SET timeouts = ? WHERE partida_id = ? AND slug = ?",
-                       (inc["timeout"], pid, slug))
-            tocadas += 1
+        texto = reflog.read_text(encoding="utf-8", errors="replace")
+        for _sid, url, nombre in LINEA.findall(texto):
+            inc = incidencias_de(reflog, url)
+            cur = db.execute(
+                "UPDATE latencias SET timeouts = ? WHERE partida_id = ? AND slug = ?",
+                (inc["timeout"], pid, nombre))
+            modificadas += cur.rowcount
     db.commit()
-    print(f"recalculadas {tocadas} filas de latencias en {salida}")
+
+    print(f"filas de latencias modificadas: {modificadas}")
+    if sin_log:
+        print(f"AVISO {sin_log} partidas sin log del arbitro: no se pudo recalcular")
+    if modificadas == 0:
+        print("FAIL no se modifico ninguna fila: el recalculo no hizo nada", file=sys.stderr)
+        return 1
     for fila in db.execute("""SELECT l.slug, SUM(l.timeouts), SUM(l.movimientos)
                               FROM latencias l JOIN partidas g ON g.id = l.partida_id
                               WHERE g.arbitro_rc = 0 GROUP BY l.slug ORDER BY 2 DESC"""):
