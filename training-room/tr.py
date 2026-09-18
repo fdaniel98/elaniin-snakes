@@ -205,6 +205,32 @@ def construye_la_nuestra(docker, commit, hash_cfg, config, seco):
     return img
 
 
+def libera_nuestros_contenedores(docker):
+    """Borra TODO contenedor de nuestro espacio de nombres (`tr-ours*`, `zoo-*`) antes de
+    empezar, y devuelve los que borro.
+
+    Por que hace falta y por que es seguro: el orquestador borraba solo los nombres exactos
+    que iba a usar. Una corrida en serie deja `tr-ours` en el puerto 9700; la siguiente con
+    `--paralelo 2` quiere `tr-ours-w0` en el MISMO 9700, borra un nombre que no existe y
+    choca contra un contenedor de hace tres horas que nadie mira. Paso, y el mensaje de
+    error no decia por que.
+
+    Es seguro porque a estas alturas ya tenemos el cerrojo global: si hay dos torneos a la
+    vez, el otro no ha llegado aqui. Cualquier `tr-ours*` o `zoo-*` vivo es, por
+    definicion, basura de una corrida muerta. No se toca ningun otro nombre: lo que corra
+    en esta maquina que no sea del Training Room no es asunto nuestro.
+    """
+    r = corre([docker, "ps", "-aq", "--filter", "name=^tr-ours", "--filter", "name=^zoo-"])
+    ids = [x for x in r.stdout.split() if x]
+    if not ids:
+        return []
+    nombres = corre([docker, "inspect", "-f", "{{.Name}}", *ids]).stdout.split()
+    corre([docker, "rm", "-f", *ids])
+    print(f"OK   {len(ids)} contenedor(es) de una corrida anterior borrados: "
+          f"{' '.join(n.lstrip('/') for n in nombres)}")
+    return ids
+
+
 BANDERAS_AISLAMIENTO = [
     "--user", "65534:65534", "--read-only", "--tmpfs", "/tmp",
     "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=256",
@@ -532,6 +558,7 @@ def cmd_match(args):
     # y sus nucleos: dos partidas compartiendo contenedor se robarian el cerebro.
     slugs = composiciones[0]
     suites = []
+    libera_nuestros_contenedores(docker)
     try:
         for w in range(paralelo):
             sufijo = f"-w{w}" if paralelo > 1 else ""

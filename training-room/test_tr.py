@@ -351,6 +351,49 @@ faltan = set(tr.configs_disponibles()) - {p.stem for p in
                                           (tr.RAIZ / "snake/config").glob("*.json")}
 comprueba(not faltan, "la lista que se le ofrece al usuario sale del disco, no de una constante")
 
+# --- la basura de la corrida anterior se limpia sola --------------------------------
+# Una corrida en serie deja `tr-ours` en el 9700; la siguiente con --paralelo 2 quiere
+# `tr-ours-w0` en el MISMO 9700 y chocaba contra un contenedor de hace tres horas.
+_vistos = []
+
+
+class _Ps:
+    returncode = 0
+    stdout = "abc123 def456\n"
+    stderr = ""
+
+
+class _Inspect:
+    returncode = 0
+    stdout = "/tr-ours\n/zoo-eremetic-eric\n"
+    stderr = ""
+
+
+def _falso_corre(cmd, **kw):
+    _vistos.append(cmd)
+    if "ps" in cmd:
+        return _Ps()
+    if "inspect" in cmd:
+        return _Inspect()
+    return _Ps()
+
+
+_corre_real = tr.corre
+tr.corre = _falso_corre
+try:
+    borrados = tr.libera_nuestros_contenedores("docker")
+finally:
+    tr.corre = _corre_real
+
+comprueba(borrados == ["abc123", "def456"], "borra lo que docker ps le devuelve")
+filtros = [c for c in _vistos if "ps" in c][0]
+comprueba("name=^tr-ours" in filtros and "name=^zoo-" in filtros,
+          "solo mira nuestro espacio de nombres, anclado al principio")
+comprueba(all("testing" not in " ".join(c) for c in _vistos),
+          "no toca ningun contenedor ajeno al Training Room")
+rm = [c for c in _vistos if "rm" in c][0]
+comprueba(rm[-2:] == ["abc123", "def456"], "y los borra por id, no por nombre adivinado")
+
 # --- un arranque fallido tiene que decir POR QUE ----------------------------------
 # "ERROR no arranco el contenedor de nuestra snake" se lee igual con el puerto ocupado,
 # con un cpuset invalido y con la imagen rota. El de los rivales ya traia el stderr de
