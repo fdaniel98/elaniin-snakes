@@ -87,6 +87,40 @@ if real.exists():
     comprueba(len(d["latencias"][d["ganador"]]) == d["turnos"],
               "hay una latencia por turno jugado del ganador")
 
+# ---------------------------------------------------------------- persistencia
+# Lo que faltaba: los tests probaban la derivacion y nunca la escritura. La primera
+# corrida real reventó en el primer INSERT -asiento era NOT NULL y solo se lo ponia a
+# nuestra snake- despues de levantar cuatro contenedores y jugar una partida. Un fallo
+# que cuesta minutos de docker tiene que salir aqui, en milisegundos y sin docker.
+def log_arbitro_falso(ids_y_urls):
+    ruta = Path(tempfile.mkstemp(suffix=".log")[1])
+    ruta.write_text("\n".join(f"Snake ID: {sid} URL: {url}, Name: {sid}"
+                              for sid, url in ids_y_urls) + "\n", encoding="utf-8")
+    return ruta
+
+
+urls = {"v0-baseline": "http://127.0.0.1:9700", "a": "http://127.0.0.1:9701",
+        "b": "http://127.0.0.1:9702", "c": "http://127.0.0.1:9703"}
+ids = {"v0-baseline": "id0", "a": "ida", "b": "idb", "c": "idc"}
+jsonl = jsonl_falso({v: 9 - i for i, v in enumerate(ids.values())}, ganador="id0")
+reflog = log_arbitro_falso([(ids[s], u) for s, u in urls.items()])
+
+db = tr.abre_db(":memory:")
+orden = ["b", "c", "v0-baseline", "a"]          # asiento 2 para la nuestra
+plan = {"id": "g00000", "semilla": 7, "asiento": 2, "comp": ["a", "b", "c"]}
+gauntlet = {"nombre": "test", "imagenes": {"zoo/x:1": "sha256:0"}}
+tr.guarda(db, gauntlet, plan, jsonl, reflog, 0, urls, orden,
+          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"])
+
+filas = db.execute("SELECT slug, asiento, puesto FROM participantes ORDER BY asiento").fetchall()
+comprueba(len(filas) == 4, "se persisten las cuatro snakes, no solo la nuestra")
+comprueba([f[0] for f in filas] == orden, "el asiento guardado es la posicion real en el arbitro")
+comprueba(all(f[1] is not None for f in filas), "ninguna snake se guarda sin asiento")
+comprueba(db.execute("SELECT COUNT(*) FROM latencias").fetchone()[0] == 4,
+          "hay una fila de latencias por snake")
+fila = db.execute("SELECT semilla, asiento_nuestro, arbitro_rc FROM partidas").fetchone()
+comprueba(fila == (7, 2, 0), "la partida guarda semilla, asiento nuestro y codigo del arbitro")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")

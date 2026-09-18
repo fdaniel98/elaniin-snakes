@@ -375,8 +375,8 @@ def cmd_match(args):
                     cwd=RAIZ, stdout=subprocess.DEVNULL, stderr=errores).returncode
             if rc != 0:
                 fallos += 1
-            guarda(db, gauntlet, p, jsonl, reflog, rc, urls, topo, commit, nuestro_hash,
-                   img_nuestra, gauntlet["imagenes"])
+            guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit,
+                   nuestro_hash, img_nuestra, gauntlet["imagenes"])
             print(".", end="", flush=True)
             if (plan.index(p) + 1) % 50 == 0:
                 print(f" {plan.index(p) + 1}", flush=True)
@@ -396,7 +396,11 @@ def cmd_match(args):
     return 0
 
 
-def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, topo, commit, hash_cfg, img_nuestra, imagenes):
+def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit, hash_cfg,
+           img_nuestra, imagenes):
+    """`orden` es la lista de slugs en el orden en que se le pasaron al arbitro, que ES el
+    asiento. Se guarda para todas las snakes, no solo la nuestra: si un asiento favorece,
+    se ve en los rivales igual que en nosotros, y eso es lo que la rotacion anula."""
     datos = lee_partida(jsonl, reflog)
     if datos is None:
         db.execute("INSERT OR REPLACE INTO partidas VALUES (?,?,?,?,?,?,?,?,?,?)",
@@ -409,6 +413,11 @@ def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, topo, commit, hash_cfg, img
                 datos["turnos"], rc, time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 json.dumps(topo), "arbitro-oficial"))
     id_por_slug = {slug: datos["por_url"].get(url.rstrip("/")) for slug, url in urls.items()}
+    faltan = [slug for slug, sid in id_por_slug.items() if sid is None]
+    if faltan:
+        # Sin el id no se puede casar nada de esa snake. Se registra y no se inventa.
+        print(f"\nAVISO {p['id']}: el log del arbitro no da el id de {', '.join(faltan)}",
+              file=sys.stderr)
     for slug, sid in id_por_slug.items():
         if sid is None:
             continue
@@ -418,7 +427,7 @@ def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, topo, commit, hash_cfg, img
                     "v0" if nuestra else "zoo", commit if nuestra else None,
                     hash_cfg if nuestra else None,
                     img_nuestra if nuestra else list(imagenes)[0],
-                    p["asiento"] if nuestra else None,
+                    orden.index(slug),
                     datos["puestos"].get(sid), datos["ultimo_turno"].get(sid),
                     None))
         lat = datos["latencias"].get(sid, [])
