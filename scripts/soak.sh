@@ -20,6 +20,11 @@
 #   - el campo `us=` del log del servidor es el tiempo dentro de decide(), con resolucion
 #     de microsegundos. Es lo que cuesta nuestro codigo.
 #
+# El `arranque_en_frio` de aqui mide la primera peticion SERVIDA de cada partida, no la
+# carga del proceso: el config se lee antes de abrir el socket y el servidor ya ha
+# contestado el GET / del sondeo de arranque. Y esta cuantizado a milisegundos enteros,
+# como todo lo que mide el arbitro.
+#
 # NO se mete un proxy en medio: un salto de Python que en produccion no existe inflaba la
 # cifra trece veces.
 #

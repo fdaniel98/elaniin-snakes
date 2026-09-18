@@ -23,6 +23,12 @@ tests usen exactamente el mismo `decide` que el servidor (ver docs/architecture.
 - `GET /health` responde 200 **sin invocar el cerebro**: el `GET /` de personalizacion lo
   consume el motor y no sirve como sonda.
 - Rutas desconocidas: 404 sin parsear el cuerpo.
+- `/start` y `/end` aguantan lo mismo que `/move`: un JSON que no sea objeto no puede
+  darles 500. Habia uno, y duro hasta la fase 2 porque el check 8 solo probaba `/move`.
+- Un `set_exception_handler` cubre **toda** ruta: cpp-httplib responde 500 por su cuenta
+  si un handler lanza, y de paso filtra el mensaje de la excepcion en una cabecera.
+- Cuerpo maximo 256 KiB, y timeouts de socket cortos: con 5 s bastaban ocho conexiones a
+  medio abrir para agotar el pool de hilos y dejar sin responder, que es peor que un 5xx.
 - `POST /move` **nunca** devuelve 5xx (ver docs/invariants.md#inv-12): payload invalido,
   tablero de otro tamaño o serpiente propia ausente caen al fail-safe con `WARN`. El
   check 8 lo comprueba con 14 payloads adversos, no solo con fixtures validos.

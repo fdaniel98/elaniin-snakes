@@ -20,8 +20,7 @@ Snake activa: v0-baseline
 | asignaciones dinamicas en `apply`/`legal_moves`/`decide` | 0 / 0 / 0 | 8082d1d | 2026-09-15 |
 <!-- END:perf-snapshot -->
 
-Esa tabla la regenera `./scripts/sync_state.sh` desde `docs/performance.md`, su unico
-dueño; editarla a mano es un fallo que el gate detecta.
+La regenera `./scripts/sync_state.sh` desde su dueño, `docs/performance.md`.
 
 ## Entregables de la fase con loop obligatorio
 
@@ -31,23 +30,13 @@ dueño; editarla a mano es un fallo que el gate detecta.
 | rules | engine/src/rules.cpp | correctness, robustness, perf |
 <!-- END:loop-deliverables -->
 
-Que entra aqui lo decide el ambito del loop
-(ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071). Los ledgers de la fase 0 se
-conservan en `.loop/0/`; el cerebro no es entregable de esta fase y no lleva ledger nuevo.
+Que entra aqui lo decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Bloqueado / pendiente de decision humana
 
-- [x] **El loop cierra.** Tres auditorias del criterio 14 encontraron 17 hallazgos en
-      total, todos reparados. Dejan de contarse como iteraciones
-      (ver docs/decisions/ADR-0013-auditorias-fuera-del-loop.md#d-0121), que es lo que
-      atascaba el cierre, y el check 9 pasa a exigir su bloque.
 
 - [ ] **Linea base de la fase 1 en la maquina de referencia:** `./scripts/bench.sh` en
       WSL2. Lo medido hasta ahora, en ver docs/performance.md#p-06, es de otra maquina.
-- [x] **El ratio de mutantes de la fase 0, re-medido** con el arnes arreglado sobre
-      `8082d1d` y su lista original: 0.8333, no 1.0. Sigue por encima del umbral de 0.8 y
-      el unico superviviente resulto ser un mutante equivalente, asi que no faltaba
-      ningun test. La correccion vive en `correcciones` de los dos ledgers de `.loop/0/`.
 
 ## Decisiones humanas
 

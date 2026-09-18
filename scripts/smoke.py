@@ -98,7 +98,9 @@ PAYLOADS_ADVERSOS = [
     ("sin la serpiente propia", '{"board":{"width":11,"height":11,"snakes":[{"id":"b",'
                                 '"body":[{"x":1,"y":1}]}],"food":[],"hazards":[]},'
                                 '"you":{"id":"a"}}'),
-    ("anidamiento profundo", "[" * 2000 + "]" * 2000),
+    # El parser aguanta 125 000 niveles sin despeinarse: esto no prueba un desbordamiento,
+    # solo que un cuerpo raro y grande no rompe nada.
+    ("anidamiento de 2000 niveles", "[" * 2000 + "]" * 2000),
 ]
 
 
@@ -145,6 +147,27 @@ def adversos(url):
             if movimiento not in DIRECTIONS:
                 fallos.append(f"{etiqueta}: movimiento invalido '{movimiento}'")
     return fallos
+
+
+def limite_de_cuerpo(url):
+    """El contrato declara 256 KiB: pasarse tiene que dar 413, no 200 ni un cuelgue.
+
+    Nadie lo probaba. Un limite que no se comprueba es un limite que alguien sube sin
+    enterarse.
+    """
+    cuerpo = b'{"relleno":"' + b"a" * (300 * 1024) + b'"}'
+    peticion = urllib.request.Request(f"{url}/move", data=cuerpo,
+                                      headers={"Content-Type": "application/json"},
+                                      method="POST")
+    try:
+        with urllib.request.urlopen(peticion, timeout=5) as respuesta:
+            return [f"cuerpo de 300 KiB: HTTP {respuesta.status}, se esperaba 413"]
+    except urllib.error.HTTPError as error:
+        if error.code == 413:
+            return []
+        return [f"cuerpo de 300 KiB: HTTP {error.code}, se esperaba 413"]
+    except (urllib.error.URLError, OSError) as error:
+        return [f"cuerpo de 300 KiB: sin respuesta ({error})"]
 
 
 def conexiones_colgadas(url, cuantas=24):
@@ -218,7 +241,9 @@ def main():
     failures = []
 
     # Calentamiento: una peticion real, con su movimiento comprobado igual que las demas,
-    # cuya latencia se contabiliza como arranque en frio y NO entra en la muestra.
+    # cuya latencia se contabiliza como arranque en frio y NO entra en la muestra. Lo que
+    # mide es la primera peticion SERVIDA: el config se carga antes de abrir el socket, y
+    # el proceso ya ha contestado el GET / con el que este script comprueba que esta vivo.
     cold_start = None
     first = json.loads(fixtures[0].read_text(encoding="utf-8"))
     try:
@@ -255,8 +280,9 @@ def main():
     # El servidor sigue vivo tras los fixtures: ahora se le manda lo que no espera.
     fallos_adversos = adversos(args.url)
     failures.extend(fallos_adversos)
-    fallos_adversos.extend(conexiones_colgadas(args.url))
-    failures.extend(conexiones_colgadas(args.url))
+    extra = conexiones_colgadas(args.url) + limite_de_cuerpo(args.url)
+    fallos_adversos.extend(extra)
+    failures.extend(extra)
 
     if not latencies:
         print("FAIL ninguna respuesta del servidor")

@@ -4,7 +4,7 @@ read_when: "antes de parsear el request, de tocar el config o de dar por cierto 
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-18
-size_bytes: 4691
+size_bytes: 5162
 ---
 
 Separado de `docs/rules.md` por presupuesto de bytes, no por tema: las mecanicas del
@@ -40,13 +40,22 @@ Ruta JSON exacta, verificada contra `client/models.go` en el SHA fijado. **Prohi
 | `game.ruleset.settings.hazardDamagePerTurn` | int | 14 | `client/models.go:61`, `cli/commands/play.go:116` |
 | `game.ruleset.settings.royale.shrinkEveryNTurns` | int | 25 arbitro / 20 motor | `client/models.go:69-70`, `cli/commands/play.go:117`, `maps/royale.go:49` |
 | `board.width`, `board.height` | int | 11 | `client/models.go:24-25`, `cli/commands/play.go:97-98` |
-| `you.latency` | string | — | `client/models.go:35`, `cli/commands/play.go:455,738,755` |
+| `you.latency` | string | — | `client/models.go:35`, `cli/commands/play.go:455,797-804` |
 
 `you.latency` no es un parametro: es lo que el **arbitro** midio de ida y vuelta en la
-peticion ANTERIOR de esa serpiente (`cli/commands/play.go:455`), serializado con
-`.Milliseconds()` (`cli/commands/play.go:738`), o sea **milisegundos enteros truncados**.
-Sirve para contar timeouts y ver la cola; para un p99 por debajo del milisegundo hace
-falta el reloj propio del servidor.
+peticion ANTERIOR de esa serpiente (`cli/commands/play.go:455`), serializado en
+`convertRulesSnake` con `.Milliseconds()` (`cli/commands/play.go:798,803`), o sea
+**milisegundos enteros truncados**, cero incluido.
+
+Cuidado con confundirlo con el frame del tablero que va por websocket: ese lo construye
+`buildFrameEvent`, que ademas **redondea el cero a uno**
+(`cli/commands/play.go:739-742`). El payload y el JSONL no hacen eso.
+
+Y no sirve para contar timeouts: la serpiente eliminada no se exporta
+(`cli/commands/play.go:818-820`) y el ultimo turno de la partida tampoco
+(`cli/commands/play.go:273-276`), asi que justo la peticion que la mato no aparece. Para
+eso esta el stderr del arbitro; para un p99 por debajo del milisegundo, el reloj propio
+del servidor.
 
 `settings` **no es plano**: `royale` es un objeto anidado (`client/models.go:64,68-70`). El nombre
 interno del parametro de hazard en el motor Go es `damagePerTurn` (`constants.go:54`), distinto del
