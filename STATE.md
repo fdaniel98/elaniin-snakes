@@ -2,10 +2,9 @@
 
 ## Estado actual
 
-Fase: 3 (Training Room MVP) — loop CLOSED; gate completo verde en el contenedor (13/14; el
-10 exige docker). Pendiente la corrida en la maquina de referencia sobre 480c9fa
-Gate: 14 checks; el 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta
-fase, con cinco venenos. El veredicto vigente sigue siendo el de la fase 2 en bb99e84
+Fase: 3 (Training Room MVP) — COMPLETA
+Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
+El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
 Snake activa: v0-baseline. v1 (Voronoi) medida y RECHAZADA: mismo puesto medio, 17 turnos
 mas de vida (ver docs/strategy.md#s-v1r)
@@ -54,9 +53,10 @@ Cada una con su ADR en `docs/decisions/`, que es donde vive el contenido.
 
 ## Hallazgos abiertos del loop
 
-- [ ] 2 violaciones de deadline sobre 10 000 (fuzz, debug+ASan, maquina de referencia) que
-      el arranque en frio no explica. Si reaparecen ya calentado, decidir si un test de
-      reloj de 5 ms puede ser determinista ahi (ver
+- [ ] Los tests de reloj de 5 ms no son deterministas en la maquina de referencia: con la
+      maquina cargada dieron 9 ms en el primer fixture y 2 violaciones de 10 000, y con
+      ella descargada pasan incluso sin calentar. El calentamiento les devuelve margen
+      pero no los hace deterministas (ver
       docs/decisions/ADR-0021-arranque-en-frio.md#adr-0021-abierto).
 
 - [ ] El transporte se come casi todo el presupuesto: el maximo del arbitro son 169 ms y
@@ -86,7 +86,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr el gate completo sobre 480c9fa en la maquina de referencia: confirma que los dos
-tests de deadline pasan con el calentamiento (ver
-docs/decisions/ADR-0021-arranque-en-frio.md). Despues desplegar v0, la unica version
-medida, y luego busqueda: v1 no mejoro el puesto medio (ver docs/strategy.md#s-v1r).
+Desplegar v0 -la unica version medida- y registrar la URL. En paralelo, medir v2
+(cuellos), que esta escrita y probada pero nunca se ha medido y ataca justo el diagnostico
+del torneo: 132 de 178 muertes sin ninguna salida. v1 ya se descarto por no mover el
+puesto medio (ver docs/strategy.md#s-v1r).
