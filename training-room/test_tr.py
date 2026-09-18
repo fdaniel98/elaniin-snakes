@@ -121,6 +121,29 @@ comprueba(db.execute("SELECT COUNT(*) FROM latencias").fetchone()[0] == 4,
 fila = db.execute("SELECT semilla, asiento_nuestro, arbitro_rc FROM partidas").fetchone()
 comprueba(fila == (7, 2, 0), "la partida guarda semilla, asiento nuestro y codigo del arbitro")
 
+# ---------------------------------------------------------------- reanudacion
+# Una corrida de horas tiene que sobrevivir a que la maten. Se comprueba que lo escrito
+# persiste y que una segunda pasada reconoce lo ya jugado en vez de repetirlo o borrarlo.
+ruta_db = Path(tempfile.mkdtemp()) / "torneo.sqlite"
+db1 = tr.abre_db(ruta_db)
+tr.guarda(db1, gauntlet, plan, jsonl, reflog, 0, urls, orden,
+          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"])
+db1.commit()
+db1.close()
+
+db2 = tr.abre_db(ruta_db)
+comprueba(db2.execute("SELECT COUNT(*) FROM partidas").fetchone()[0] == 1,
+          "lo guardado sigue ahi al reabrir la base: el commit no espera al final")
+ya = {f[0] for f in db2.execute("SELECT id FROM partidas WHERE arbitro_rc = 0")}
+comprueba(ya == {"g00000"}, "una segunda pasada reconoce la partida ya jugada")
+
+plan_malo = dict(plan, id="g00001")
+tr.guarda(db2, gauntlet, plan_malo, jsonl, reflog, 1, urls, orden,
+          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"])
+db2.commit()
+ya = {f[0] for f in db2.execute("SELECT id FROM partidas WHERE arbitro_rc = 0")}
+comprueba("g00001" not in ya, "una partida con el arbitro en error NO cuenta como jugada")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")

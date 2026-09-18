@@ -353,10 +353,20 @@ def cmd_match(args):
         print("OK   las cuatro snakes responden")
 
         cli = arbitro()
-        db.execute("DELETE FROM partidas")
+        # Nada de borrar lo anterior: una corrida de cinco horas que empieza tirando el
+        # resultado de la anterior es una forma cara de perder datos. Las partidas ya
+        # jugadas con el arbitro en 0 se saltan, asi que una corrida interrumpida se
+        # reanuda sola con el mismo --out.
+        ya_jugadas = {fila[0] for fila in db.execute(
+            "SELECT id FROM partidas WHERE arbitro_rc = 0")}
+        if ya_jugadas:
+            print(f"OK   {len(ya_jugadas)} partidas ya estaban jugadas; se reanuda")
         fallos = 0
         empezado = time.time()
         for p in plan:
+            if p["id"] in ya_jugadas:
+                print("=", end="", flush=True)
+                continue
             # La rotacion se implementa reordenando los argumentos del arbitro: el orden
             # de --name/--url ES el asiento. No hace falta reiniciar nada.
             orden = [NUESTRO_SLUG] + list(p["comp"])
@@ -377,11 +387,13 @@ def cmd_match(args):
                 fallos += 1
             guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit,
                    nuestro_hash, img_nuestra, gauntlet["imagenes"])
+            # Commit por partida, no al final: lo que ya se jugo no se pierde porque la
+            # 190 falle, y `sqlite3` desde otra terminal puede mirar el avance.
+            db.commit()
             print(".", end="", flush=True)
             if (plan.index(p) + 1) % 50 == 0:
                 print(f" {plan.index(p) + 1}", flush=True)
         print()
-        db.commit()
     finally:
         corre([docker, "rm", "-f", "tr-ours"])
         corre([str(RAIZ / "scripts/zoo.sh"), "down", "--all"], cwd=RAIZ)
