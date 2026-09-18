@@ -5,6 +5,7 @@
 #   ./scripts/zoo.sh build <slug>|--all
 #   ./scripts/zoo.sh up <slug> --port N [--cpus C --cpuset S --memory M]
 #   ./scripts/zoo.sh down <slug>|--all
+#   ./scripts/zoo.sh check <slug>|--all
 #   ./scripts/zoo.sh digest <slug>
 #
 # Todas aceptan --dry-run, que imprime el `docker ...` exacto sin ejecutarlo. Sirve para
@@ -270,6 +271,71 @@ cmd_down() {
     return 0
 }
 
+# ------------------------------------------------------------------ check
+# Arranca cada snake con el aislamiento completo, comprueba que responde, y apunta el
+# digest de la imagen. Es lo unico que distingue "la imagen existe" de "la snake juega":
+# una imagen puede construirse y luego no arrancar con --read-only, que es exactamente lo
+# que le paso a Robosnake. ver zoo/README.md
+#
+# El resultado va a zoo/.estado-local.json, que NO se commitea: digests y salud son de
+# esta maquina. Lo que si se congela, en gauntlet-v1.json, es el digest aprobado, y el
+# orquestador aborta si el de la maquina no coincide.
+cmd_check() {
+    local objetivo="${1:-}"
+    shift || true
+    [[ -n "$objetivo" ]] || die "uso: zoo.sh check <slug>|--all [--cpus C --memory M]"
+    local cpus=1 memoria=512m
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --cpus) cpus="${2:-}"; shift 2 ;;
+            --memory) memoria="${2:-}"; shift 2 ;;
+            *) die "opcion desconocida de check: $1" ;;
+        esac
+    done
+
+    local lista
+    if [[ "$objetivo" == --all ]]; then lista="$(slugs_todos)"; else lista="$objetivo"; fi
+
+    buscar_docker || die "sin docker utilizable"
+    local salida="zoo/.estado-local.json"
+    local nucleos hilos_por_nucleo gobernador
+    nucleos="$(nproc 2>/dev/null || echo 0)"
+    hilos_por_nucleo="$(lscpu 2>/dev/null | sed -nE 's/^Thread\(s\) per core: *([0-9]+)/\1/p' | head -1)"
+    gobernador="$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo desconocido)"
+
+    printf '{\n  "maquina": {"nucleos": %s, "hilos_por_nucleo": "%s", "gobernador": "%s"},\n  "snakes": [\n' \
+        "$nucleos" "${hilos_por_nucleo:-desconocido}" "$gobernador" >"$salida"
+
+    printf '%-28s %-9s %-9s %-13s %s\n' slug imagen responde aislamiento digest
+    local primero=1 slug img digest url estado_img estado_resp aislamiento puerto=8190
+    for slug in $lista; do
+        estado_img=no; estado_resp=no; aislamiento=no; digest=""
+        img="$(imagen_de "$slug")"
+        if "$DOCKER" image inspect "$img" >/dev/null 2>&1; then
+            estado_img=si
+            digest="$("$DOCKER" image inspect --format '{{.Id}}' "$img")"
+            "$DOCKER" rm -f "zoo-$slug" >/dev/null 2>&1
+            # up ya aplica todas las banderas de aislamiento; si la snake no sobrevive a
+            # ellas, aqui se ve, y ese es el punto.
+            if url="$(cmd_up "$slug" --port "$puerto" --cpus "$cpus" --cpuset 0 --memory "$memoria" 2>/dev/null)"; then
+                estado_resp=si
+                aislamiento=ok
+            fi
+            cmd_down "$slug" >/dev/null 2>&1
+            puerto=$((puerto + 1))
+        fi
+        printf '%-28s %-9s %-9s %-13s %s\n' "$slug" "$estado_img" "$estado_resp" "$aislamiento" "${digest:0:19}"
+        [[ $primero -eq 0 ]] && printf ',\n' >>"$salida"
+        primero=0
+        printf '    {"slug": "%s", "imagen": "%s", "existe": "%s", "responde": "%s", "aislamiento": "%s", "digest": "%s"}' \
+            "$slug" "$img" "$estado_img" "$estado_resp" "$aislamiento" "$digest" >>"$salida"
+    done
+    printf '\n  ]\n}\n' >>"$salida"
+    echo
+    echo "escrito $salida (no se commitea: es de esta maquina)"
+    echo "nucleos=$nucleos hilos_por_nucleo=${hilos_por_nucleo:-desconocido} gobernador=$gobernador"
+}
+
 # ------------------------------------------------------------------ add
 # No construye nada: escribe el manifest y para. Aprobar un repositorio es un acto humano,
 # y aqui lo unico que se hace es dejarle el hueco donde firmarlo.
@@ -322,6 +388,7 @@ case "${1:-}" in
     up) shift; cmd_up "$@" ;;
     down) shift; cmd_down "$@" ;;
     digest) shift; cmd_digest "$@" ;;
+    check) shift; cmd_check "$@" ;;
     add) shift; cmd_add "$@" ;;
     *)
         sed -n '2,10p' "$0"

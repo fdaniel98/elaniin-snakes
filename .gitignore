@@ -12,3 +12,4 @@ docs/results/*.html
 docs/results/*.db
 tmp/
 .venv/
+zoo/.estado-local.json
