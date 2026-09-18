@@ -161,22 +161,36 @@ int main() {
         int turn = 0;
         bool degraded = true;
 
-        const json request = json::parse(req.body, nullptr, false);
-        engine::State11 state;
-        if (!request.is_discarded() && snake::parse_state(request, state)) {
-            rules = state.rules;
-            variant = rules.variant;
-            turn = state.turn;
-            degraded = !engine::is_supported(variant);
-            const auto deadline =
-                snake::Deadline::from_timeout(rules.timeout_ms, params.time, started);
-            move = degraded ? snake::decide_degraded(state, deadline, params)
-                            : snake::decide(state, deadline, params);
-        } else {
-            // Tablero no instanciado, payload invalido o serpiente propia ausente:
-            // escalon 3, el ultimo del fail-safe; nunca 5xx. ver docs/rules.md#r-03
+        // El try NO tapa ningun fallo conocido: el parser aguanta los 14 payloads
+        // adversos del check 8. Esta para que INV-12 deje de depender de que toda rama
+        // futura sea cuidadosa; si algo lanza, se responde el ultimo escalon del
+        // fail-safe en vez de un 500, que haria que el arbitro aplicase su movimiento por
+        // defecto. ver docs/invariants.md#inv-12
+        try {
+            const json request = json::parse(req.body, nullptr, false);
+            engine::State11 state;
+            if (!request.is_discarded() && snake::parse_state(request, state)) {
+                rules = state.rules;
+                variant = rules.variant;
+                turn = state.turn;
+                degraded = !engine::is_supported(variant);
+                const auto deadline =
+                    snake::Deadline::from_timeout(rules.timeout_ms, params.time, started);
+                move = degraded ? snake::decide_degraded(state, deadline, params)
+                                : snake::decide(state, deadline, params);
+            } else {
+                // Tablero no instanciado -el cerebro es 11x11, ver el ADR de la fase 2-,
+                // payload invalido o serpiente propia ausente: escalon 3, el ultimo del
+                // fail-safe; nunca 5xx. ver docs/rules.md#r-03
+                move = snake::Move{engine::Direction::up, 3, 0.0, 0};
+                std::cerr << "WARN=payload_no_soportado\n";
+            }
+        } catch (const std::exception& error) {
             move = snake::Move{engine::Direction::up, 3, 0.0, 0};
-            std::cerr << "WARN=payload_no_soportado\n";
+            std::cerr << "WARN=excepcion_en_move motivo=" << error.what() << "\n";
+        } catch (...) {
+            move = snake::Move{engine::Direction::up, 3, 0.0, 0};
+            std::cerr << "WARN=excepcion_en_move motivo=desconocido\n";
         }
 
         const auto micros = std::chrono::duration_cast<std::chrono::microseconds>(

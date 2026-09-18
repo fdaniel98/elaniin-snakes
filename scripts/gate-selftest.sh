@@ -270,6 +270,21 @@ p.write_text(s.replace(marca, fila + marca, 1), encoding="utf-8")
 EOF
 }
 
+poison_8b() {
+    # El servidor devuelve 5xx ante un payload que no entiende. INV-12 dice que /move
+    # nunca lo hace: un 5xx hace que el arbitro aplique su movimiento por defecto.
+    # Hasta la fase 2 el check 8 solo mandaba fixtures validos y no lo habria visto.
+    python3 - <<'EOF'
+import pathlib
+p = pathlib.Path("snake/src/server.cpp")
+s = p.read_text(encoding="utf-8")
+viejo = 'std::cerr << "WARN=payload_no_soportado\\n";'
+nuevo = 'res.status = 500;\n                std::cerr << "WARN=payload_no_soportado\\n";'
+assert viejo in s, "el veneno 8b ya no encaja con server.cpp"
+p.write_text(s.replace(viejo, nuevo, 1), encoding="utf-8")
+EOF
+}
+
 poison_9e() {
     # Ledger sin bloque de auditorias. El criterio 14 las hace obligatorias y hasta
     # ADR-0013 el check 9 ni las miraba.
@@ -361,6 +376,7 @@ POISONS=(
     "poison_6g|6|front-matter con un valor que no es YAML valido|no es YAML valido"
     "poison_7|7|-march=native en un preset del que deploy hereda"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
+    "poison_8b|8|el servidor devuelve 5xx ante un payload que no entiende|HTTP 500"
     "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"
     "poison_9b|9|ledger con el encadenamiento de commits roto|commit_after(i) != commit_before(i+1)"
     "poison_9c|9|ultima iteracion de una clase fuera de umbral|umbral incumplido"

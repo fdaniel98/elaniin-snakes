@@ -69,6 +69,69 @@ def post(url, payload, timeout):
     return body, (time.perf_counter() - started) * 1000.0
 
 
+# Payloads que el arbitro nunca mandaria, pero que un puerto abierto a internet si recibe.
+# Cada uno tiene que salir 200 con un movimiento de las cuatro literales: INV-12 dice que
+# /move NUNCA devuelve 5xx, y sin esto esa garantia dependia de que el parser fuera
+# cuidadoso en cada rama, no de una comprobacion. ver docs/invariants.md#inv-12
+PAYLOADS_ADVERSOS = [
+    ("json invalido", "no es json"),
+    ("cuerpo vacio", ""),
+    ("json que no es objeto", "[1,2,3]"),
+    ("game con el tipo equivocado", '{"game":5}'),
+    ("ruleset con el tipo equivocado", '{"game":{"ruleset":3}}'),
+    ("board que no es objeto", '{"board":"no-es-objeto"}'),
+    ("turn como string", '{"turn":"dos","board":{"width":11,"height":11,'
+                         '"snakes":[],"food":[],"hazards":[]}}'),
+    ("body como string", '{"board":{"width":11,"height":11,"snakes":[{"id":"a",'
+                         '"body":"no"}],"food":[],"hazards":[]},"you":{"id":"a"}}'),
+    ("body vacio", '{"board":{"width":11,"height":11,"snakes":[{"id":"a","body":[]}],'
+                   '"food":[],"hazards":[]},"you":{"id":"a"}}'),
+    ("coordenadas fuera de rango", '{"board":{"width":11,"height":11,"snakes":[{"id":"a",'
+                                   '"body":[{"x":99999999999,"y":-88888888}]}],"food":[],'
+                                   '"hazards":[]},"you":{"id":"a"}}'),
+    ("salud imposible", '{"board":{"width":11,"height":11,"snakes":[{"id":"a",'
+                        '"body":[{"x":1,"y":1}],"health":99999}],"food":[],"hazards":[]},'
+                        '"you":{"id":"a"},"turn":-5}'),
+    ("tablero que el cerebro no instancia", '{"board":{"width":19,"height":19,"snakes":'
+                                            '[{"id":"a","body":[{"x":1,"y":1}]}],"food":[],'
+                                            '"hazards":[]},"you":{"id":"a"}}'),
+    ("sin la serpiente propia", '{"board":{"width":11,"height":11,"snakes":[{"id":"b",'
+                                '"body":[{"x":1,"y":1}]}],"food":[],"hazards":[]},'
+                                '"you":{"id":"a"}}'),
+    ("anidamiento profundo", "[" * 2000 + "]" * 2000),
+]
+
+
+def adversos(url):
+    """Devuelve la lista de fallos; vacia si el servidor aguanta todo."""
+    fallos = []
+    for nombre, cuerpo in PAYLOADS_ADVERSOS:
+        peticion = urllib.request.Request(
+            f"{url}/move", data=cuerpo.encode("utf-8"),
+            headers={"Content-Type": "application/json"}, method="POST")
+        try:
+            with urllib.request.urlopen(peticion, timeout=5) as respuesta:
+                codigo = respuesta.status
+                datos = respuesta.read()
+        except urllib.error.HTTPError as error:
+            fallos.append(f"adverso '{nombre}': HTTP {error.code}, y /move nunca es 5xx")
+            continue
+        except (urllib.error.URLError, OSError) as error:
+            fallos.append(f"adverso '{nombre}': sin respuesta ({error})")
+            continue
+        if codigo != 200:
+            fallos.append(f"adverso '{nombre}': HTTP {codigo}")
+            continue
+        try:
+            movimiento = json.loads(datos).get("move")
+        except ValueError:
+            fallos.append(f"adverso '{nombre}': la respuesta no es JSON")
+            continue
+        if movimiento not in DIRECTIONS:
+            fallos.append(f"adverso '{nombre}': movimiento invalido '{movimiento}'")
+    return fallos
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", default="http://127.0.0.1:8080")
@@ -131,6 +194,10 @@ def main():
                     f"{path.name}: movimiento ILEGAL '{move}', legales {sorted(legal)}")
                 break
 
+    # El servidor sigue vivo tras los fixtures: ahora se le manda lo que no espera.
+    fallos_adversos = adversos(args.url)
+    failures.extend(fallos_adversos)
+
     if not latencies:
         print("FAIL ninguna respuesta del servidor")
         return 1
@@ -141,6 +208,7 @@ def main():
     worst = latencies[-1]
 
     cold_txt = f"{cold_start:.2f}ms" if cold_start is not None else "no medido"
+    print(f"adversos={len(PAYLOADS_ADVERSOS)} sin 5xx={len(PAYLOADS_ADVERSOS) - len(fallos_adversos)}")
     print(f"fixtures={len(fixtures)} peticiones={len(latencies)} "
           f"p50={p50:.2f}ms p99={p99:.2f}ms max={worst:.2f}ms "
           f"arranque_en_frio={cold_txt}")
