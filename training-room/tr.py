@@ -102,6 +102,135 @@ def topologia():
     }
 
 
+
+# --------------------------------------------------------------- contenedores
+def imagen_nuestra(commit):
+    return f"battlesnake/ours:{commit}"
+
+
+def construye_la_nuestra(docker, commit, seco):
+    """Nuestra snake corre en contenedor como las demas. Compararla fuera seria regalarle
+    la maquina entera mientras los rivales viven con una cuota."""
+    img = imagen_nuestra(commit)
+    if seco:
+        print(f"DRY docker build -f deploy/Dockerfile -t {img} .")
+        return img
+    if corre([docker, "image", "inspect", img]).returncode == 0:
+        print(f"OK   {img} ya existe")
+        return img
+    print(f"-- construyendo {img} (compila el proyecto entero, unos minutos) --")
+    r = subprocess.run([docker, "build", "-f", "deploy/Dockerfile", "-t", img, "."], cwd=RAIZ)
+    if r.returncode != 0:
+        muere("fallo el docker build de nuestra snake")
+    return img
+
+
+BANDERAS_AISLAMIENTO = [
+    "--user", "65534:65534", "--read-only", "--tmpfs", "/tmp",
+    "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=256",
+]
+
+
+def arranca_la_nuestra(docker, img, puerto, cpus, cpuset, memoria, seco):
+    cmd = [docker, "run", "-d", "--name", "tr-ours", *BANDERAS_AISLAMIENTO,
+           "--cpus", str(cpus), "--cpuset-cpus", cpuset, "--memory", memoria,
+           "-p", f"127.0.0.1:{puerto}:8080", "-e", "PORT=8080", img]
+    if seco:
+        print("DRY " + " ".join(cmd))
+        return f"http://127.0.0.1:{puerto}"
+    corre([docker, "rm", "-f", "tr-ours"])
+    if corre(cmd).returncode != 0:
+        muere("no arranco el contenedor de nuestra snake")
+    return f"http://127.0.0.1:{puerto}"
+
+
+def espera(url, segundos=60):
+    fin = time.time() + segundos
+    while time.time() < fin:
+        if corre(["curl", "-fsS", url]).returncode == 0:
+            return True
+        time.sleep(0.5)
+    return False
+
+
+def arbitro():
+    ruta = shutil.which("battlesnake")
+    if ruta:
+        return ruta
+    gopath = corre(["go", "env", "GOPATH"]).stdout.strip()
+    candidato = Path(gopath) / "bin" / "battlesnake" if gopath else None
+    if candidato and candidato.exists():
+        return str(candidato)
+    muere("no encuentro el CLI oficial; compilalo con el SHA de docs/SOURCES.md")
+
+
+# --------------------------------------------------------------- lectura del JSONL
+def lee_partida(jsonl, log_arbitro):
+    """Deriva de un JSONL lo que el arbitro SI exporta, y nada mas.
+
+    El JSONL no trae puestos: la serpiente eliminada desaparece de `board.snakes` y el
+    ultimo turno no se exporta (ver docs/rules.md#r-12). Lo que si hay es el ultimo turno
+    en que cada una aparecio, y una linea final con el ganador. De ahi salen los puestos,
+    con rango compartido promediado para las que caen en el mismo turno, que es la
+    convencion propia de placements() y no una regla del motor oficial."""
+    lineas = [l for l in Path(jsonl).read_text(encoding="utf-8").splitlines() if l.strip()]
+    if len(lineas) < 3:
+        return None
+    final = json.loads(lineas[-1])
+    ultimo_turno, latencias, nombres = {}, {}, {}
+    turnos = 0
+    for linea in lineas[1:-1]:
+        try:
+            estado = json.loads(linea)
+        except ValueError:
+            continue
+        turno = estado.get("turn", 0)
+        turnos = max(turnos, turno)
+        for s in estado.get("board", {}).get("snakes", []):
+            sid = s.get("id")
+            ultimo_turno[sid] = turno
+            nombres[sid] = s.get("name", "")
+            if turno == 0:
+                continue
+            try:
+                latencias.setdefault(sid, []).append(float(s.get("latency", "")))
+            except (TypeError, ValueError):
+                pass
+
+    # Puestos: mas turnos sobrevividos, mejor puesto. Empates a rango promediado.
+    ganador = final.get("winnerId")
+    if ganador:
+        ultimo_turno[ganador] = max(ultimo_turno.values(), default=0) + 1
+    orden = sorted(ultimo_turno.items(), key=lambda kv: -kv[1])
+    puestos, i = {}, 0
+    while i < len(orden):
+        j = i
+        while j + 1 < len(orden) and orden[j + 1][1] == orden[i][1]:
+            j += 1
+        promedio = sum(range(i + 1, j + 2)) / (j - i + 1)
+        for k in range(i, j + 1):
+            puestos[orden[k][0]] = promedio
+        i = j + 1
+
+    # Que id es cada url, del log del arbitro: casar por nombre se rompe al renombrar.
+    por_url = {}
+    if Path(log_arbitro).exists():
+        import re
+        for sid, url in re.findall(r"Snake ID:\s+(\S+)\s+URL:\s+(\S+?),",
+                                   Path(log_arbitro).read_text(encoding="utf-8", errors="replace")):
+            por_url[url.rstrip("/")] = sid
+    return {"turnos": turnos, "puestos": puestos, "latencias": latencias,
+            "nombres": nombres, "por_url": por_url, "empate": bool(final.get("isDraw")),
+            "ganador": ganador, "ultimo_turno": ultimo_turno}
+
+
+def percentil(valores, p):
+    if not valores:
+        return None
+    o = sorted(valores)
+    return o[min(len(o) - 1, int(len(o) * p))]
+
+
 # --------------------------------------------------------------- sqlite
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS partidas (
@@ -195,8 +324,107 @@ def cmd_match(args):
         print("\nDRY no se ejecuta nada")
         return 0
 
-    muere("la ejecucion real del torneo llega en el siguiente commit; hoy solo --dry-run")
+    # ---------------------------------------------------------- arranque
+    docker = docker_bin()
+    commit = nuestro_commit
+    img_nuestra = construye_la_nuestra(docker, commit, seco=False)
+
+    # Los contenedores se levantan UNA vez para todo el torneo, no por partida: un
+    # servidor de Battlesnake es apatrida entre partidas -recibe /start cada vez- y
+    # reiniciar cuatro contenedores 200 veces mediria el arranque de docker, no las
+    # snakes. El arranque en frio se mide aparte, en el soak (ver docs/performance.md#p-07).
+    puerto_base = 9700
+    urls = {}
+    slugs = composiciones[0]
+    try:
+        urls[NUESTRO_SLUG] = arranca_la_nuestra(
+            docker, img_nuestra, puerto_base, cpus, cpusets[0], recursos["memoria"], seco=False)
+        for i, slug in enumerate(slugs):
+            r = corre([str(RAIZ / "scripts/zoo.sh"), "up", slug,
+                       "--port", str(puerto_base + 1 + i), "--cpus", str(cpus),
+                       "--cpuset", cpusets[i + 1], "--memory", recursos["memoria"]],
+                      cwd=RAIZ)
+            if r.returncode != 0:
+                muere(f"no arranco {slug}: {r.stderr.strip()[:300]}")
+            urls[slug] = r.stdout.strip()
+        for slug, url in urls.items():
+            if not espera(url):
+                muere(f"{slug} no respondio en {url}")
+        print("OK   las cuatro snakes responden")
+
+        cli = arbitro()
+        db.execute("DELETE FROM partidas")
+        fallos = 0
+        empezado = time.time()
+        for p in plan:
+            # La rotacion se implementa reordenando los argumentos del arbitro: el orden
+            # de --name/--url ES el asiento. No hace falta reiniciar nada.
+            orden = [NUESTRO_SLUG] + list(p["comp"])
+            orden = orden[-p["asiento"]:] + orden[:-p["asiento"]] if p["asiento"] else orden
+            argumentos = []
+            for slug in orden:
+                argumentos += ["--name", slug, "--url", urls[slug]]
+            jsonl = salida / f"{p['id']}.jsonl"
+            reflog = salida / f"{p['id']}.ref.log"
+            with open(reflog, "w") as errores:
+                rc = subprocess.run(
+                    [cli, "play", "-W", str(partida["ancho"]), "-H", str(partida["alto"]),
+                     "-g", partida["ruleset"], "-m", partida["mapa"],
+                     "-t", str(partida["timeout_ms"]), "-r", str(p["semilla"]),
+                     *argumentos, "-o", str(jsonl)],
+                    cwd=RAIZ, stdout=subprocess.DEVNULL, stderr=errores).returncode
+            if rc != 0:
+                fallos += 1
+            guarda(db, gauntlet, p, jsonl, reflog, rc, urls, topo, commit, nuestro_hash,
+                   img_nuestra, gauntlet["imagenes"])
+            print(".", end="", flush=True)
+            if (plan.index(p) + 1) % 50 == 0:
+                print(f" {plan.index(p) + 1}", flush=True)
+        print()
+        db.commit()
+    finally:
+        corre([docker, "rm", "-f", "tr-ours"])
+        corre([str(RAIZ / "scripts/zoo.sh"), "down", "--all"], cwd=RAIZ)
+
+    minutos = (time.time() - empezado) / 60
+    print(f"jugadas {len(plan)} partidas en {minutos:.1f} min "
+          f"({len(plan) / max(minutos, 1e-9):.1f} partidas/min)")
+    print(f"resultados en {salida}/torneo.sqlite")
+    if fallos:
+        print(f"FAIL {fallos} partidas con el arbitro en error", file=sys.stderr)
+        return 1
     return 0
+
+
+def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, topo, commit, hash_cfg, img_nuestra, imagenes):
+    datos = lee_partida(jsonl, reflog)
+    if datos is None:
+        db.execute("INSERT OR REPLACE INTO partidas VALUES (?,?,?,?,?,?,?,?,?,?)",
+                   (p["id"], gauntlet["nombre"], p["semilla"], str(jsonl), p["asiento"],
+                    None, rc, time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    json.dumps(topo), "arbitro-oficial"))
+        return
+    db.execute("INSERT OR REPLACE INTO partidas VALUES (?,?,?,?,?,?,?,?,?,?)",
+               (p["id"], gauntlet["nombre"], p["semilla"], str(jsonl), p["asiento"],
+                datos["turnos"], rc, time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                json.dumps(topo), "arbitro-oficial"))
+    id_por_slug = {slug: datos["por_url"].get(url.rstrip("/")) for slug, url in urls.items()}
+    for slug, sid in id_por_slug.items():
+        if sid is None:
+            continue
+        nuestra = slug == NUESTRO_SLUG
+        db.execute("INSERT OR REPLACE INTO participantes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                   (p["id"], slug, datos["nombres"].get(sid, slug),
+                    "v0" if nuestra else "zoo", commit if nuestra else None,
+                    hash_cfg if nuestra else None,
+                    img_nuestra if nuestra else list(imagenes)[0],
+                    p["asiento"] if nuestra else None,
+                    datos["puestos"].get(sid), datos["ultimo_turno"].get(sid),
+                    None))
+        lat = datos["latencias"].get(sid, [])
+        db.execute("INSERT OR REPLACE INTO latencias VALUES (?,?,?,?,?,?,?,?)",
+                   (p["id"], slug, percentil(lat, 0.50), percentil(lat, 0.95),
+                    percentil(lat, 0.99), max(lat) if lat else None, None, len(lat)))
 
 
 def main():

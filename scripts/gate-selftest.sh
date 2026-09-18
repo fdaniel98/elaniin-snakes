@@ -34,7 +34,7 @@ FAST_ONLY=0
 }
 
 # Checks que cubre `gate.sh --fast`.
-FAST_CHECKS=(0 1 3 4 6 7 9 11)
+FAST_CHECKS=(0 1 3 4 6 7 9 11 12)
 
 is_fast_check() {
     local needle="$1"
@@ -405,6 +405,20 @@ poison_11d() {
         scripts/zoo.sh
 }
 
+poison_12() {
+    # Los puestos se desempatan por orden de aparicion en vez de compartir rango
+    # promediado: dos snakes eliminadas en el mismo turno quedarian 3a y 4a en vez de 3.5
+    # las dos. Es la convencion que docs/rules.md#r-12 prohibe romper.
+    python3 - <<'EOF'
+import pathlib
+p = pathlib.Path("training-room/tr.py")
+s = p.read_text()
+s = s.replace("        promedio = sum(range(i + 1, j + 2)) / (j - i + 1)",
+              "        promedio = i + 1")
+p.write_text(s)
+EOF
+}
+
 # veneno | check esperado | descripcion | [mensaje exacto que debe aparecer]
 #
 # El cuarto campo es opcional y existe para los venenos del check 9: ese check puede
@@ -442,6 +456,7 @@ POISONS=(
     "poison_11b|11|manifest que apunta a una rama en vez de a un commit|sha no es un commit completo"
     "poison_11c|11|puerto del zoo publicado en todas las interfaces|no se publica en 127.0.0.1"
     "poison_11d|11|imagen etiquetada por snake en vez de por repositorio|pero otra imagen"
+    "poison_12|12|puestos desempatados por indice en vez de rango compartido|comparten puesto 2.5"
 )
 
 passed=0

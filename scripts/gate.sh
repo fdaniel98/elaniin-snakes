@@ -5,7 +5,7 @@
 # ver docs/harness.md#h-01
 #
 #   ./scripts/gate.sh          todos los checks; es lo unico que cierra una fase
-#   ./scripts/gate.sh --fast   checks 0,1,3(release),4,6,7,9,11; NO cierra fase
+#   ./scripts/gate.sh --fast   checks 0,1,3(release),4,6,7,9,11,12; NO cierra fase
 #
 # Salida: una linea `CHECK <n> <nombre> PASS|FAIL|SKIP <segundos>` por check.
 # Codigos: 0 = PASA, 1 = fallo de check, 2 = error de entorno o toolchain.
@@ -339,6 +339,9 @@ fi
 # Barato y sin docker: se comprueba el comando que `zoo.sh up` construiria, en seco, asi
 # que corre tambien en --fast.
 run_check 11 lint-zoo ./scripts/lint-zoo.sh || true
+# Los tests del orquestador no necesitan docker ni arbitro: prueban la derivacion, que es
+# donde un error miente en silencio. Que un contenedor no arranque ya se ve solo.
+run_check 12 tests-training-room python3 training-room/test_tr.py || true
 
 PENDING=0
 if [[ -x build/release/bin/unit_tests ]]; then

@@ -3,8 +3,8 @@
 ## Estado actual
 
 Fase: 3 (Training Room MVP) — en curso. La 2 cerro en c5cead7
-Gate: 13 checks; el 11 (lint-zoo) es nuevo de esta fase y trae sus tres venenos. El
-veredicto vigente es el de la fase 2 en bb99e84: 12 checks y 27 de 27 venenos
+Gate: 14 checks; el 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta
+fase, con cinco venenos. El veredicto vigente sigue siendo el de la fase 2 en bb99e84
 Loop: `.loop/3/` sin abrir todavia; los de las fases 1 y 2 quedaron CLOSED
 Snake activa: v0-baseline
 
@@ -84,6 +84,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Escribir `gauntlet-v1.json` y el orquestador del torneo: un contenedor por snake con
-`--cpus`, `--cpuset-cpus` y `--memory` identicos, y aborto si la suma de cuotas supera los
-nucleos fisicos menos dos.
+Correr el torneo de 200 partidas del `gauntlet-v1` en la maquina de referencia, que es
+donde hay docker. Despues, las causas de muerte y el reporte.
