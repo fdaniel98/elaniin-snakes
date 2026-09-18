@@ -190,6 +190,29 @@ with open("CMakePresets.json", "w", encoding="utf-8", newline="\n") as fh:
 EOF
 }
 
+poison_7b() {
+    # Codigo que clang acepta y GCC rechaza. Esta clase entera se escapaba del gate -que
+    # compila con clang- y no aparecia hasta `docker build`, o sea el dia del despliegue.
+    # Es el caso real que paso en snake/src/search.cpp: `std::sort` sobre un array de 4
+    # con un tamaño de runtime dispara un falso positivo de -Warray-bounds en el introsort
+    # de libstdc++. Va ya con el formato que clang-format produce, para que el veneno
+    # muera en el check 7 y no antes en el 4.
+    sed -i "s|^#include <fstream>|#include <algorithm>\\n#include <array>\\n#include <fstream>\\n#include <utility>|" snake/src/config_loader.cpp
+    cat >>snake/src/config_loader.cpp <<'EOF'
+
+namespace snake {
+// Solo GCC se queja: -Warray-bounds sobre el introsort de libstdc++ con un array corto y
+// un tamaño de runtime, que es exactamente el caso que fallo en snake/src/search.cpp.
+int veneno_solo_gcc(int n) {
+    std::array<std::pair<int, int>, 4> v{};
+    std::sort(
+        v.begin(), v.begin() + n, [](const auto& a, const auto& b) { return a.first < b.first; });
+    return v[0].first;
+}
+} // namespace snake
+EOF
+}
+
 poison_8() {
     # El servidor responde siempre "up", que es ilegal en algun fixture.
     sed -i 's|const json reply{{"move", direction_name(move.direction)}, {"shout", ""}};|const json reply{{"move", "up"}, {"shout", ""}};|' \
@@ -472,6 +495,7 @@ POISONS=(
     "poison_6f|6|el mismo hecho escrito en dos documentos"
     "poison_6g|6|front-matter con un valor que no es YAML valido|no es YAML valido"
     "poison_7|7|-march=native en un preset del que deploy hereda"
+    "poison_7b|7|codigo que clang acepta y GCC rechaza|NO compila con"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
     "poison_8b|8|el servidor devuelve 5xx ante un payload que no entiende|HTTP 500"
     "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"

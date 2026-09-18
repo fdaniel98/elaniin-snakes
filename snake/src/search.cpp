@@ -51,6 +51,25 @@ int manhattan(const State& s, int a, int b) noexcept {
     return std::abs(pa.x - pb.x) + std::abs(pa.y - pb.y);
 }
 
+/// Ordena por clave descendente un array de como mucho 4 elementos, in situ.
+///
+/// No es `std::sort` por dos motivos, y el segundo es el bueno. El primero: GCC rechaza
+/// `std::sort` sobre un array de 4 con -Warray-bounds, porque el introsort de libstdc++
+/// llama a `__insertion_sort(first, first + 16)` y el compilador no puede demostrar que
+/// ese camino no se toma. El segundo: esto se llama en CADA nodo de la busqueda, y montar
+/// introsort para ordenar cuatro cosas cuesta mas que ordenarlas.
+template <typename T> void ordena_desc(T* v, int n) noexcept {
+    for (int i = 1; i < n; ++i) {
+        T actual = v[i];
+        int j = i - 1;
+        while (j >= 0 && v[j].first < actual.first) {
+            v[j + 1] = v[j];
+            --j;
+        }
+        v[j + 1] = actual;
+    }
+}
+
 /// Direcciones de `id` ordenadas para que la mas prometedora se pruebe primero. Con poda
 /// alfa-beta el orden es la diferencia entre cortar el 90% del arbol y no cortar nada.
 int ordered_moves(const State& s,
@@ -93,9 +112,7 @@ int ordered_moves(const State& s,
         }
         return n;
     }
-    std::sort(con_peso.begin(), con_peso.begin() + n, [](const auto& a, const auto& b) {
-        return a.first > b.first;
-    });
+    ordena_desc(con_peso.data(), n);
     for (int i = 0; i < n; ++i) {
         out[static_cast<unsigned>(i)] = con_peso[static_cast<unsigned>(i)].second;
     }
@@ -342,9 +359,11 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
         cercanos[static_cast<unsigned>(n++)] = {manhattan(state, yo.head(), otro.head()),
                                                 static_cast<SnakeId>(i)};
     }
-    std::sort(cercanos.begin(), cercanos.begin() + n, [](const auto& a, const auto& b) {
-        return a.first < b.first;
-    });
+    // Los rivales al reves: primero el mas CERCANO, que es el que decide si vivimos.
+    for (int i = 0; i < n; ++i) {
+        cercanos[static_cast<unsigned>(i)].first = -cercanos[static_cast<unsigned>(i)].first;
+    }
+    ordena_desc(cercanos.data(), n);
     ctx.n_rivales = std::min(n, std::max(0, params.search.max_rivals));
     for (int i = 0; i < ctx.n_rivales; ++i) {
         ctx.rivales[static_cast<unsigned>(i)] = cercanos[static_cast<unsigned>(i)].second;

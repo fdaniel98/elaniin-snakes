@@ -79,6 +79,35 @@ else
     fail "no existe deploy/Dockerfile"
 fi
 
+# ------------------------------------------------------------------ compilador real
+# El gate compila con clang y la imagen de deploy con GCC, asi que hasta ahora un error
+# que solo GCC ve no aparecia hasta `docker build`, o sea el dia del despliegue. Paso de
+# verdad: GCC rechaza `std::sort` sobre un array de 4 con -Warray-bounds -falso positivo
+# del introsort de libstdc++- y el fallo salio al construir la imagen, no en el gate.
+#
+# Esto compila el SERVIDOR con el GCC que haya, que es barato y caza esa clase entera.
+# No compila los tests a proposito: el Dockerfile tampoco, y el allocator instrumentado
+# dispara un falso positivo de -Wmismatched-new-delete que no tiene que bloquear nada.
+echo "== compila con GCC, que es lo que usa la imagen de deploy =="
+GXX="$(command -v g++-12 || command -v g++ || true)"
+if [[ -z "$GXX" ]]; then
+    echo "AVISO sin g++ en este entorno: el build de la imagen no queda cubierto aqui"
+    echo "      (el check 10 lo construye de verdad y sigue siendo el arbitro)"
+else
+    TMP_GCC="$(mktemp -d)"
+    trap 'rm -rf "$TMP_GCC"' EXIT
+    if cmake -S . -B "$TMP_GCC" -GNinja -DCMAKE_BUILD_TYPE=Release \
+             -DCMAKE_C_COMPILER="${GXX/g++/gcc}" -DCMAKE_CXX_COMPILER="$GXX" \
+             >"$TMP_GCC/cmake.log" 2>&1 \
+       && cmake --build "$TMP_GCC" --target battlesnake-server \
+             >"$TMP_GCC/build.log" 2>&1; then
+        echo "OK   battlesnake-server compila con $("$GXX" --version | head -1)"
+    else
+        tail -30 "$TMP_GCC/build.log" 2>/dev/null || tail -20 "$TMP_GCC/cmake.log"
+        fail "battlesnake-server NO compila con $GXX (la imagen de deploy fallaria)"
+    fi
+fi
+
 echo "== grep textual (check redundante) =="
 if grep -rnE -- "$NATIVE_RE" deploy/ 2>/dev/null; then
     fail "ISA nativa en deploy/"
