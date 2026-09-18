@@ -6,7 +6,8 @@ Fase: 3 (Training Room MVP) — en curso. La 2 cerro en c5cead7
 Gate: 14 checks; el 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta
 fase, con cinco venenos. El veredicto vigente sigue siendo el de la fase 2 en bb99e84
 Loop: `.loop/3/` sin abrir todavia; los de las fases 1 y 2 quedaron CLOSED
-Snake activa: v0-baseline
+Snake activa: v0-baseline. v1 (Voronoi) medida y RECHAZADA: mismo puesto medio, 17 turnos
+mas de vida (ver docs/strategy.md#s-v1r)
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -82,4 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Cerrar el loop de `training-room/`, que es lo unico que le queda a la fase 3.
+Desplegar v0 -la unica version medida- y registrarla. Despues, busqueda: v1 no mejoro el
+puesto medio (ver docs/strategy.md#s-v1r) y el diagnostico dice que contra un rival que
+busca una evaluacion estatica mejor no basta.

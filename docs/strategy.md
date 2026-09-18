@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 3408
+size_bytes: 4811
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -33,6 +33,34 @@ predecible, ver docs/rules.md#r-09) y deteccion de puntos de articulacion.
 
 **Como se falsa:** A/B con SPRT contra `gauntlet-v1`. Si el veredicto es `NO CONCLUYENTE`
 al agotar `--max-games`, no entra.
+
+### S-V1R Resultado: NO ENTRA {#s-v1r}
+
+Medido, 60 partidas contra `gauntlet-v1` (`snake/config/v1.json`, solo la parte de
+Voronoi; los puntos de articulacion quedaron en `v2.json` y no llegaron a medirse):
+
+| | v0 (200 partidas) | v1 (60 partidas) |
+|---|---|---|
+| puesto medio | 2.770 | **2.817** |
+| turnos vividos | 119.2 | **136.3** |
+
+La hipotesis era que el territorio subiria la posicion media. **No la sube.** La
+diferencia de 0.05 esta muy por debajo del ruido de la propia corrida: su primera mitad
+promedia 2.683 y la segunda 2.950. Se corto en 60 partidas a proposito, porque distinguir
+0.05 con ese ruido pide cientos de bloques y no 140 partidas mas.
+
+Lo que si cambia es la supervivencia: **17 turnos mas de media**. Asi que el territorio
+hace algo -aguantamos mas- pero aguantar no adelanta a nadie: Hobbs y Devin viven 185 y
+189 turnos y nos entierran igual.
+
+**Lo que este resultado enseña, y es el motivo de conservarlo:** contra un rival que
+busca, una evaluacion estatica mejor no basta. Da igual lo fina que sea la heuristica si
+el otro simula tres turnos y nosotros cero. Seguir afinando pesos aqui es trabajo que se
+siente productivo y no mueve el marcador.
+
+El codigo se conserva entero y seleccionable (`territory.version = 1`): cuando exista
+busqueda, una evaluacion mejor en las hojas si deberia notarse, y entonces esta medicion
+es la linea base contra la que comparar.
 
 ## S-V2 Busqueda multijugador {#s-v2}
 
