@@ -65,22 +65,20 @@ def recoge(salida, binario_causas):
     # Causas de muerte: las pide al motor verificado, partida a partida.
     d["causas"] = None
     if binario_causas and Path(binario_causas).exists():
-        por_snake, nombres = {}, {}
+        # Se agrega por NOMBRE, no por id: el id cambia en cada partida, y lo que hace
+        # accionable esta tabla es saber de quien es cada muerte. Las nuestras salen
+        # determinadas porque `causas --nuestra` le pregunta al cerebro en vez de enumerar.
+        por_nombre = {}
         for jsonl in sorted(salida.glob("g*.jsonl")):
             if jsonl.stat().st_size == 0:
                 continue
-            r = subprocess.run([binario_causas, str(jsonl)], capture_output=True, text=True)
+            r = subprocess.run([binario_causas, str(jsonl), "--nuestra", "v0-baseline"],
+                               capture_output=True, text=True)
             if r.returncode != 0:
                 continue
-            doc = json.loads(r.stdout)
-            for sid, reg in doc["snakes"].items():
-                por_snake.setdefault(sid, Counter())[reg["causa"]] += 1
-        # El id de serpiente cambia cada partida, asi que se agregan todas juntas: lo que
-        # interesa aqui es cuantas causas son determinables, no de quien.
-        total = Counter()
-        for c in por_snake.values():
-            total.update(c)
-        d["causas"] = total
+            for reg in json.loads(r.stdout)["snakes"].values():
+                por_nombre.setdefault(reg.get("nombre") or "?", Counter())[reg["causa"]] += 1
+        d["causas"] = por_nombre
     return d
 
 
@@ -152,21 +150,35 @@ def md(d):
     a("Los fallos de `/end` **no** se cuentan: no cuestan un movimiento.")
     a("")
     if d["causas"]:
-        total = sum(d["causas"].values())
-        determinables = sum(v for k, v in d["causas"].items()
-                            if k not in ("ambigua", "sobrevivio", "final_no_exportado", "sin_candidato"))
+        NO_ES_CAUSA = ("sobrevivio", "final_no_exportado", "sin_candidato",
+                       "ambigua", "modelo_discrepa")
+        etiquetas = sorted({c for cont in d["causas"].values() for c in cont
+                            if c not in NO_ES_CAUSA})
         a("## T-05 Causas de muerte {#t-05}")
         a("")
-        a("| causa | veces |")
-        a("|---|---|")
-        for causa, n in d["causas"].most_common():
-            a(f"| {causa} | {n} |")
+        a("| snake | " + " | ".join(etiquetas) + " | ambigua | sobrevivio |")
+        a("|---" * (len(etiquetas) + 3) + "|")
+        for nombre in sorted(d["causas"]):
+            cont = d["causas"][nombre]
+            fila = [str(cont.get(e, 0)) for e in etiquetas]
+            a(f"| {nombre} | " + " | ".join(fila) +
+              f" | {cont.get('ambigua', 0)} | {cont.get('sobrevivio', 0)} |")
         a("")
-        a(f"**Determinables: {determinables} de {total}.** El JSONL no exporta los")
-        a("movimientos, asi que el de la serpiente que muere se enumera y se queda con los")
-        a("candidatos que reproducen el turno siguiente observado. Cuando varios llevan a")
-        a("causas distintas, la causa es `ambigua` y se cuenta como tal: elegir la mas")
-        a("probable seria inventar un dato y presentarlo como medido.")
+        nuestras = d["causas"].get("v0-baseline", Counter())
+        muertes_nuestras = sum(v for k, v in nuestras.items() if k != "sobrevivio")
+        ambiguas_nuestras = nuestras.get("ambigua", 0) + nuestras.get("modelo_discrepa", 0)
+        a(f"**De nuestras {muertes_nuestras} muertes, "
+          f"{muertes_nuestras - ambiguas_nuestras} estan determinadas.**")
+        a("El JSONL no exporta los movimientos, asi que el de una")
+        a("serpiente que muere se enumera y se queda con los candidatos que reproducen el")
+        a("turno siguiente observado; cuando varios llevan a causas distintas, es `ambigua`")
+        a("y se cuenta como tal. Para la nuestra hay atajo: el cerebro es determinista, asi")
+        a("que se le pregunta. El movimiento modelado tiene que estar entre los candidatos")
+        a("consistentes o la fila sale como `modelo_discrepa`, que seria un hallazgo -el")
+        a("replay creyendo que hicimos algo que no hicimos- y no un detalle a tapar.")
+        a("")
+        a("Las de los rivales siguen siendo ambiguas en su mayoria y asi se quedan: no")
+        a("tenemos su cerebro, y elegir la causa mas probable seria inventar un dato.")
         a("")
     a("## T-06 Lo que este reporte no dice {#t-06}")
     a("")

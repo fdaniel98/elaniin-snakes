@@ -16,9 +16,17 @@
 /// causas distintas, se dice `ambigua` con la lista. No se elige la mas probable: eso
 /// seria inventar un dato y presentarlo como medido.
 ///
+/// Con `--nuestra <nombre>` hay un atajo que solo vale para NUESTRA snake: en vez de
+/// enumerar sus cuatro movimientos, se le PREGUNTA al cerebro, que es determinista. El
+/// movimiento modelado tiene que estar entre los candidatos consistentes; si no lo esta,
+/// se dice `modelo_discrepa` y no se usa, porque entonces lo que el replay cree que
+/// hicimos no es lo que hicimos -por un timeout, por un fallback, o por un bug- y eso es
+/// un hallazgo, no un detalle a tapar.
+///
 /// El ultimo turno de toda partida no se exporta (`cli/commands/play.go:273-276`), asi
 /// que las muertes de ese turno salen como `final_no_exportado`. El ganador si consta.
 #include <array>
+#include <chrono>
 #include <cstdio>
 #include <map>
 #include <set>
@@ -28,6 +36,8 @@
 #include <nlohmann/json.hpp>
 
 #include "engine/rules.hpp"
+#include "snake/brain.hpp"
+#include "snake/params.hpp"
 #include "engine/state.hpp"
 #include "engine/types.hpp"
 #include "replay/replay_harness.hpp"
@@ -92,9 +102,16 @@ bool encaja(const Estado& resultado, const std::vector<std::string>& ids,
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::fprintf(stderr, "uso: causas <partida.jsonl>\n");
+        std::fprintf(stderr, "uso: causas <partida.jsonl> [--nuestra <nombre>]\n");
         return 2;
     }
+    std::string nuestra;
+    for (int i = 2; i + 1 < argc; ++i) {
+        if (std::string(argv[i]) == "--nuestra") {
+            nuestra = argv[i + 1];
+        }
+    }
+    const snake::Params params;
     const auto partida = replay::cargar(argv[1], "");
     if (!partida) {
         std::fprintf(stderr, "ERROR no se pudo cargar %s\n", argv[1]);
@@ -105,8 +122,17 @@ int main(int argc, char** argv) {
     json salida;
     salida["jsonl"] = argv[1];
     salida["snakes"] = json::object();
+    // El nombre viaja en la salida: sin el, el que agrega el reporte no puede separar
+    // nuestras muertes de las ajenas, y el id cambia en cada partida.
+    std::map<std::string, std::string> nombres;
+    if (!partida->turnos.empty()) {
+        for (const auto& sn : partida->turnos.front()["board"]["snakes"]) {
+            nombres[sn.value("id", "")] = sn.value("name", "");
+        }
+    }
     for (const auto& id : ids) {
-        salida["snakes"][id] = {{"causa", "sobrevivio"}, {"turno", nullptr},
+        salida["snakes"][id] = {{"nombre", nombres.count(id) ? nombres[id] : ""},
+                                {"causa", "sobrevivio"}, {"turno", nullptr},
                                 {"certeza", "n/a"}};
     }
 
@@ -122,6 +148,12 @@ int main(int argc, char** argv) {
         for (const auto& s : partida->turnos[t + 1]["board"]["snakes"]) {
             cabezas[s.value("id", "")] =
                 engine::Bitboard<W, H>::index_of(s["head"].value("x", 0), s["head"].value("y", 0));
+        }
+
+        // Nombre de cada serpiente en este turno, para reconocer la nuestra.
+        std::map<std::string, std::string> nombre_por_id;
+        for (const auto& sn : partida->turnos[t]["board"]["snakes"]) {
+            nombre_por_id[sn.value("id", "")] = sn.value("name", "");
         }
 
         std::vector<std::size_t> muertas;
@@ -163,9 +195,39 @@ int main(int argc, char** argv) {
         }
 
         for (const auto i : muertas) {
-            const auto& causas = causas_por_snake[ids[i]];
+            auto& causas = causas_por_snake[ids[i]];
             json& registro = salida["snakes"][ids[i]];
             registro["turno"] = turno;
+
+            // Atajo para la nuestra: el cerebro es determinista, asi que se le pregunta
+            // en vez de enumerar. Solo se acepta si el movimiento modelado esta entre los
+            // consistentes; si no, la discrepancia es el dato.
+            if (!nuestra.empty() && causas.size() > 1 && nombre_por_id[ids[i]] == nuestra) {
+                Estado copia_para_preguntar = estado;
+                copia_para_preguntar.you = static_cast<engine::SnakeId>(i);
+                const snake::Deadline plazo(snake::Deadline::Clock::now() +
+                                            std::chrono::milliseconds(350));
+                const snake::Move elegido =
+                    snake::decide(copia_para_preguntar, plazo, params);
+
+                auto movimientos = base;
+                movimientos[i] = elegido.direction;
+                Estado copia = estado;
+                engine::apply(copia,
+                              std::span<const engine::Direction>(movimientos.data(), ids.size()));
+                if (encaja(copia, ids, cabezas) &&
+                    !engine::is_alive(copia.snakes[i].status)) {
+                    registro["causa"] = nombre_causa(copia.snakes[i].status);
+                    registro["certeza"] = "modelada";
+                    registro["fallback"] = elegido.fallback_level;
+                    continue;
+                }
+                registro["causa"] = "modelo_discrepa";
+                registro["certeza"] = "indeterminada";
+                registro["posibles"] = causas;
+                continue;
+            }
+
             if (causas.size() == 1) {
                 registro["causa"] = *causas.begin();
                 registro["certeza"] = "exacta";
