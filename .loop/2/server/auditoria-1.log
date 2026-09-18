@@ -1,0 +1,41 @@
+== auditoria 1 (criterio 14): subagente independiente sobre el diff de la fase 2 ==
+Commit auditado: 53e2994 (diff 3df38cd..HEAD)
+El auditor recibio el diff, el clon del SHA fijado, el binario del servidor y el arbitro.
+NO recibio resumen del autor. Reprodujo cada hallazgo con un comando.
+
+blocker=2 mayor=8 menor=9
+
+Blockers:
+ 1. soak.sh declaraba exito con CERO partidas jugadas: el codigo de salida del arbitro se
+    descartaba y el analisis no comparaba lo jugado con lo pedido. Reproducido sustituyendo
+    el arbitro por un stub que falla siempre: "partidas=0 timeouts=0 / OK 0 timeouts / exit 0".
+ 2. El conteo de timeouts perdia sistematicamente los que importan: la serpiente eliminada
+    desaparece de board.snakes (play.go:818-820) y el ultimo turno de toda partida no se
+    exporta (play.go:273-276). Reproducido con una snake que duerme 800 ms: el arbitro
+    registra 2 timeouts y el analisis reportaba 1.
+
+Mayores:
+ 3. El soak no comprobaba que nuestra snake respondiera bien: 500 o movimientos invalidos
+    sacaban "OK 0 timeouts". El stderr del arbitro, unico registro, iba a /dev/null.
+ 4. El casado por nombre "v0-baseline" estaba hardcodeado en dos sitios; al divergir daba
+    cero muestras y veredicto verde.
+ 5. POST /start devolvia 500 con cualquier JSON que no fuera objeto (type_error.306) y
+    filtraba el mensaje de la excepcion en una cabecera EXCEPTION_WHAT.
+ 6. POST /move podia quedarse SIN responder: 8 conexiones a medio abrir agotaban el pool
+    de hilos durante los 5 s del read timeout.
+ 7. El try/catch de la fase era codigo muerto sin prueba que lo cubriera; poison_8b
+    envenenaba la rama else, que esta fuera del try.
+ 8. Ni el smoke ni el check 8 mandaban nada a /start ni a /end.
+ 9. Las citas de you.latency apuntaban a buildFrameEvent -el frame del websocket, que
+    ademas redondea el cero a uno- y no a convertRulesSnake, que es el payload.
+10. Se cerro la pregunta abierta de S-03 sin consultar docs.battlesnake.com, que es
+    literalmente lo que pedia.
+
+Menores: JSONL truncado indistinguible del recorte, doc que dice "you.latency" donde el
+codigo lee board.snakes[].latency, arranque en frio cuantizado y sin la carga del config,
+soak_analiza sin guarda si falta server.log, limite de 256 KiB sin probar, el anidamiento
+de 2000 niveles no prueba desbordamiento (el parser aguanta 125 000), el contrato del
+modulo callaba /start y /end, y sacar config/loop.json de la tabla del pack hacia pasar el
+presupuesto sin reducir lo que la tarea abre.
+
+Reparados en 7d4f781 (blockers, servidor, smoke) y 5fa700c (docs, presupuesto, comentarios).

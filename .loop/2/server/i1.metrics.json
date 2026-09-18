@@ -1,0 +1,11 @@
+{
+  "adversos": 42,
+  "rutas_probadas": 3,
+  "adversos_con_5xx": 0,
+  "fixtures": 15,
+  "fixtures_pass": 15,
+  "failsafe_levels_covered": 4,
+  "variantes_degradadas_ok": true,
+  "diverge": 0,
+  "sin_verificar": 0
+}

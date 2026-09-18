@@ -33,6 +33,16 @@ MUTANTS=(
     "m9|engine/src/royale_map.cpp|s/Rng rng(seed);/Rng rng(seed + 1);/|el schedule de shrink usa otra semilla"
     "m10|engine/src/royale_map.cpp|s/++min_x;/++min_x, ++min_y;/|un shrink mueve dos bordes en vez de uno"
     "m11|tests/replay/replay_harness.hpp|s/if (respuesta.status != 200) {/if (false) {/|el replay acepta respuestas que el arbitro rechazo"
+    # La guarda de /start y la red de ultimo recurso son defensa en profundidad: cada una
+    # sola tapa a la otra, asi que por separado son mutantes EQUIVALENTES -no observables-.
+    # El mutante honesto tira las dos a la vez, que es lo que de verdad deja pasar un 5xx.
+    "s1|snake/src/server.cpp|s/if (request.is_object()) {/if (!request.is_discarded()) {/; s/res.status = 200;/res.status = 500;/|/start revienta y la red de seguridad responde 5xx"
+    # Lo que salva al servidor de las conexiones a medio abrir es el TAMANO DEL POOL, no
+    # el timeout: con 64 hilos, 24 conexiones colgadas dejan hilos libres. El timeout solo
+    # acota el caso peor cuando ya no quedan, asi que mutarlo no se observa.
+    "s2|snake/src/server.cpp|s/thread_pool_size = 64;/thread_pool_size = 8;/|el pool vuelve al default y ocho conexiones colgadas lo agotan"
+    "s3|snake/src/server.cpp|s/max_payload_bytes);/max_payload_bytes * 1000);/|el limite de 256 KiB deja de aplicarse"
+    "s5|snake/src/server.cpp|s/{\"move\", direction_name(move.direction)}/{\"move\", \"up\"}/|el servidor responde siempre up, pase lo que pase"
 )
 
 echo "== preparando copia limpia en $WORK =="
@@ -52,6 +62,33 @@ if ! ./build/release/bin/unit_tests >/dev/null 2>&1; then
     exit 2
 fi
 echo "OK   referencia verde"
+
+# El smoke es oraculo ademas de los tests unitarios: `unit_tests` no arranca el servidor,
+# asi que sin esto ningun mutante de snake/src/server.cpp moria nunca -no porque estuviera
+# cubierto, sino porque nadie lo miraba-. ver docs/decisions/ADR-0014-el-servidor-es-11x11.md#d-0131
+PUERTO_SMOKE=8199
+smoke_verde() {
+    ./build/release/bin/battlesnake-server >/tmp/mutantes-servidor.log 2>&1 &
+    local pid=$!
+    local vivo=0
+    for _ in $(seq 1 60); do
+        curl -fsS "http://127.0.0.1:${PUERTO_SMOKE}/health" >/dev/null 2>&1 && {
+            vivo=1
+            break
+        }
+        sleep 0.2
+    done
+    if [[ $vivo -eq 0 ]]; then
+        kill "$pid" 2>/dev/null
+        return 1
+    fi
+    python3 scripts/smoke.py --url "http://127.0.0.1:${PUERTO_SMOKE}" >/tmp/mutantes-smoke.log 2>&1
+    local rc=$?
+    kill "$pid" 2>/dev/null
+    wait "$pid" 2>/dev/null
+    return $rc
+}
+export PORT=$PUERTO_SMOKE
 
 # Restaurar con `mv` devuelve el fichero con su fecha original, que es ANTERIOR a los
 # objetos compilados con el mutante dentro. Para un .cpp da igual -el siguiente mutante
@@ -102,7 +139,7 @@ for entry in "${MUTANTS[@]}"; do
         broken=$((broken + 1))
         survivors+=("$id (no compila: arnes roto)")
         continue
-    elif ./build/release/bin/unit_tests >/dev/null 2>&1; then
+    elif ./build/release/bin/unit_tests >/dev/null 2>&1 && smoke_verde; then
         echo "VIVO     $id - $description"
         survivors+=("$id: $description")
     else

@@ -1,0 +1,314 @@
+{
+  "deliverable": "snake/src/server.cpp",
+  "phase": 2,
+  "status": "CLOSED",
+  "thresholds_sha256": "575427a81771ee2d41c2f33a5639873e8b815b26ff9fc918f2f5d0963bb46a31",
+  "iterations": [
+    {
+      "n": 1,
+      "class": "correctness",
+      "agent": "rules-auditor",
+      "commit_before": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "commit_after": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "cmd": "python3 scripts/smoke.py",
+      "exit_code": 0,
+      "started_at": "2026-09-18T02:00:00Z",
+      "duration_ms": 600000,
+      "log_sha256": "7323820965e90cdcd91516b136b6f9ba7dde4847f91dc1203d813022f47c7390",
+      "payload_sha256": "f70b49f376165397a0663d1f729ec826c2082708414e5f1393b972e81ff5aba3",
+      "metrics": {
+        "adversos": 42,
+        "rutas_probadas": 3,
+        "adversos_con_5xx": 0,
+        "fixtures": 15,
+        "fixtures_pass": 15,
+        "failsafe_levels_covered": 4,
+        "variantes_degradadas_ok": true,
+        "diverge": 0,
+        "sin_verificar": 0
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        "python3 scripts/smoke.py",
+        "curl a /start y /end con cuerpos que no son objeto",
+        "./build/release/bin/unit_tests fail-safe*",
+        "./build/release/bin/unit_tests variantes no soportadas"
+      ]
+    },
+    {
+      "n": 2,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "commit_after": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "cmd": "ctest --preset debug",
+      "exit_code": 0,
+      "started_at": "2026-09-18T03:00:00Z",
+      "duration_ms": 600000,
+      "log_sha256": "c9cf28f5ce0540b10dc959c2d01af839b469ca7139df44ddfe27cbeae10ddfb1",
+      "payload_sha256": "440cb7973985cdb45c25088cac685a2efaa846f5648c488543708a5295f8ad3f",
+      "metrics": {
+        "sanitizer_findings": 0,
+        "tests_debug": 80,
+        "illegal_moves": 0,
+        "deadline_violations": 0,
+        "failsafe_levels_covered": 4,
+        "conexiones_colgadas_probadas": 64,
+        "venenos_check8": 2,
+        "venenos_check8_cazados": 2,
+        "nota": "el smoke pasa a ser oraculo de mutantes ademas de unit_tests: sin eso ningun mutante de snake/src/server.cpp moria nunca, no por estar cubierto sino porque nadie lo miraba",
+        "mutants": 15,
+        "mutants_valid": 15,
+        "mutants_killed": 15,
+        "mutants_killed_ratio": 1.0,
+        "mutants_broken_patterns": 0,
+        "mutantes_del_servidor": 4
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        "ctest --preset debug",
+        "python3 scripts/smoke.py contra el binario con ASan y UBSan",
+        "64 conexiones a medio abrir",
+        "venenos 8 y 8b del check 8",
+        "./scripts/mutants.sh"
+      ]
+    },
+    {
+      "n": 3,
+      "class": "perf",
+      "agent": "perf-analyst",
+      "commit_before": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "commit_after": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "cmd": "./scripts/soak.sh --games 40",
+      "exit_code": 0,
+      "started_at": "2026-09-18T04:00:00Z",
+      "duration_ms": 600000,
+      "log_sha256": "6491e518b13d9f35b62163088b284a5eac5e2292ebdcbf6bf44e07dbceb3c2a8",
+      "payload_sha256": "b1a63fbd03451c2b0cca44020183b2b75790e7d7902e0e7c1b9591b3fb050db2",
+      "metrics": {
+        "partidas": 40,
+        "timeouts": 0,
+        "respuestas_rechazadas": 0,
+        "p99_move_ms": 0.541,
+        "max_move_ms": 1.509,
+        "cold_start_ms": 2.0,
+        "latencia_arbitro_p99_ms": 1.0,
+        "muestras": 2376,
+        "hot_path_allocs": 0
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        "./scripts/soak.sh --games 40",
+        "python3 scripts/soak_analiza.py",
+        "python3 scripts/smoke.py"
+      ]
+    },
+    {
+      "n": 4,
+      "class": "context",
+      "agent": "context-curator",
+      "commit_before": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "commit_after": "f8af0ded2146593298dcc9885d90e51270ffad9b",
+      "cmd": "./scripts/lint-docs.sh",
+      "exit_code": 0,
+      "started_at": "2026-09-18T05:00:00Z",
+      "duration_ms": 600000,
+      "log_sha256": "7e33a2d61218cfbfed118b1175774816cb8d56b92edcd7fc6adb6a653dd26a31",
+      "payload_sha256": "36cef58a5365a71e6e51942b3e122e0a5ae6d888d481237988b55a852bdff2b4",
+      "metrics": {
+        "frontmatter_invalid": 0,
+        "broken_anchors": 0,
+        "size_bytes_mismatch": 0,
+        "duplicated_facts": 0,
+        "last_verified_max_age_days": 0
+      },
+      "checks_added": [],
+      "findings": [],
+      "commands_run": [
+        "./scripts/lint-docs.sh",
+        "./scripts/docs_meta.sh --check",
+        "./scripts/docs_meta.sh --budget",
+        "./scripts/sync_state.sh --check"
+      ]
+    }
+  ],
+  "auditorias": [
+    {
+      "n": 1,
+      "agent": "rules-auditor",
+      "commit_auditado": "53e2994691e6d827b3b95f87ad9c1a67eecd5d02",
+      "log": ".loop/2/server/auditoria-1.log",
+      "log_sha256": "90931e1ea7fad9e5b5bbc2cc1550c539f549b1f672c7624d0d4be5d471dc2af9",
+      "payload_sha256": "bbe416e3c284d6c695d27f7832617bfcb6626a30045b64c6dfeca47dbdaaed9b",
+      "started_at": "2026-09-18T02:00:00Z",
+      "duration_ms": 884183,
+      "metrics": {
+        "blocker": 2,
+        "mayor": 8,
+        "menor": 9,
+        "reparados": 19,
+        "descartados": 0,
+        "auditor": "subagente independiente",
+        "commit_auditado": "53e2994691e6d827b3b95f87ad9c1a67eecd5d02",
+        "metodo": "reproduccion con comandos: arbitro sustituido por un stub, snake que duerme 800 ms, snake con movimientos invalidos, conexiones a medio abrir"
+      },
+      "findings": [
+        {
+          "id": "F-201",
+          "sev": "blocker",
+          "cite": "scripts/soak_analiza.py",
+          "desc": "el soak declaraba exito con cero partidas jugadas: el codigo de salida del arbitro se descartaba y no se comparaba lo jugado con lo pedido",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-202",
+          "sev": "blocker",
+          "cite": "scripts/soak_analiza.py",
+          "desc": "los timeouts se contaban en el JSONL, que no puede tenerlos: la serpiente eliminada no se exporta (play.go:818-820) ni el ultimo turno (play.go:273-276). El arbitro veia 2 y el analisis decia 1",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-203",
+          "sev": "mayor",
+          "cite": "scripts/soak.sh",
+          "desc": "el stderr del arbitro, unico sitio donde constan las respuestas rechazadas, iba a /dev/null",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-204",
+          "sev": "mayor",
+          "cite": "scripts/soak_analiza.py",
+          "desc": "nuestra serpiente se casaba por un nombre hardcodeado en dos sitios; al divergir, cero muestras y veredicto verde",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-205",
+          "sev": "mayor",
+          "cite": "snake/src/server.cpp",
+          "desc": "POST /start devolvia 500 con cualquier JSON que no fuera objeto y filtraba el mensaje de la excepcion en una cabecera",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-206",
+          "sev": "mayor",
+          "cite": "snake/src/server.cpp",
+          "desc": "ocho conexiones a medio abrir agotaban el pool de hilos y dejaban sin respuesta, que es peor que un 5xx",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-207",
+          "sev": "mayor",
+          "cite": "scripts/smoke.py",
+          "desc": "el try/catch no lo cubria ninguna prueba: el veneno envenenaba la rama else, fuera del try",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-208",
+          "sev": "mayor",
+          "cite": "scripts/smoke.py",
+          "desc": "ni el smoke ni el check 8 mandaban nada a /start ni a /end, que es por lo que el 500 vivio hasta aqui",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-209",
+          "sev": "mayor",
+          "cite": "docs/rules-parametros.md",
+          "desc": "las citas de you.latency apuntaban a buildFrameEvent -el frame del websocket, que redondea el cero a uno- y no a convertRulesSnake",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        },
+        {
+          "id": "F-210",
+          "sev": "mayor",
+          "cite": "docs/SOURCES.md",
+          "desc": "se cerro la pregunta abierta de S-03 sin consultar docs.battlesnake.com, que es lo que pedia; reabierta",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        },
+        {
+          "id": "F-211",
+          "sev": "menor",
+          "cite": "docs/context-packs/tocar-el-harness.md",
+          "desc": "sacar config/loop.json de la tabla hacia pasar el presupuesto sin reducir lo que la tarea abre; devuelto a la tabla y recortado STATE en su lugar",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        },
+        {
+          "id": "F-212",
+          "sev": "menor",
+          "cite": "snake/CLAUDE.md",
+          "desc": "el contrato del servidor callaba /start y /end, justo la ruta que devolvia 500",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        },
+        {
+          "id": "F-213",
+          "sev": "menor",
+          "cite": "scripts/smoke.py",
+          "desc": "el limite de 256 KiB que declara el contrato no lo probaba nadie",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        },
+        {
+          "id": "F-214",
+          "sev": "menor",
+          "cite": "scripts/smoke.py",
+          "desc": "el adverso de anidamiento prometia probar un desbordamiento; el parser aguanta 125 000 niveles",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        },
+        {
+          "id": "F-215",
+          "sev": "menor",
+          "cite": "scripts/soak.sh",
+          "desc": "el arranque en frio no incluye la carga del config, que ocurre antes de abrir el socket, ni es mas fino que el milisegundo",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        },
+        {
+          "id": "F-216",
+          "sev": "menor",
+          "cite": "scripts/soak_analiza.py",
+          "desc": "una linea de JSONL ilegible se descartaba en silencio; ahora cuenta como fallo",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-217",
+          "sev": "menor",
+          "cite": "scripts/soak_analiza.py",
+          "desc": "reventaba si faltaba server.log, justo el caso que su docstring anuncia",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-218",
+          "sev": "menor",
+          "cite": "scripts/soak_analiza.py",
+          "desc": "la doc hablaba de you.latency y el analizador lee board.snakes[].latency, que no es lo mismo: `you` es una serpiente arbitraria y puede estar eliminada",
+          "estado": "REPARADO",
+          "fixed_in": "7d4f7810c856596e2a7a59c1caeaa19f1df643ce"
+        },
+        {
+          "id": "F-219",
+          "sev": "menor",
+          "cite": "scripts/smoke.py",
+          "desc": "la justificacion del arranque en frio decia que la primera peticion paga la carga del config",
+          "estado": "REPARADO",
+          "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
+        }
+      ]
+    }
+  ]
+}

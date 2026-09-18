@@ -1,0 +1,17 @@
+{
+  "sanitizer_findings": 0,
+  "tests_debug": 80,
+  "illegal_moves": 0,
+  "deadline_violations": 0,
+  "failsafe_levels_covered": 4,
+  "conexiones_colgadas_probadas": 64,
+  "venenos_check8": 2,
+  "venenos_check8_cazados": 2,
+  "nota": "el smoke pasa a ser oraculo de mutantes ademas de unit_tests: sin eso ningun mutante de snake/src/server.cpp moria nunca, no por estar cubierto sino porque nadie lo miraba",
+  "mutants": 15,
+  "mutants_valid": 15,
+  "mutants_killed": 15,
+  "mutants_killed_ratio": 1.0,
+  "mutants_broken_patterns": 0,
+  "mutantes_del_servidor": 4
+}

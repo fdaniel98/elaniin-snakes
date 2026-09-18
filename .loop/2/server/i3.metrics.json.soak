@@ -1,0 +1,45 @@
+{
+  "partidas_pedidas": 40,
+  "partidas_jugadas": 40,
+  "timeout_ms": 500.0,
+  "timeouts": 0,
+  "respuestas_rechazadas": 0,
+  "incidencias_por_tipo": {
+    "timeout": 0,
+    "conexion": 0,
+    "status": 0,
+    "json": 0,
+    "movimiento": 0
+  },
+  "latencia_arbitro": {
+    "metrica": "ida y vuelta medida por el arbitro",
+    "unidad": "ms enteros, truncados",
+    "muestras": 2336,
+    "p50_ms": 0.0,
+    "p95_ms": 1.0,
+    "p99_ms": 1.0,
+    "max_ms": 8.0,
+    "media_ms": 0.09
+  },
+  "computo_interno": {
+    "metrica": "tiempo dentro de decide()",
+    "unidad": "ms con resolucion de us",
+    "muestras": 2376,
+    "p50_ms": 0.063,
+    "p95_ms": 0.119,
+    "p99_ms": 0.541,
+    "max_ms": 1.509,
+    "media_ms": 0.08
+  },
+  "arranque_en_frio": {
+    "metrica": "primera medida de cada partida",
+    "unidad": "ms enteros",
+    "muestras": 40,
+    "p50_ms": 1.0,
+    "p95_ms": 2.0,
+    "p99_ms": 2.0,
+    "max_ms": 2.0,
+    "media_ms": 1.025
+  },
+  "fallos": []
+}

@@ -1,0 +1,18 @@
+== i4 context: lint de la capa de contexto ==
+== front-matter ==
+OK   front-matter valido
+== size_bytes y presupuestos ==
+size_bytes correcto en 29 docs
+OK   arranque: 10674 / 12288 bytes
+OK   docs/context-packs/debug-partida.md: 37889 / 49152 bytes
+OK   docs/context-packs/implementar-regla.md: 45976 / 49152 bytes
+OK   docs/context-packs/nueva-heuristica.md: 44606 / 49152 bytes
+OK   docs/context-packs/optimizar-hotpath.md: 39080 / 49152 bytes
+OK   docs/context-packs/tocar-el-harness.md: 48873 / 49152 bytes
+== anchors ==
+OK   242 citas resueltas
+INFO 88 anchors huerfanos de 137
+== duplicados ==
+hechos duplicados: 0 (n-grama de 12 palabras, 38 archivos)
+== STATE.md ==
+OK   perf-snapshot de STATE.md sincronizado con docs/performance.md

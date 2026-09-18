@@ -2,8 +2,8 @@
 title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
-last_verified: 2026-09-17
-size_bytes: 6089
+last_verified: 2026-09-18
+size_bytes: 7389
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -79,6 +79,30 @@ El maximo de `POST /move` (23.88 ms) esta 30 veces por encima del p99 (0.79 ms):
 primera peticion, que paga el arranque del servidor y la carga del config. Queda como
 hallazgo abierto de la clase `perf`, no como regresion: el presupuesto de la fase 0 son
 50 ms de p99 y 150 ms de maximo, y ambos se cumplen con margen.
+
+## P-07 Soak del servidor {#p-07}
+
+La DoD de la fase 2 pide 0 timeouts en 200 partidas locales y el p99 publicado. Los
+numeros de abajo son de **40 partidas en el contenedor** (ver P-06), no de la maquina de
+referencia: sirven para saber que el instrumento funciona, no como linea base.
+
+Que mide cada cosa, porque se confunden con facilidad:
+
+| Numero | De donde sale | Para que sirve |
+|---|---|---|
+| timeouts | stderr del arbitro | lo unico que los cuenta bien: el JSONL no exporta ni la serpiente eliminada ni el ultimo turno (ver docs/rules-parametros.md#r-20) |
+| latencia del arbitro | `latency` del JSONL | la forma de la distribucion, en milisegundos enteros |
+| computo interno | campo `us=` del log del servidor | lo que cuesta nuestro codigo, con resolucion de microsegundos |
+
+| metrica | valor | commit | fecha |
+|---|---|---|---|
+| partidas jugadas / pedidas | 40 / 40 | f8af0de | 2026-09-18 |
+| timeouts | 0 | f8af0de | 2026-09-18 |
+| respuestas que el arbitro rechazo | 0 | f8af0de | 2026-09-18 |
+| computo interno p50 / p99 / maximo | 0.063 / 0.541 / 1.509 ms | f8af0de | 2026-09-18 |
+| latencia del arbitro p50 / p99 / maximo | 0 / 1 / 8 ms | f8af0de | 2026-09-18 |
+| arranque en frio, maximo | 2 ms | f8af0de | 2026-09-18 |
+| movimientos medidos | 2376 | f8af0de | 2026-09-18 |
 
 ## P-05 Politica de playout {#p-05}
 

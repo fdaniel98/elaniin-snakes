@@ -1,0 +1,16 @@
+== i1 correctness: el servidor responde lo que debe ==
+commit: f8af0ded2146593298dcc9885d90e51270ffad9b
+-- smoke: 15 fixtures, 42 adversos en las tres rutas POST, limite de cuerpo, conexiones colgadas --
+adversos=42 en /move,/start,/end  fallos=0
+fixtures=15 peticiones=300 p50=0.49ms p99=0.79ms max=0.82ms arranque_en_frio=2.40ms
+OK   todos los movimientos legales y dentro del presupuesto
+-- /start y /end con cuerpos que no son objeto --
+  [1,2,3]    start=200 end=200
+  5          start=200 end=200
+  null       start=200 end=200
+-- variantes no soportadas en modo degradado --
+All tests passed (2 assertions in 1 test case)
+
+-- fail-safe, cuatro escalones --
+All tests passed (16 assertions in 1 test case)
+

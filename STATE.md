@@ -46,6 +46,11 @@ corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-
 
 ## Hallazgos abiertos del loop
 
+- [ ] El servidor sigue siendo agotable por conexiones a medio abrir: con el pool de 64
+      hilos hacen falta 64 a la vez, y entonces una peticion legitima espera hasta el
+      read timeout de 2 s. El pool aleja el accidente y el timeout acota el caso peor; no
+      lo elimina. En la fase 7 el servicio va detras de un balanceador que absorbe eso.
+
 - [ ] La tabla de causas de muerte que pide el Training Room de la fase 3 no va a tener
       contraste externo: ver docs/rules.md#r-12.
 - [ ] El reparto de puestos de `placements()` sigue siendo una convencion propia. El

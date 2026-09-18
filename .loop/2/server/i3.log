@@ -1,0 +1,24 @@
+== i3 perf: 40 partidas locales completas ==
+commit: f8af0ded2146593298dcc9885d90e51270ffad9b
+fecha_utc=2026-09-18T02:08:05Z
+commit=f8af0de
+nucleos=2
+memoria_gb=7
+cpu=Intel(R) Xeon(R) Processor @ 2.10GHz
+partidas=40
+timeout_ms=500
+arbitro=/root/bs/build/tools/battlesnake
+concurrencia=1 partida, 1 instancia propia, 3 rivales cautos
+
+........................................
+
+partidas=40/40  timeouts=0  respuestas_rechazadas=0  (timeout=500 ms)
+latencia_arbitro   n=2336   p50=0.0      p95=1.0      p99=1.0      max=8.0
+computo_interno    n=2376   p50=0.063    p95=0.119    p99=0.541    max=1.509
+arranque_en_frio   n=40     p50=1.0      p95=2.0      p99=2.0      max=2.0
+
+OK   0 timeouts, 0 respuestas rechazadas, y las partidas pedidas jugadas
+resultados en /tmp/soakfinal
+-- smoke con su presupuesto --
+fixtures=15 peticiones=300 p50=0.53ms p99=1.03ms max=2.25ms arranque_en_frio=8.61ms
+OK   todos los movimientos legales y dentro del presupuesto

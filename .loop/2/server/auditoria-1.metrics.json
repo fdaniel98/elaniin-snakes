@@ -1,0 +1,10 @@
+{
+  "blocker": 2,
+  "mayor": 8,
+  "menor": 9,
+  "reparados": 19,
+  "descartados": 0,
+  "auditor": "subagente independiente",
+  "commit_auditado": "53e2994691e6d827b3b95f87ad9c1a67eecd5d02",
+  "metodo": "reproduccion con comandos: arbitro sustituido por un stub, snake que duerme 800 ms, snake con movimientos invalidos, conexiones a medio abrir"
+}

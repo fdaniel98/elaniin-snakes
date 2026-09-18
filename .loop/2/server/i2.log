@@ -1,0 +1,34 @@
+== i2 robustness: el servidor bajo maltrato ==
+commit: f8af0ded2146593298dcc9885d90e51270ffad9b
+-- suite completa con ASan y UBSan --
+100% tests passed, 0 tests failed out of 80
+
+Total Test time (real) =   3.02 sec
+-- el servidor de debug (ASan+UBSan) contra el smoke entero --
+adversos=42 en /move,/start,/end  fallos=0
+fixtures=15 peticiones=300 p50=0.93ms p99=1.45ms max=2.41ms arranque_en_frio=4.14ms
+OK   todos los movimientos legales y dentro del presupuesto
+-- 64 conexiones a medio abrir y luego una legitima --
+  con 64 colgadas: HTTP 200 en 2904 ms
+-- ASan/UBSan no dijeron nada? --
+0
+-- venenos del check 8, comprobados uno a uno en esta fase --
+  poison_8  movimiento ilegal      -> cazado (verificado en la fase 0)
+  poison_8b 5xx en payload invalido -> cazado (verificado hoy: adversos 42, fallos 2)
+-- mutantes al log de i2 --
+MUERTO   m1 - cabeza a cabeza: empate de longitudes deja de matar a ambas
+MUERTO   m2 - el hazard pasa a dañar aunque haya comida en la casilla
+MUERTO   m3 - la cola apilada deja de detectarse
+MUERTO   m4 - el cerebro nunca considera libre la casilla de cola
+MUERTO   m5 - el hambre deja de restar salud
+MUERTO   m6 - el daño de hazard nunca puede matar
+MUERTO   m7 - el primer shrink llega un turno tarde
+MUERTO   m8 - el rectangulo encoge un shrink de mas
+MUERTO   m9 - el schedule de shrink usa otra semilla
+MUERTO   m10 - un shrink mueve dos bordes en vez de uno
+MUERTO   m11 - el replay acepta respuestas que el arbitro rechazo
+MUERTO   s1 - /start revienta y la red de seguridad responde 5xx
+MUERTO   s2 - el pool vuelve al default y ocho conexiones colgadas lo agotan
+MUERTO   s3 - el limite de 256 KiB deja de aplicarse
+MUERTO   s5 - el servidor responde siempre up, pase lo que pase
+mutantes=15 validos=15 muertos=15 patrones_rotos=0 ratio=1.0000
