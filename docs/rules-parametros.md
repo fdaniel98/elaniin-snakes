@@ -3,8 +3,8 @@ title: Parametros del ruleset, variantes y preguntas abiertas
 read_when: "antes de parsear el request, de tocar el config o de dar por cierto un default"
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
-last_verified: 2026-09-14
-size_bytes: 4470
+last_verified: 2026-09-18
+size_bytes: 4691
 ---
 
 Separado de `docs/rules.md` por presupuesto de bytes, no por tema: las mecanicas del
@@ -40,6 +40,13 @@ Ruta JSON exacta, verificada contra `client/models.go` en el SHA fijado. **Prohi
 | `game.ruleset.settings.hazardDamagePerTurn` | int | 14 | `client/models.go:61`, `cli/commands/play.go:116` |
 | `game.ruleset.settings.royale.shrinkEveryNTurns` | int | 25 arbitro / 20 motor | `client/models.go:69-70`, `cli/commands/play.go:117`, `maps/royale.go:49` |
 | `board.width`, `board.height` | int | 11 | `client/models.go:24-25`, `cli/commands/play.go:97-98` |
+| `you.latency` | string | — | `client/models.go:35`, `cli/commands/play.go:455,738,755` |
+
+`you.latency` no es un parametro: es lo que el **arbitro** midio de ida y vuelta en la
+peticion ANTERIOR de esa serpiente (`cli/commands/play.go:455`), serializado con
+`.Milliseconds()` (`cli/commands/play.go:738`), o sea **milisegundos enteros truncados**.
+Sirve para contar timeouts y ver la cola; para un p99 por debajo del milisegundo hace
+falta el reloj propio del servidor.
 
 `settings` **no es plano**: `royale` es un objeto anidado (`client/models.go:64,68-70`). El nombre
 interno del parametro de hazard en el motor Go es `damagePerTurn` (`constants.go:54`), distinto del
@@ -68,6 +75,3 @@ Go, y lo que no esta verificado contra el no se implementa).
    debe **inyectar** comida y hazards del log en vez de generarlos. Decidido asi; no es bloqueante.
 2. **Semilla 0.** Si la semilla es 0 el motor cae al RNG global no reproducible
    (`settings.go:50-52`). El Training Room debe pasar siempre una semilla distinta de 0.
-3. **Latencia reportada.** El campo que la DoD de la Fase 7 exige aparece como `you.latency`, un
-   string, en el payload (`client/models.go:35`), pero su unidad y su origen no estan verificados
-   contra `docs.battlesnake.com`. Pendiente de la Fase 7.

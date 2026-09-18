@@ -5,9 +5,19 @@
 #   ./scripts/soak.sh --games 200 [--out DIR] [--seed-base N]
 #
 # Es la DoD de la fase 2 y a la vez el diagnostico: 0 timeouts en 200 partidas y el p99
-# publicado. El p99 que cuenta es el de la LATENCIA HTTP, que es lo que el arbitro mide
-# para decidir si llega tarde; el tiempo interno del cerebro se anota aparte porque la
-# diferencia entre ambos es el coste del transporte, no del algoritmo.
+# publicado.
+#
+# Dos instrumentos, y ninguno sobra:
+#
+#   - `you.latency` del JSONL es lo que el ARBITRO midio de ida y vuelta, que es con lo
+#     que decide si llegamos tarde (`cli/commands/play.go:455,738`). Viene en
+#     milisegundos ENTEROS, truncados por `.Milliseconds()`, asi que sirve para contar
+#     timeouts y para ver la cola, no para un p99 fino.
+#   - el campo `us=` del log del servidor es el tiempo dentro de decide(), con resolucion
+#     de microsegundos. Es lo que cuesta nuestro codigo.
+#
+# La diferencia entre ambos es transporte. NO se mete un proxy en medio para medirla: un
+# salto de Python que en produccion no existe inflaba la cifra trece veces.
 #
 # Una partida cada vez y una sola instancia nuestra, con tres rivales cautos en Python:
 # lanzar partidas en paralelo mide la maquina, no el cerebro. El numero de nucleos y el
@@ -75,9 +85,7 @@ limpia() {
 }
 trap 'limpia; exit 130' INT TERM
 
-MOVES="$OUT/moves.jsonl"
 SERVERLOG="$OUT/server.log"
-: > "$MOVES"
 : > "$SERVERLOG"
 FALLOS=0
 
@@ -85,16 +93,13 @@ for ((g = 0; g < GAMES; ++g)); do
     SEED=$((SEED_BASE + g))
     BASE_PORT=$((9600 + (g % 20) * 10))
     NUESTRO=$BASE_PORT
-    PROXY=$((BASE_PORT + 1))
 
     # Cada partida arranca el servidor de cero: asi cada una aporta un arranque en frio
     # real, que es lo que se mide aparte del maximo (ver ADR-0009).
     PORT=$NUESTRO "$SERVER" >>"$SERVERLOG" 2>>"$SERVERLOG" &
     PIDS+=($!)
-    python3 tests/replay/recorder.py "$PROXY" "http://127.0.0.1:${NUESTRO}" "$MOVES" >/dev/null 2>&1 &
-    PIDS+=($!)
 
-    ARGS=(--name "v0-baseline" --url "http://127.0.0.1:${PROXY}")
+    ARGS=(--name "v0-baseline" --url "http://127.0.0.1:${NUESTRO}")
     for s in 1 2 3; do
         RIVAL=$((BASE_PORT + 2 + s))
         # `--cauta`: rivales que sobreviven. Con suicidas la partida dura siete turnos,
@@ -107,7 +112,7 @@ for ((g = 0; g < GAMES; ++g)); do
     listo=0
     for _ in $(seq 1 300); do
         listo=1
-        curl -fsS "http://127.0.0.1:${PROXY}/" >/dev/null 2>&1 || listo=0
+        curl -fsS "http://127.0.0.1:${NUESTRO}/" >/dev/null 2>&1 || listo=0
         for s in 1 2 3; do
             curl -fsS "http://127.0.0.1:$((BASE_PORT + 2 + s))/" >/dev/null 2>&1 || listo=0
         done
@@ -130,68 +135,7 @@ done
 echo
 
 # ---------------------------------------------------------------- analisis
-python3 - "$OUT" "$TIMEOUT_MS" <<'PY'
-import json, sys, statistics, pathlib, re
-
-raiz = pathlib.Path(sys.argv[1])
-timeout = float(sys.argv[2])
-
-http, primeras, timeouts, por_partida = [], [], 0, {}
-for linea in (raiz / "moves.jsonl").read_text(encoding="utf-8").splitlines():
-    if not linea.strip():
-        continue
-    r = json.loads(linea)
-    if "elapsed_ms" not in r:
-        continue
-    ms = float(r["elapsed_ms"])
-    http.append(ms)
-    if r.get("status") != 200 or ms >= timeout:
-        timeouts += 1
-    clave = r.get("game", "")
-    if r.get("turn") == 0 or clave not in por_partida:
-        por_partida[clave] = ms
-for clave, ms in por_partida.items():
-    primeras.append(ms)
-
-interno = [float(m.group(1)) / 1000.0
-           for m in re.finditer(r"\bus=(\d+)", (raiz / "server.log").read_text(
-               encoding="utf-8", errors="replace"))]
-
-def pct(v, p):
-    if not v:
-        return 0.0
-    v = sorted(v)
-    return v[min(len(v) - 1, int(len(v) * p))]
-
-def bloque(nombre, v):
-    if not v:
-        return {"metrica": nombre, "muestras": 0}
-    return {"metrica": nombre, "muestras": len(v),
-            "p50_ms": round(pct(v, 0.50), 3), "p95_ms": round(pct(v, 0.95), 3),
-            "p99_ms": round(pct(v, 0.99), 3), "max_ms": round(max(v), 3),
-            "media_ms": round(statistics.fmean(v), 3)}
-
-resumen = {
-    "partidas": len(list(raiz.glob("g*.jsonl"))),
-    "timeouts": timeouts,
-    "latencia_http": bloque("latencia HTTP vista por el arbitro", http),
-    "computo_interno": bloque("tiempo dentro de decide()", interno),
-    "arranque_en_frio": bloque("primera peticion de cada partida", primeras),
-}
-(raiz / "resumen.json").write_text(json.dumps(resumen, indent=2, ensure_ascii=False) + "\n",
-                                  encoding="utf-8")
-
-print()
-print(f"partidas={resumen['partidas']}  timeouts={timeouts}")
-for clave in ("latencia_http", "computo_interno", "arranque_en_frio"):
-    b = resumen[clave]
-    if b["muestras"]:
-        print(f"{clave:18} n={b['muestras']:<6} p50={b['p50_ms']:<8} p95={b['p95_ms']:<8} "
-              f"p99={b['p99_ms']:<8} max={b['max_ms']}")
-print()
-print("OK   0 timeouts" if timeouts == 0 else f"FAIL {timeouts} timeouts")
-sys.exit(0 if timeouts == 0 else 1)
-PY
+python3 scripts/soak_analiza.py "$OUT" "$TIMEOUT_MS"
 RC=$?
 
 echo "resultados en $OUT"

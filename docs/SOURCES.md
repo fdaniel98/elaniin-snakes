@@ -4,7 +4,7 @@ read_when: "antes de afirmar algo sobre una herramienta externa o de re-verifica
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-17
-size_bytes: 5097
+size_bytes: 5228
 ---
 
 Este archivo lleva **fuentes**, no hechos: qué se consultó, en qué SHA, cuándo, y qué
@@ -38,12 +38,11 @@ documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven
 | Payload literal de `/move` capturado del arbitro | 2026-09-15 | `tests/fixtures/13-payload-literal-del-cli.json` |
 | Arbitro del SHA fijado compilado en el contenedor de la nube con `scripts/build-referee-mirrored.sh` | 2026-09-17 | Compila y juega. Siete dependencias **indirectas** del CLI (cobra, viper, fsnotify, websocket) se traen del espejo en GitHub del mismo modulo y la misma version que declara su `go.mod`, porque el proxy de egress deniega `proxy.golang.org`, `golang.org/x`, `gopkg.in` y `go.uber.org`. El motor de reglas -`rules/`, `maps/`, `client/`- sale del clon del SHA, sin espejo ni parche |
 | 48 partidas generadas con `scripts/gen-replays.sh --games 48 --out tests/corpus` y reproducidas por el test diferencial | 2026-09-17 | 949 turnos y 2788 estados de serpiente sin divergencia; cobertura de las seis causas de eliminacion. Es el corpus commiteado |
+| Campo de latencia del arbitro, leido en el Go y comprobado en partidas reales del soak | 2026-09-18 | `you.latency` es la ida y vuelta que midio el arbitro, en milisegundos enteros truncados: cierra la pregunta abierta que la fase 0 dejo para la fase 7 (ver docs/rules-parametros.md#r-20) |
 | 500 partidas con `scripts/gen-replays.sh --games 500 --seed-base 500000` y replay con `BSR_CORPUS_DIR` | 2026-09-17 | 10387 turnos y 29921 estados de serpiente sin divergencia, tambien bajo ASan y UBSan. Es la evidencia de la DoD de la fase 1; no se commitea (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101) y se regenera con ese comando |
 
 ## S-03 Pendiente de verificar {#s-03}
 
-- Referencia de API en `docs.battlesnake.com`: nombre y unidad exactos del campo de
-  latencia que exige la DoD de la fase 7 (ver docs/rules-parametros.md#r-99).
 - Que ruta de hazards ejecuta realmente el CLI con `-g royale -m royale`: el stage del
   pipeline y el hook del mapa calculan lo mismo, pero solo se ha verificado leyendo el
   codigo, no instrumentando una partida.
