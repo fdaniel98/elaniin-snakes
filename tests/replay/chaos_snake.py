@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Snake de caos: juega uniforme al azar y, a proposito, responde mal de vez en cuando.
 
-    chaos_snake.py <puerto> <semilla> [--invalid P] [--slow P] [--slow-ms N]
+    chaos_snake.py <puerto> <semilla> [--invalid P] [--slow P] [--slow-ms N] [--cauta]
 
 No es una snake: es un generador de estados raros para el corpus del test diferencial.
 Una snake que juega bien sobrevive y nunca produce choques cabeza a cabeza, autocolisiones
@@ -10,6 +10,12 @@ ni muertes contra la pared, que son justo las reglas que hay que verificar.
 Las respuestas deliberadamente malas existen para ejercitar la rama del arbitro que el
 motor propio tiene que reproducir: ante timeout, error HTTP, JSON invalido o direccion
 desconocida el CLI reenvia el LastMove anterior. ver docs/rules.md#r-03
+
+Con `--cauta` elige uniforme entre los movimientos que no son inmediatamente mortales en
+vez de entre los cuatro. Sigue sin ser una snake -no busca comida ni espacio- pero
+sobrevive, que es lo que hace falta cuando lo que se mide es el servidor propio: con
+rivales suicidas la partida se acaba en siete turnos, no se llega al primer shrink y la
+muestra de latencias es demasiado corta para que un p99 signifique algo.
 
 Es determinista: la direccion depende solo de (semilla, game, turn, snake), asi que dos
 corridas con la misma semilla producen la misma partida.
@@ -34,9 +40,46 @@ def _opcion(nombre, defecto):
     return defecto
 
 
+CAUTA = "--cauta" in ARGS
 PROB_INVALIDA = _opcion("--invalid", 0.0)
 PROB_LENTA = _opcion("--slow", 0.0)
 RETRASO_MS = _opcion("--slow-ms", 800.0)
+
+
+def _casillas_ocupadas(board):
+    """Casillas que seguiran ocupadas el proximo turno.
+
+    Misma derivacion que el cerebro y que el smoke: la cola cuenta como libre salvo que
+    los dos ultimos segmentos esten apilados. ver docs/rules.md#r-04
+    """
+    ocupadas = set()
+    for snake in board["snakes"]:
+        cuerpo = [(p["x"], p["y"]) for p in snake["body"]]
+        apilada = len(cuerpo) >= 2 and cuerpo[-1] == cuerpo[-2]
+        ultimo = len(cuerpo) - 1
+        for i, casilla in enumerate(cuerpo):
+            if i == ultimo and not apilada:
+                continue
+            ocupadas.add(casilla)
+    return ocupadas
+
+
+def _no_mortales(peticion):
+    """Direcciones dentro del tablero que no chocan con nada que siga ocupado."""
+    board = peticion["board"]
+    yo = peticion["you"]
+    cabeza = (yo["body"][0]["x"], yo["body"][0]["y"])
+    ocupadas = _casillas_ocupadas(board)
+    salida = []
+    for nombre, (dx, dy) in (("up", (0, 1)), ("down", (0, -1)),
+                             ("left", (-1, 0)), ("right", (1, 0))):
+        destino = (cabeza[0] + dx, cabeza[1] + dy)
+        if not (0 <= destino[0] < board["width"] and 0 <= destino[1] < board["height"]):
+            continue
+        if destino in ocupadas:
+            continue
+        salida.append(nombre)
+    return salida
 
 
 def _sorteo(*partes):
@@ -99,8 +142,13 @@ class Caos(BaseHTTPRequestHandler):
                 self._responde(500, json.dumps({"error": "caos"}))
             return
 
-        indice = int(_sorteo("dir", *clave) * len(DIRECCIONES))
-        self._responde(200, json.dumps({"move": DIRECCIONES[indice], "shout": ""}))
+        candidatas = DIRECCIONES
+        if CAUTA:
+            seguras = _no_mortales(peticion)
+            if seguras:
+                candidatas = tuple(seguras)
+        indice = int(_sorteo("dir", *clave) * len(candidatas))
+        self._responde(200, json.dumps({"move": candidatas[indice], "shout": ""}))
 
 
 if __name__ == "__main__":
