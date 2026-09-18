@@ -58,14 +58,18 @@ template <int W, int H, int MaxSnakes>
                                            int from_id = -1,
                                            int from_cell = -1) noexcept {
     using Board = engine::Bitboard<W, H>;
-    constexpr int kCells = W * H;
+    constexpr int k_cells = W * H;
 
     Territory<MaxSnakes> out;
 
     // Distancia y dueño por casilla. dueño -1 = sin asignar, -2 = disputada sin dueño.
-    std::array<std::int16_t, static_cast<std::size_t>(kCells)> dist{};
-    std::array<std::int8_t, static_cast<std::size_t>(kCells)> owner{};
-    for (int i = 0; i < kCells; ++i) {
+    std::array<std::int16_t, static_cast<std::size_t>(k_cells)> dist{};
+    // `owner` es int16 y no int8 a proposito: int8_t es `signed char`, y leer un
+    // char con signo hacia un int es justo el patron que clang-tidy prohibe
+    // (bugprone-signed-char-misuse) porque en otras plataformas char no tiene signo
+    // y el -2 se convertiria en 254. Son 121 bytes mas de pila: irrelevante.
+    std::array<std::int16_t, static_cast<std::size_t>(k_cells)> owner{};
+    for (int i = 0; i < k_cells; ++i) {
         dist[static_cast<std::size_t>(i)] = -1;
         owner[static_cast<std::size_t>(i)] = -1;
     }
@@ -83,13 +87,13 @@ template <int W, int H, int MaxSnakes>
         const int source = (s == from_id && from_cell >= 0) ? from_cell : snake.head();
         front[static_cast<std::size_t>(s)].set(source);
         dist[static_cast<std::size_t>(source)] = 0;
-        owner[static_cast<std::size_t>(source)] = static_cast<std::int8_t>(s);
+        owner[static_cast<std::size_t>(source)] = static_cast<std::int16_t>(s);
     }
     if (alive == 0) {
         return out;
     }
 
-    for (int turn = 1; turn <= kCells; ++turn) {
+    for (int turn = 1; turn <= k_cells; ++turn) {
         bool any = false;
         std::array<Board, static_cast<std::size_t>(MaxSnakes)> next{};
         for (int s = 0; s < static_cast<int>(state.snake_count); ++s) {
@@ -106,7 +110,7 @@ template <int W, int H, int MaxSnakes>
         // Los empates se resuelven ANTES de asignar. Hacerlo serpiente a serpiente le
         // daria la casilla a la primera del bucle, que es el desempate por indice que el
         // proyecto prohibe en todas partes. ver docs/rules.md#r-12
-        for (int cell = 0; cell < kCells; ++cell) {
+        for (int cell = 0; cell < k_cells; ++cell) {
             if (dist[static_cast<std::size_t>(cell)] >= 0) {
                 continue;
             }
@@ -132,16 +136,16 @@ template <int W, int H, int MaxSnakes>
             any = true;
             dist[static_cast<std::size_t>(cell)] = static_cast<std::int16_t>(turn);
             owner[static_cast<std::size_t>(cell)] =
-                empate ? static_cast<std::int8_t>(-2) : static_cast<std::int8_t>(ganador);
+                empate ? std::int16_t{-2} : static_cast<std::int16_t>(ganador);
         }
 
         // El frente siguiente es lo conquistado en este turno. Una casilla disputada no
         // da paso a nadie: las dos serpientes moririan ahi.
         for (int s = 0; s < static_cast<int>(state.snake_count); ++s) {
             Board conquistado;
-            for (int cell = 0; cell < kCells; ++cell) {
+            for (int cell = 0; cell < k_cells; ++cell) {
                 if (dist[static_cast<std::size_t>(cell)] == turn &&
-                    owner[static_cast<std::size_t>(cell)] == static_cast<std::int8_t>(s)) {
+                    owner[static_cast<std::size_t>(cell)] == static_cast<std::int16_t>(s)) {
                     conquistado.set(cell);
                 }
             }
@@ -152,7 +156,7 @@ template <int W, int H, int MaxSnakes>
         }
     }
 
-    for (int cell = 0; cell < kCells; ++cell) {
+    for (int cell = 0; cell < k_cells; ++cell) {
         const int o = owner[static_cast<std::size_t>(cell)];
         if (o == -2) {
             ++out.contested;
