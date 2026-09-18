@@ -90,6 +90,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Leer el resultado del torneo de 200 partidas que corre en la maquina de referencia, y
-escribir el reporte. Las causas de muerte necesitan antes capturar el log de nuestro
-propio servidor: con el JSONL solo, 20 de 24 muertes quedan ambiguas.
+Generar el reporte del torneo en la maquina de referencia y cerrar el loop de
+`training-room/`, que es lo unico que le queda a la fase 3.

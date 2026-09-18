@@ -216,6 +216,37 @@ tr.abre_db(vacio / "torneo.sqlite").close()
 comprueba(tr.cmd_reanaliza(types.SimpleNamespace(out=str(vacio))) == 1,
           "un recalculo que no modifica nada FALLA en vez de decir que hizo algo")
 
+# ---------------------------------------------------------------- reporte
+spec_r = importlib.util.spec_from_file_location("reporte", RAIZ / "training-room/reporte.py")
+rep = importlib.util.module_from_spec(spec_r)
+spec_r.loader.exec_module(rep)
+
+dir_rep = Path(tempfile.mkdtemp())
+dbr = tr.abre_db(dir_rep / "torneo.sqlite")
+dbr.execute("INSERT INTO partidas VALUES ('g0','gauntlet-x',1,'g0.jsonl',0,100,0,'ahora',"
+            "'{\"nucleos\": 8, \"gobernador\": \"desconocido\"}','x')")
+for i, (slug, puesto) in enumerate([("v0-baseline", 1.0), ("a", 2.5), ("b", 2.5), ("c", 4.0)]):
+    dbr.execute("INSERT INTO participantes VALUES ('g0',?,?,'v0','abc','hash','img',?,?,100,NULL)",
+                (slug, slug, i, puesto))
+    dbr.execute("INSERT INTO latencias VALUES ('g0',?,1,2,3,4,0,100)", (slug,))
+dbr.commit(); dbr.close()
+
+datos = rep.recoge(dir_rep, None)
+comprueba(datos["partidas_ok"] == 1 and datos["causas"] is None,
+          "el reporte se genera sin binario de causas, y lo dice")
+texto = rep.md(datos)
+comprueba("## T-02" in texto and "v0-baseline" in texto, "el markdown lleva la clasificacion")
+comprueba("p-valores" in texto, "el reporte declara que no da veredicto ni p-valores")
+comprueba("2.500" in texto, "el puesto compartido llega al reporte sin redondearse a entero")
+pagina = rep.html(datos)
+comprueba(pagina.count("prefers-color-scheme") >= 2 and 'data-theme="dark"' in pagina,
+          "el HTML trae modo oscuro por las dos vias, no solo la del sistema")
+
+vacio2 = Path(tempfile.mkdtemp())
+tr.abre_db(vacio2 / "torneo.sqlite").close()
+d_vacio = rep.recoge(vacio2, None)
+comprueba(d_vacio["partidas_ok"] == 0, "un torneo sin partidas buenas se detecta antes de escribir")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")
