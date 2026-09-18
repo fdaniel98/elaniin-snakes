@@ -2,9 +2,10 @@
 
 ## Estado actual
 
-Fase: 2 (Servidor endurecido) — pendiente solo de la autoprueba en la maquina de referencia
-Gate: 12 checks PASS y 200 partidas sin un timeout en la maquina de referencia
-Loop: snake/src/server.cpp → en `.loop/2/`; el de la fase 1 quedo CLOSED en `.loop/1/`
+Fase: 2 (Servidor endurecido) — **COMPLETA**
+Gate: PASS en la maquina de referencia (2026-09-18, commit bb99e84): 12 checks, 27 de 27
+venenos cazados y 0 fallidos en `gate-selftest.sh`, y 200 de 200 partidas sin un timeout
+Loop: `snake/src/server.cpp` → CLOSED en `.loop/2/`; el de la fase 1, en `.loop/1/`
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -75,5 +76,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Cerrar la fase 2 cuando termine `gate-selftest.sh` en la maquina de referencia: el gate ya
-paso alli con 12 checks y las 200 partidas dieron 0 timeouts.
+Empezar la fase 3 (Training Room MVP): proponer el plan y **esperar aprobacion** antes de
+escribir codigo.
