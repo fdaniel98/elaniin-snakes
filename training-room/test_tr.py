@@ -163,6 +163,25 @@ comprueba(_os.WEXITSTATUS(estado) == 3, "un segundo torneo en la misma maquina r
 primero.close()
 comprueba(tr.toma_el_cerrojo() is not None, "el cerrojo se libera al cerrarse el proceso")
 
+# ---------------------------------------------------------------- incidencias
+# El conteo de timeouts sale del stderr del arbitro, no del JSONL, y tiene una exclusion
+# que no es cosmetica: `/end` no cuenta. Eremetic Eric fallo las 198 veces al responder
+# /end en el torneo real, y contarlo habria dado 198 "incidencias" de algo que no cuesta
+# ni un movimiento.
+ruta_log = Path(tempfile.mkstemp(suffix=".log")[1])
+ruta_log.write_text("""INFO Snake ID: id0 URL: http://127.0.0.1:9700, Name: "v0-baseline"
+WARN Request to http://127.0.0.1:9700/move failed
+ERROR context deadline exceeded
+WARN Request to http://127.0.0.1:9700/end failed
+ERROR context deadline exceeded
+WARN Got non-ok status code from http://127.0.0.1:9701/otra/move
+""", encoding="utf-8")
+inc = tr.incidencias_de(ruta_log, "http://127.0.0.1:9700")
+comprueba(inc["timeout"] == 1, "el timeout de /move cuenta una vez")
+comprueba(inc["status"] == 0, "una queja sobre otra snake no se nos apunta")
+inc_otra = tr.incidencias_de(ruta_log, "http://127.0.0.1:9701/otra")
+comprueba(inc_otra["status"] == 1, "la queja se apunta a quien le toca")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")

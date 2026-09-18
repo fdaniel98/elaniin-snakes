@@ -251,6 +251,41 @@ def lee_partida(jsonl, log_arbitro):
             "ganador": ganador, "ultimo_turno": ultimo_turno}
 
 
+# Lo que el arbitro escribe cuando una snake no le sirve. Mismos patrones que
+# scripts/soak_analiza.py, y por la misma razon: el JSONL NO puede contar timeouts, porque
+# la eliminada desaparece del turno siguiente y el ultimo turno no se exporta
+# (ver docs/rules-parametros.md#r-20). El conteo sale del stderr del arbitro o no sale.
+PATRONES = (
+    ("timeout", "context deadline exceeded"),
+    ("status", "Got non-ok status code"),
+    ("json", "Failed to decode JSON"),
+    ("movimiento", "invalid move"),
+)
+
+
+def incidencias_de(reflog, url):
+    """Quejas del arbitro sobre `url`, por tipo. `/end` se excluye a proposito: fallar al
+    avisar del final no afecta a la partida, y hay rivales que no responden a `/end`
+    NUNCA -Eremetic Eric fallo las 198 veces-, asi que contarlo inflaria el numero con
+    algo que no cuesta ni un movimiento."""
+    cuenta = {etiqueta: 0 for etiqueta, _ in PATRONES}
+    ruta = Path(reflog)
+    if not ruta.exists():
+        return cuenta
+    lineas = ruta.read_text(encoding="utf-8", errors="replace").splitlines()
+    for i, linea in enumerate(lineas):
+        if f"{url}/end" in linea:
+            continue
+        if url not in linea:
+            continue
+        # El motivo del fallo va en la MISMA linea o en la siguiente, segun el caso.
+        contexto = linea + " " + (lineas[i + 1] if i + 1 < len(lineas) else "")
+        for etiqueta, patron in PATRONES:
+            if patron in contexto:
+                cuenta[etiqueta] += 1
+    return cuenta
+
+
 def percentil(valores, p):
     if not valores:
         return None
@@ -471,9 +506,49 @@ def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit, hash_c
                     datos["puestos"].get(sid), datos["ultimo_turno"].get(sid),
                     None))
         lat = datos["latencias"].get(sid, [])
+        inc = incidencias_de(reflog, urls[slug])
         db.execute("INSERT OR REPLACE INTO latencias VALUES (?,?,?,?,?,?,?,?)",
                    (p["id"], slug, percentil(lat, 0.50), percentil(lat, 0.95),
-                    percentil(lat, 0.99), max(lat) if lat else None, None, len(lat)))
+                    percentil(lat, 0.99), max(lat) if lat else None,
+                    inc["timeout"], len(lat)))
+
+
+# --------------------------------------------------------------- reanaliza
+def cmd_reanaliza(args):
+    """Recalcula lo derivado de una corrida ya jugada, sin volver a jugar ni tocar docker.
+
+    Existe porque una metrica que falto la primera vez no puede costar cinco horas de
+    torneo: los JSONL y los logs del arbitro estan en disco, y todo lo que este programa
+    calcula sale de ahi."""
+    salida = Path(args.out)
+    db = abre_db(salida / "torneo.sqlite")
+    urls_por_partida = {}
+    for pid, in db.execute("SELECT id FROM partidas"):
+        reflog = salida / f"{pid}.ref.log"
+        if not reflog.exists():
+            continue
+        # Las urls se recuperan del propio log del arbitro, que las imprime al arrancar.
+        import re
+        urls = {}
+        for sid, url in re.findall(r"Snake ID:\s+\S+\s+URL:\s+(\S+?), Name: \"([^\"]+)\"",
+                                   reflog.read_text(encoding="utf-8", errors="replace")):
+            urls[url] = sid
+        urls_por_partida[pid] = {nombre: u for u, nombre in urls.items()}
+
+    tocadas = 0
+    for pid, slugs in urls_por_partida.items():
+        for slug, url in slugs.items():
+            inc = incidencias_de(salida / f"{pid}.ref.log", url)
+            db.execute("UPDATE latencias SET timeouts = ? WHERE partida_id = ? AND slug = ?",
+                       (inc["timeout"], pid, slug))
+            tocadas += 1
+    db.commit()
+    print(f"recalculadas {tocadas} filas de latencias en {salida}")
+    for fila in db.execute("""SELECT l.slug, SUM(l.timeouts), SUM(l.movimientos)
+                              FROM latencias l JOIN partidas g ON g.id = l.partida_id
+                              WHERE g.arbitro_rc = 0 GROUP BY l.slug ORDER BY 2 DESC"""):
+        print("   %-16s timeouts=%-5s movimientos=%s" % fila)
+    return 0
 
 
 def main():
@@ -486,6 +561,9 @@ def main():
     m.add_argument("--seed-base", type=int, default=1)
     m.add_argument("--dry-run", action="store_true")
     m.set_defaults(func=cmd_match)
+    r = sub.add_parser("reanaliza", help="recalcula lo derivado de una corrida ya jugada")
+    r.add_argument("--out", required=True)
+    r.set_defaults(func=cmd_reanaliza)
     args = ap.parse_args()
     raise SystemExit(args.func(args))
 
