@@ -407,6 +407,48 @@ try:
 except SystemExit:
     comprueba(True, "una corrida sin campo `paralelo` cuenta como serie, y 2 no es 1")
 
+# --- no se reanuda una corrida con OTRA estrategia --------------------------------
+# El §10.4 dice que un A/B por los pelos se amplia con mas bloques del MISMO run. Si entre
+# medias cambia el config -aunque sea el tope de profundidad, que parece inocente-, las
+# partidas nuevas las juega otra snake y el veredicto promedia dos cosas.
+tmp_cfg = Path(tempfile.mkdtemp())
+db_cfg = tr.abre_db(tmp_cfg / "torneo.sqlite")
+db_cfg.execute(
+    "INSERT INTO partidas (id, gauntlet, semilla, jsonl, asiento_nuestro, turnos, "
+    "arbitro_rc, empezada_en, topologia, rng_version) VALUES "
+    "('g00000','g',1,'x',0,10,0,'t','{}','r')")
+db_cfg.execute(
+    "INSERT INTO participantes (partida_id, slug, nombre, hash_config, imagen, asiento, "
+    "puesto) VALUES ('g00000','v3-busqueda','v3','HASH_VIEJO','local/snake',0,2.0)")
+db_cfg.execute(
+    "INSERT INTO participantes (partida_id, slug, nombre, hash_config, imagen, asiento, "
+    "puesto) VALUES ('g00000','rival','rival','h2','zoo/x',1,1.0)")
+db_cfg.commit()
+
+try:
+    tr.comprueba_config(db_cfg, "HASH_NUEVO", "v3-busqueda")
+    comprueba(False, "reanudar con otro hash de config aborta")
+except SystemExit:
+    comprueba(True, "reanudar con otro hash de config aborta")
+
+try:
+    tr.comprueba_config(db_cfg, "HASH_VIEJO", "otra-snake")
+    comprueba(False, "y cambiar de slug tambien aborta, aunque el hash coincidiera")
+except SystemExit:
+    comprueba(True, "y cambiar de slug tambien aborta, aunque el hash coincidiera")
+
+try:
+    tr.comprueba_config(db_cfg, "HASH_VIEJO", "v3-busqueda")
+    comprueba(True, "con la misma estrategia se amplia sin protestar")
+except SystemExit:
+    comprueba(False, "con la misma estrategia se amplia sin protestar")
+
+try:
+    tr.comprueba_config(tr.abre_db(Path(tempfile.mkdtemp()) / "t.sqlite"), "h", "s")
+    comprueba(True, "una corrida nueva no tiene con que chocar")
+except SystemExit:
+    comprueba(False, "una corrida nueva no tiene con que chocar")
+
 # --- la basura de la corrida anterior se limpia sola --------------------------------
 # Una corrida en serie deja `tr-ours` en el 9700; la siguiente con --paralelo 2 quiere
 # `tr-ours-w0` en el MISMO 9700 y chocaba contra un contenedor de hace tres horas.

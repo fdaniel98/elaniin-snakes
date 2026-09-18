@@ -208,6 +208,29 @@ def construye_la_nuestra(docker, commit, hash_cfg, config, seco):
 CAMPOS_QUE_INVALIDAN = ("paralelo", "nucleos", "hilos_por_nucleo")
 
 
+def comprueba_config(db, hash_ahora, slug_ahora):
+    """Reanudar con OTRA estrategia mete dos snakes distintas en la misma corrida.
+
+    Es el caso que el protocolo del §10.4 hace probable, no raro: cuando un A/B sale por
+    los pelos, lo que manda es AMPLIAR el mismo run con mas bloques. Si entre medias el
+    config ha cambiado -aunque sea un parametro que parece inocente, como el tope de
+    profundidad- las partidas nuevas las juega otra snake y el veredicto promedia dos
+    cosas distintas sin que ninguna tabla lo diga.
+    """
+    fila = db.execute(
+        "SELECT pa.slug, pa.hash_config FROM participantes pa JOIN partidas g "
+        "ON g.id = pa.partida_id WHERE g.arbitro_rc = 0 AND pa.imagen NOT LIKE 'zoo/%' "
+        "LIMIT 1").fetchone()
+    if not fila:
+        return
+    slug_antes, hash_antes = fila
+    if hash_antes != hash_ahora or slug_antes != slug_ahora:
+        muere(f"esta corrida ya tiene partidas jugadas con OTRA estrategia: "
+              f"{slug_antes} ({hash_antes}) -> {slug_ahora} ({hash_ahora}).\n"
+              "  Ampliar un run exige la MISMA snake; si cambio el config, es otro "
+              "experimento y necesita otro --out.")
+
+
 def comprueba_topologia(db, topo_ahora):
     """Reanudar una corrida con otra topologia la convierte en dos corridas en un fichero.
 
@@ -624,6 +647,7 @@ def cmd_match(args):
             "SELECT id FROM partidas WHERE arbitro_rc = 0")}
         if ya_jugadas:
             comprueba_topologia(db, topo)
+            comprueba_config(db, nuestro_hash, nuestro_slug)
             print(f"OK   {len(ya_jugadas)} partidas ya estaban jugadas; se reanuda")
         pendientes = [p for p in plan if p["id"] not in ya_jugadas]
         print(f"{len(pendientes)} partidas por jugar")
