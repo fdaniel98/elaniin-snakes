@@ -199,11 +199,28 @@ def lee_partida(jsonl, log_arbitro):
     ultimo turno no se exporta (ver docs/rules.md#r-12). Lo que si hay es el ultimo turno
     en que cada una aparecio, y una linea final con el ganador. De ahi salen los puestos,
     con rango compartido promediado para las que caen en el mismo turno, que es la
-    convencion propia de placements() y no una regla del motor oficial."""
-    lineas = [l for l in Path(jsonl).read_text(encoding="utf-8").splitlines() if l.strip()]
+    convencion propia de placements() y no una regla del motor oficial.
+
+    **Nada de lo que entra aqui es de fiar.** El JSONL lo escribe un binario de Go que
+    puede cortarse a media linea si se mata el proceso, y el fuzz de `scripts/fuzz_tr.py`
+    lo demostro: la primera version lanzaba `AttributeError` en el estado 7 de 500. Una
+    excepcion aqui aborta un torneo de cinco horas por un fichero roto. Asi que una linea
+    ilegible se salta, un tipo inesperado se ignora, y si no queda nada utilizable se
+    devuelve None, que el llamante ya sabe registrar."""
+    try:
+        lineas = [l for l in Path(jsonl).read_text(encoding="utf-8", errors="replace").splitlines()
+                  if l.strip()]
+    except OSError:
+        return None
     if len(lineas) < 3:
         return None
-    final = json.loads(lineas[-1])
+    try:
+        final = json.loads(lineas[-1])
+    except ValueError:
+        final = {}
+    if not isinstance(final, dict):
+        final = {}
+
     ultimo_turno, latencias, nombres = {}, {}, {}
     turnos = 0
     for linea in lineas[1:-1]:
@@ -211,23 +228,44 @@ def lee_partida(jsonl, log_arbitro):
             estado = json.loads(linea)
         except ValueError:
             continue
+        if not isinstance(estado, dict):
+            continue
         turno = estado.get("turn", 0)
+        if not isinstance(turno, int):
+            continue
         turnos = max(turnos, turno)
-        for s in estado.get("board", {}).get("snakes", []):
+        board = estado.get("board")
+        if not isinstance(board, dict):
+            continue
+        serpientes = board.get("snakes")
+        if not isinstance(serpientes, list):
+            continue
+        for s in serpientes:
+            if not isinstance(s, dict):
+                continue
             sid = s.get("id")
+            if not isinstance(sid, str):
+                continue
             ultimo_turno[sid] = turno
-            nombres[sid] = s.get("name", "")
+            nombre = s.get("name")
+            nombres[sid] = nombre if isinstance(nombre, str) else ""
             if turno == 0:
                 continue
             try:
                 latencias.setdefault(sid, []).append(float(s.get("latency", "")))
             except (TypeError, ValueError):
                 pass
+    if not ultimo_turno:
+        return None
 
     # Puestos: mas turnos sobrevividos, mejor puesto. Empates a rango promediado.
     ganador = final.get("winnerId")
-    if ganador:
-        ultimo_turno[ganador] = max(ultimo_turno.values(), default=0) + 1
+    if not isinstance(ganador, str):
+        ganador = None
+    if ganador and ganador in ultimo_turno:
+        # Solo si el ganador aparecio en algun turno: un id inventado en la ultima linea
+        # metia una serpiente fantasma y descuadraba el reparto de puestos.
+        ultimo_turno[ganador] = max(ultimo_turno.values()) + 1
     orden = sorted(ultimo_turno.items(), key=lambda kv: -kv[1])
     puestos, i = {}, 0
     while i < len(orden):
@@ -241,11 +279,13 @@ def lee_partida(jsonl, log_arbitro):
 
     # Que id es cada url, del log del arbitro: casar por nombre se rompe al renombrar.
     por_url = {}
-    if Path(log_arbitro).exists():
-        import re
-        for sid, url in re.findall(r"Snake ID:\s+(\S+)\s+URL:\s+(\S+?),",
-                                   Path(log_arbitro).read_text(encoding="utf-8", errors="replace")):
-            por_url[url.rstrip("/")] = sid
+    try:
+        texto = Path(log_arbitro).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        texto = ""
+    import re
+    for sid, url in re.findall(r"Snake ID:\s+(\S+)\s+URL:\s+(\S+?),", texto):
+        por_url[url.rstrip("/")] = sid
     return {"turnos": turnos, "puestos": puestos, "latencias": latencias,
             "nombres": nombres, "por_url": por_url, "empate": bool(final.get("isDraw")),
             "ganador": ganador, "ultimo_turno": ultimo_turno}
@@ -272,7 +312,10 @@ def incidencias_de(reflog, url):
     ruta = Path(reflog)
     if not ruta.exists():
         return cuenta
-    lineas = ruta.read_text(encoding="utf-8", errors="replace").splitlines()
+    try:
+        lineas = ruta.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return cuenta
     for i, linea in enumerate(lineas):
         if f"{url}/end" in linea:
             continue

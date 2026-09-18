@@ -212,6 +212,38 @@ comprueba(rc == 0, "reanaliza sale con 0 cuando modifica filas")
 comprueba(valores.get("v0-baseline") == 1, "el timeout de /move llega a la fila correcta")
 comprueba(valores.get("a") == 0, "una snake sin quejas queda en 0, no en NULL")
 
+# m5 del arnes de mutantes: `modificadas += 1` en vez de `+= cur.rowcount` sobrevivia,
+# porque en los casos de arriba las filas iteradas coinciden con las modificadas. Hace
+# falta un log que nombre una snake SIN fila en latencias: ahi rowcount es 0 y el contador
+# mentiroso suma igual. Es el bug que se publico de verdad: "recalculadas 800 filas" con
+# la base intacta.
+dir_run2 = Path(tempfile.mkdtemp())
+(dir_run2 / "g00000.ref.log").write_text(
+    'INFO Snake ID: id0 URL: http://127.0.0.1:9700, Name: "v0-baseline"\n'
+    'INFO Snake ID: idz URL: http://127.0.0.1:9709, Name: "fantasma"\n'
+    'WARN Request to http://127.0.0.1:9700/move failed\n'
+    'ERROR context deadline exceeded\n', encoding="utf-8")
+db4 = tr.abre_db(dir_run2 / "torneo.sqlite")
+db4.execute("INSERT INTO partidas VALUES ('g00000','t',1,'x.jsonl',0,10,0,'ahora','{}','x')")
+db4.execute("INSERT INTO latencias VALUES ('g00000','v0-baseline',0,0,0,0,NULL,10)")
+db4.commit(); db4.close()
+import io, contextlib
+salida_txt = io.StringIO()
+with contextlib.redirect_stdout(salida_txt):
+    tr.cmd_reanaliza(types.SimpleNamespace(out=str(dir_run2)))
+comprueba("modificadas: 1" in salida_txt.getvalue(),
+          "el contador cuenta filas modificadas, no snakes vistas en el log")
+
+# m10: sin la guarda, un JSONL sin ninguna serpiente devolvia un resultado vacio en vez
+# de None, y el llamante lo tomaba por una partida legible.
+sin_snakes = Path(tempfile.mkstemp(suffix=".jsonl")[1])
+sin_snakes.write_text(
+    '{"id":"x"}\n'
+    '{"turn":0,"board":{"snakes":[],"food":[],"hazards":[],"width":11,"height":11}}\n'
+    '{"isDraw":false,"winnerId":null}\n', encoding="utf-8")
+comprueba(tr.lee_partida(sin_snakes, "/dev/null") is None,
+          "un JSONL sin ninguna serpiente se rechaza, no se resume a cero")
+
 vacio = Path(tempfile.mkdtemp())
 tr.abre_db(vacio / "torneo.sqlite").close()
 comprueba(tr.cmd_reanaliza(types.SimpleNamespace(out=str(vacio))) == 1,
