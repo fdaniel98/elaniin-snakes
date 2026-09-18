@@ -219,8 +219,14 @@ def arranca_la_nuestra(docker, img, puerto, cpus, cpuset, memoria, seco, sufijo=
         print("DRY " + " ".join(cmd))
         return f"http://127.0.0.1:{puerto}"
     corre([docker, "rm", "-f", f"tr-ours{sufijo}"])
-    if corre(cmd).returncode != 0:
-        muere("no arranco el contenedor de nuestra snake")
+    r = corre(cmd)
+    if r.returncode != 0:
+        # Sin el stderr de docker este mensaje no sirve para nada: puerto ocupado, cpuset
+        # invalido y imagen corrupta se leen todos igual. Lo aprendimos perdiendo un turno
+        # entero adivinando cual de los tres era.
+        muere("no arranco el contenedor de nuestra snake\n"
+              f"  comando: {' '.join(cmd)}\n"
+              f"  docker dijo: {(r.stderr or r.stdout or '(nada)').strip()}")
     return f"http://127.0.0.1:{puerto}"
 
 

@@ -8,6 +8,8 @@ esten mal repartidos, no.
 import importlib.util
 from collections import Counter
 import json
+import contextlib
+import io
 import sys
 import tempfile
 from pathlib import Path
@@ -348,6 +350,38 @@ except SystemExit:
 faltan = set(tr.configs_disponibles()) - {p.stem for p in
                                           (tr.RAIZ / "snake/config").glob("*.json")}
 comprueba(not faltan, "la lista que se le ofrece al usuario sale del disco, no de una constante")
+
+# --- un arranque fallido tiene que decir POR QUE ----------------------------------
+# "ERROR no arranco el contenedor de nuestra snake" se lee igual con el puerto ocupado,
+# con un cpuset invalido y con la imagen rota. El de los rivales ya traia el stderr de
+# docker; el nuestro no, y costo un turno entero adivinando.
+class _Falla:
+    returncode = 1
+    stderr = "docker: Error response from daemon: port is already allocated."
+    stdout = ""
+
+
+_corre_real = tr.corre
+tr.corre = lambda cmd, **kw: _Falla() if "run" in cmd else _corre_real(["true"])
+try:
+    tr.arranca_la_nuestra("docker", "img", 9800, 1, "0", "512m", False)
+    comprueba(False, "un arranque fallido aborta")
+except SystemExit:
+    comprueba(True, "un arranque fallido aborta")
+finally:
+    tr.corre = _corre_real
+
+_salida = io.StringIO()
+tr.corre = lambda cmd, **kw: _Falla() if "run" in cmd else _corre_real(["true"])
+try:
+    with contextlib.redirect_stderr(_salida):
+        tr.arranca_la_nuestra("docker", "img", 9800, 1, "0", "512m", False)
+except SystemExit:
+    pass
+finally:
+    tr.corre = _corre_real
+comprueba("port is already allocated" in _salida.getvalue(),
+          "y el mensaje lleva lo que dijo docker, no solo que fallo")
 
 d_vacio = rep.recoge(vacio2, None)
 comprueba(d_vacio["partidas_ok"] == 0, "un torneo sin partidas buenas se detecta antes de escribir")
