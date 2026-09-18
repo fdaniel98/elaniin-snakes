@@ -124,6 +124,13 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     REQUIRE(from_json.territory.weight == defaults.territory.weight);
     REQUIRE(from_json.territory.contested_weight == defaults.territory.contested_weight);
     REQUIRE(from_json.territory.hazard_value_pct == defaults.territory.hazard_value_pct);
+    REQUIRE(from_json.search.version == defaults.search.version);
+    REQUIRE(from_json.search.max_depth == defaults.search.max_depth);
+    REQUIRE(from_json.search.max_rivals == defaults.search.max_rivals);
+    REQUIRE(from_json.search.death_value == defaults.search.death_value);
+    REQUIRE(from_json.search.win_value == defaults.search.win_value);
+    REQUIRE(from_json.search.survival_bonus == defaults.search.survival_bonus);
+    REQUIRE(from_json.search.reserve_us == defaults.search.reserve_us);
 
     // 2. Y al reves: ningun grupo ni clave sobra en el JSON. Si alguien añade una clave
     //    al config sin añadirla al struct, este test la caza.
@@ -134,7 +141,9 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
                 "worst_case_max_cuellos"],
       "head": ["avoid_equal_or_longer", "prefer_shorter"],
       "hazard": ["weight", "low_health_multiplier"],
-      "territory": ["version", "weight", "contested_weight", "hazard_value_pct"]
+      "territory": ["version", "weight", "contested_weight", "hazard_value_pct"],
+      "search": ["version", "max_depth", "max_rivals", "death_value", "win_value",
+                 "survival_bonus", "reserve_us"]
     })");
 
     for (const auto& [group, keys] : doc.items()) {

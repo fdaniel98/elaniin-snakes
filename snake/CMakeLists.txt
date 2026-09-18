@@ -2,6 +2,7 @@
 # exactamente el mismo `decide` que el servidor.
 add_library(snake_brain STATIC
   src/brain_v0.cpp
+  src/search.cpp
   src/config_loader.cpp
 )
 

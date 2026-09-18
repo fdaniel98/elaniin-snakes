@@ -11,3 +11,9 @@ target_include_directories(causas PRIVATE "${CMAKE_SOURCE_DIR}/tests")
 # puerta. Se construye con el resto para que no se pudra. ver docs/strategy.md#s-cuellos-r
 add_executable(sonda_cuellos sonda_cuellos.cpp)
 target_link_libraries(sonda_cuellos PRIVATE engine snake_brain bsr_warnings)
+
+add_executable(sonda_busqueda sonda_busqueda.cpp)
+# `snake_brain` ya expone nlohmann como PUBLIC, asi que no se busca otra vez aqui.
+target_link_libraries(sonda_busqueda PRIVATE engine snake_brain bsr_warnings)
+target_compile_definitions(sonda_busqueda PRIVATE
+  BSR_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures")

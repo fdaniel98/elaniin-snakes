@@ -237,6 +237,132 @@ TEST_CASE("con el deadline ya vencido v2 sigue devolviendo un movimiento legal",
     REQUIRE(move.fallback_level <= 1);
 }
 
+// ================================================================================
+// [v2] Busqueda. Lo que se comprueba no es que juegue mejor -eso lo dice el A/B- sino
+// que no rompe ninguna de las garantias de v0. ver snake/include/snake/search.hpp
+// ================================================================================
+
+namespace {
+snake::Params con_busqueda(int rivales = 2, int profundidad = 8) {
+    snake::Params p;
+    p.search.version = 1;
+    p.search.max_rivals = rivales;
+    p.search.max_depth = profundidad;
+    return p;
+}
+} // namespace
+
+TEST_CASE("busqueda: nunca devuelve un movimiento ilegal en ningun fixture",
+          "[brain][search][inv-10]") {
+    const snake::Params p = con_busqueda();
+    snake::warmup(p);
+    for (const auto& fixture : load_fixtures()) {
+        INFO("fixture: " << fixture.name);
+        engine::State11 state;
+        REQUIRE(snake::parse_state(fixture.doc, state));
+        const snake::Move move = snake::decide(state, generous(), p);
+        const engine::MoveMask legal = engine::legal_moves(state, state.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, move.direction));
+        }
+    }
+}
+
+TEST_CASE("busqueda: el deadline manda, a cualquier presupuesto", "[brain][search][inv-11]") {
+    // El presupuesto se barre de lo absurdo a lo holgado. En los cortos no da tiempo ni a
+    // una profundidad y tiene que caer a v0; en los largos busca de verdad. Ninguno puede
+    // pasarse, que es lo unico que no se negocia.
+    const snake::Params p = con_busqueda();
+    snake::warmup(p);
+    for (const int presupuesto_ms : {1, 2, 5, 20, 100}) {
+        for (const auto& fixture : load_fixtures()) {
+            INFO("fixture: " << fixture.name << " presupuesto=" << presupuesto_ms);
+            engine::State11 state;
+            REQUIRE(snake::parse_state(fixture.doc, state));
+
+            const auto t0 = snake::Deadline::Clock::now();
+            const snake::Deadline d(t0 + std::chrono::milliseconds(presupuesto_ms));
+            const snake::Move move = snake::decide(state, d, p);
+            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                snake::Deadline::Clock::now() - t0)
+                                .count();
+            REQUIRE(ms <= presupuesto_ms);
+            const engine::MoveMask legal = engine::legal_moves(state, state.you);
+            if (legal != engine::move_mask_none) {
+                REQUIRE(engine::mask_has(legal, move.direction));
+            }
+        }
+    }
+}
+
+TEST_CASE("busqueda: con un deadline ya vencido no busca, cae a v0", "[brain][search][inv-11]") {
+    engine::State11 state;
+    REQUIRE(snake::parse_state(load_fixtures().front().doc, state));
+    const snake::Deadline vencido(snake::Deadline::Clock::now() - std::chrono::seconds(1));
+    const snake::Move move = snake::decide(state, vencido, con_busqueda());
+    REQUIRE(engine::mask_has(engine::legal_moves(state, state.you), move.direction));
+    REQUIRE(move.fallback_level >= 1); // vino del fail-safe de v0, no de la busqueda
+}
+
+TEST_CASE("busqueda: en modo degradado no se busca", "[brain][search]") {
+    // Simular una variante cuyas reglas el motor no reproduce da un arbol de posiciones
+    // que no van a ocurrir, que es peor que no mirar. ver docs/rules-parametros.md#r-13
+    for (const auto& fixture : load_fixtures()) {
+        engine::State11 state;
+        REQUIRE(snake::parse_state(fixture.doc, state));
+        if (engine::is_supported(state.rules.variant)) {
+            continue;
+        }
+        INFO("fixture no soportado: " << fixture.name);
+        const snake::Move move = snake::decide(state, generous(), con_busqueda());
+        const engine::MoveMask legal = engine::legal_moves(state, state.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, move.direction));
+        }
+    }
+}
+
+TEST_CASE("busqueda: mas profundidad nunca elige morir donde v0 sobrevive",
+          "[brain][search][inv-10]") {
+    // La prueba de que la busqueda no se suicida por ver demasiado: en cada fixture, si
+    // v0 encuentra una direccion que no es inmediatamente mortal, la busqueda tambien
+    // tiene que devolver una que no lo sea.
+    for (const auto& fixture : load_fixtures()) {
+        INFO("fixture: " << fixture.name);
+        engine::State11 state;
+        REQUIRE(snake::parse_state(fixture.doc, state));
+        const engine::MoveMask legal = engine::legal_moves(state, state.you);
+        if (legal == engine::move_mask_none) {
+            continue;
+        }
+        for (const int rivales : {1, 2, 3}) {
+            const snake::Move m = snake::decide(state, generous(), con_busqueda(rivales));
+            INFO("rivales simulados: " << rivales);
+            REQUIRE(engine::mask_has(legal, m.direction));
+        }
+    }
+}
+
+TEST_CASE("busqueda: profundidad mayor no cambia el veredicto sobre una muerte segura",
+          "[search]") {
+    // Fixture 14: arriba es mortal. Ninguna profundidad puede decidir lo contrario.
+    engine::State11 state;
+    bool encontrado = false;
+    for (const auto& fixture : load_fixtures()) {
+        if (fixture.name.rfind("14-", 0) != 0) {
+            continue;
+        }
+        REQUIRE(snake::parse_state(fixture.doc, state));
+        encontrado = true;
+    }
+    REQUIRE(encontrado);
+    for (const int prof : {1, 2, 3, 4, 6, 8}) {
+        INFO("profundidad " << prof);
+        const snake::Move m = snake::decide(state, generous(), con_busqueda(2, prof));
+        REQUIRE(m.direction != engine::Direction::up);
+    }
+}
+
 TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {
     const snake::Params params;
     const auto& fixtures = load_fixtures();

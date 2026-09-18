@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 8801
+size_bytes: 10316
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -129,6 +129,38 @@ El codigo se conserva entero y apagado por defecto (`space.worst_case_weight = 0
 puesto; cuellos no sube ninguna de las dos. Dos heuristicas estaticas distintas, atacando
 el mismo sintoma medido -132 de 178 muertes sin salida-, y ninguna mueve el marcador
 contra rivales que simulan. El siguiente paso no es una tercera heuristica.
+
+### S-V3 Busqueda paranoica: la primera vez que miramos hacia delante {#s-v3}
+
+**El numero que la justifica:** `brain_v0` decide en ~100 us sobre 350 ms. Gasta el
+**0.03%** del presupuesto. Las dos heuristicas que probamos -Voronoi y cuellos- dieron NO
+CONCLUYENTE contra rivales que simulan. Lo que falta no es evaluacion, es profundidad.
+
+**Que es:** busqueda paranoica con profundizacion iterativa sobre la evaluacion de v0.
+Detalle y sesgos declarados en ver docs/decisions/ADR-0022-busqueda-paranoica.md.
+
+**Capacidad medida** (`tools/sonda_busqueda.cpp`, 15 fixtures, 350 ms):
+
+| | |
+|---|---|
+| profundidad media | 7.7 |
+| profundidad minima | 4 (spawn con 4 serpientes, ~600 000 nodos) |
+| tiempo medio / peor | 41.9 ms / 348 ms |
+
+Compara eso con el turno unico de v0. Es la diferencia entre ver el movimiento y ver la
+partida.
+
+**Hipotesis falsable:** la busqueda sube el puesto medio contra `gauntlet-v1` por encima
+del delta de 0.10, medido con el mismo protocolo pareado de
+ver docs/strategy.md#s-cuellos-r.
+
+**Estado: NO MEDIDA EN PARTIDA.** Pasa los 98 tests, respeta el deadline a presupuestos de
+1 a 350 ms y nunca devuelve un movimiento ilegal, pero eso solo dice que no rompe nada.
+Hasta que gane su A/B, `search.version` sigue en **0** en `default.json` y la snake que se
+despliega es v0. Se enciende con `snake/config/v3-busqueda.json`.
+
+Si tambien sale NO CONCLUYENTE, lo que falla no es la profundidad sino la evaluacion en
+las hojas, y eso cambia por completo donde hay que mirar despues.
 
 ## S-V2 Busqueda multijugador {#s-v2}
 

@@ -170,6 +170,16 @@ Params parse_params(const json& doc) {
     params.territory.hazard_value_pct =
         read_plain_int(territory, "hazard_value_pct", params.territory.hazard_value_pct);
 
+    const json& search = child(doc, "search");
+    params.search.version = read_plain_int(search, "version", params.search.version);
+    params.search.max_depth = read_plain_int(search, "max_depth", params.search.max_depth);
+    params.search.max_rivals = read_plain_int(search, "max_rivals", params.search.max_rivals);
+    params.search.death_value = read_double(search, "death_value", params.search.death_value);
+    params.search.win_value = read_double(search, "win_value", params.search.win_value);
+    params.search.survival_bonus =
+        read_double(search, "survival_bonus", params.search.survival_bonus);
+    params.search.reserve_us = read_plain_int(search, "reserve_us", params.search.reserve_us);
+
     return params;
 }
 

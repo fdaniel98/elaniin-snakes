@@ -6,9 +6,9 @@ Fase: 3 (Training Room MVP) — COMPLETA
 Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
 El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
-Snake activa: v0-baseline. Dos heuristicas estaticas medidas y RECHAZADAS: v1/Voronoi
-(ver docs/strategy.md#s-v1r) y cuellos (ver docs/strategy.md#s-cuellos-r). Siguiente paso:
-busqueda, no una tercera heuristica
+Snake activa: v0-baseline. Dos heuristicas estaticas RECHAZADAS (ver
+docs/strategy.md#s-v1r y #s-cuellos-r). v3, busqueda paranoica, escrita y verde pero SIN
+MEDIR en partida (ver docs/strategy.md#s-v3)
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -87,6 +87,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v0 -la unica version que gana su comparacion, por no perderla- y registrar la
-URL: falta el ID del proyecto GCP y nada mas. Despues, busqueda (fase 5 v2): las dos
-heuristicas estaticas medidas dan NO CONCLUYENTE contra rivales que simulan.
+Medir la busqueda (v3) contra `gauntlet-v1`, 60 partidas en serie, mismo protocolo
+pareado que cuellos. Es lo primero que puede mover el marcador: v0 gasta el 0.03% de su
+presupuesto de tiempo y v3 llega a profundidad 7.7 de media
+(ver docs/strategy.md#s-v3). En paralelo, desplegar: falta el ID del proyecto GCP.

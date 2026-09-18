@@ -80,6 +80,37 @@ struct TerritoryParams {
 };
 
 /// Config completo del cerebro.
+/// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md
+struct SearchParams {
+    /// 0 = v0, decision de un turno. 1 = busqueda con profundizacion iterativa.
+    /// v0 nunca se borra: es la referencia fija contra la que se mide todo lo demas.
+    std::int32_t version = 0;
+    /// Techo de profundidad. Es un tope de seguridad, no un objetivo: quien manda es el
+    /// deadline, y se devuelve la mejor jugada de la ultima profundidad COMPLETADA.
+    std::int32_t max_depth = 8;
+    /// Rivales que se simulan de verdad, los mas cercanos primero. Los demas repiten su
+    /// ultimo movimiento. Cada rival simulado multiplica por ~3 el arbol, asi que este
+    /// numero es el que decide si se llega a profundidad 4 o se queda en 2.
+    std::int32_t max_rivals = 2;
+    /// Valor de morir, en la escala de `evaluate`. Tiene que dominar cualquier otra cosa
+    /// que la evaluacion pueda sumar: morir no se compensa con espacio ni con comida.
+    double death_value = -100000.0;
+    /// Valor de quedar el ultimo vivo.
+    double win_value = 100000.0;
+    /// Microsegundos que la busqueda se reserva ANTES del deadline de verdad.
+    ///
+    /// No es paranoia: detectar que se acabo el tiempo cuesta tiempo. Entre dos lecturas
+    /// del reloj caben nodos, y desenrollar la recursion y volver tampoco es gratis. Sin
+    /// reserva la sonda se pasaba entre 6 y 34 us del presupuesto, y INV-11 dice que no se
+    /// excede el deadline, no que se excede poco. Con 350 ms de presupuesto esto es el
+    /// 0.6%. ver docs/invariants.md#inv-11
+    std::int32_t reserve_us = 2000;
+    /// Cuanto vale sobrevivir un turno mas. Sin esto, la busqueda es indiferente entre
+    /// morir en el turno 3 y morir en el turno 8, y prefiere la primera por llegar antes
+    /// a una hoja con mas espacio.
+    double survival_bonus = 30.0;
+};
+
 struct Params {
     TimeParams time{};
     FoodParams food{};
@@ -87,6 +118,7 @@ struct Params {
     HeadParams head{};
     HazardParams hazard{};
     TerritoryParams territory{};
+    SearchParams search{};
 };
 
 } // namespace snake

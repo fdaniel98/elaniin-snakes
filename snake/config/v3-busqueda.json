@@ -1,5 +1,5 @@
 {
-  "_comment": "1:1 con snake::Params (snake/include/snake/params.hpp). tests/test_ruleset_parse.cpp falla si divergen. Los margenes de tiempo son normativos: cambiarlos exige aprobacion humana y un ADR.",
+  "_comment": "v3 = v0 mirando hacia delante. La evaluacion es la de v0 -las dos que intentamos mejorar, Voronoi y cuellos, dieron NO CONCLUYENTE- y lo que cambia es que ahora se simulan varios turnos en vez de uno. brain_v0 gastaba 100 us de 350 ms. ver docs/strategy.md#s-v3",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
@@ -33,7 +33,7 @@
     "hazard_value_pct": 50
   },
   "search": {
-    "version": 0,
+    "version": 1,
     "max_depth": 8,
     "max_rivals": 2,
     "death_value": -100000.0,

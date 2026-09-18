@@ -15,6 +15,7 @@
 #include <snake/brain.hpp>
 #include <snake/eval/floodfill.hpp>
 #include <snake/eval/voronoi.hpp>
+#include <snake/search.hpp>
 
 namespace snake {
 
@@ -399,6 +400,23 @@ Move decide_impl(const State& state,
 Move decide(const State& state, Deadline deadline, const Params& params) noexcept {
     try {
         const bool degraded = !engine::is_supported(state.rules.variant);
+        // [v2] La busqueda solo entra en royale y con tiempo por delante. En modo
+        // degradado NO: simular una variante cuyas reglas el motor no reproduce daria
+        // un arbol de posiciones que no van a ocurrir, que es peor que no mirar.
+        // ver docs/decisions/ADR-0022-busqueda-paranoica.md
+        if (params.search.version >= 1 && !degraded && !deadline.expired()) {
+            const SearchResult r = search(state, deadline, params);
+            if (r.depth >= 1) {
+                // Cinturon: la busqueda no puede devolver algo que v0 rechazaria por
+                // mortal. Si lo hiciera -un bug ahi dentro- se cae a v0 en vez de morir.
+                const engine::MoveMask legal = engine::legal_moves(state, state.you);
+                if (legal == engine::move_mask_none || engine::mask_has(legal, r.best)) {
+                    return Move{r.best, 0, r.score, r.depth};
+                }
+            }
+            // Sin una sola profundidad completada, o con un movimiento sospechoso, manda
+            // v0: es la referencia que si esta medida.
+        }
         return decide_impl(state, deadline, params, degraded);
     } catch (...) {
         // Escalon 3: cualquier excepcion cae al movimiento determinista documentado.

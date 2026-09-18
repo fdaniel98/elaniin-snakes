@@ -31,5 +31,14 @@
     "weight": 120.0,
     "contested_weight": 0.0,
     "hazard_value_pct": 50
+  },
+  "search": {
+    "version": 0,
+    "max_depth": 8,
+    "max_rivals": 2,
+    "death_value": -100000.0,
+    "win_value": 100000.0,
+    "survival_bonus": 30.0,
+    "reserve_us": 2000
   }
 }
