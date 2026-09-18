@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 6361
+size_bytes: 8801
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -86,6 +86,49 @@ pretende resolver 0.05, pretende ver si los cuellos mueven la aguja de forma vis
 resultado dentro del ruido **no** significa que la idea sea mala, significa que no cabe en
 el presupuesto de tiempo de esta semana y que la decision se toma con busqueda, no con mas
 partidas de heuristica.
+
+### S-CUELLOS-R Resultado: NO ENTRA, y el motivo no es el que parecia {#s-cuellos-r}
+
+Medido, 60 partidas contra `gauntlet-v1` con `snake/config/cuellos.json`, comparadas
+contra las 60 primeras de `torneo-v1` por los mismos 15 bloques (misma semilla, misma
+rotacion de asientos, misma topologia en serie):
+
+| | v0 (15 bloques) | cuellos (15 bloques) |
+|---|---|---|
+| puesto medio | **2.767** | 2.842 |
+| turnos vividos | 119.2 | 120.1 |
+
+Diferencia pareada **+0.0750**, IC95 **[-0.169, +0.319]** sobre 15 bloques.
+Veredicto: **NO CONCLUYENTE**, con tendencia a peor. No entra.
+
+Lo interesante no es el veredicto sino los turnos vividos: **119.2 -> 120.1**. v1 dio
++17 turnos; esto da +0.9. La heuristica casi no cambio el comportamiento, y eso admitia
+dos lecturas opuestas -que no se activara nunca, o que se activara siempre-. Escribir la
+primera cuando fuese la segunda seria publicar una leccion falsa, asi que se midio:
+
+    $ ./build/release/bin/sonda_cuellos
+    estados=20000  con cuello=18574 (92.9%)  perdida media=13.11 casillas
+    cuellos grandes(>10)=2492 (12.46%)
+
+**Se dispara en el 92.9% de los estados.** El problema es el contrario del que parecia:
+en un tablero de 11x11 con cuatro serpientes, «existe una casilla cuyo cierre encoge mi
+region» es cierto casi siempre. La penalizacion se aplica a casi todos los candidatos y
+con una magnitud parecida, asi que no los separa: entra en la puntuacion como ruido
+sumado al termino de espacio, no como el discriminador que se pretendia.
+
+**Lo que esto enseña, y es el motivo de conservarlo:** una heuristica que se activa el
+93% de las veces no es una heuristica, es una constante con varianza. Un detector de
+trampas tiene que ser *relativo* -cuanto peor es este cuello que el de las otras
+opciones- o estar *umbralado* -solo cuenta si lo que se pierde no cabe en mi propia
+longitud-, y ninguna de las dos formas se ha probado todavia. El 12.46% de cuellos
+grandes sugiere que un umbral por longitud dispararia de forma bastante mas selectiva.
+
+El codigo se conserva entero y apagado por defecto (`space.worst_case_weight = 0.0`).
+
+**Segunda confirmacion del mismo diagnostico.** v1 subio la supervivencia sin subir el
+puesto; cuellos no sube ninguna de las dos. Dos heuristicas estaticas distintas, atacando
+el mismo sintoma medido -132 de 178 muertes sin salida-, y ninguna mueve el marcador
+contra rivales que simulan. El siguiente paso no es una tercera heuristica.
 
 ## S-V2 Busqueda multijugador {#s-v2}
 

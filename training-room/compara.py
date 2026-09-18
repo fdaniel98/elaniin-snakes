@@ -105,6 +105,23 @@ def salud_del_campo(c):
     torneo-cuellos-serie 0.90. La linea base de v0 se midio contra un campo el doble de
     averiado que el de ahora, asi que favorece a v0.
     """
+    # NULL no es cero. Una corrida anterior a estas columnas tiene NULL, y leerlo como 0
+    # diria que su campo estaba sano cuando lo que pasa es que no se midio. Con el aviso
+    # de mas abajo, ese cero falso invertiria la conclusion.
+    # La columna puede no existir siquiera: esto abre en solo lectura a proposito -una
+    # herramienta de analisis no toca los datos- asi que no puede migrar la tabla.
+    hay = {f[1] for f in c.execute("PRAGMA table_info(latencias)")}
+    if "fallos_conexion" not in hay:
+        return {"medido": False, "filas_sin_medir": 0, "motivo": "la columna no existe",
+                "timeouts": None, "conexion": None, "otros": None,
+                "fallos_por_partida": None}
+    sin_medir = c.execute(
+        "SELECT COUNT(*) FROM latencias WHERE fallos_conexion IS NULL").fetchone()[0]
+    if sin_medir:
+        return {"medido": False, "filas_sin_medir": sin_medir,
+                "motivo": f"{sin_medir} filas sin rellenar",
+                "timeouts": None, "conexion": None, "otros": None,
+                "fallos_por_partida": None}
     fila = c.execute(
         "SELECT SUM(l.timeouts), SUM(COALESCE(l.fallos_conexion,0)), "
         "       SUM(COALESCE(l.fallos_status,0) + COALESCE(l.fallos_json,0) "
@@ -114,9 +131,9 @@ def salud_del_campo(c):
         "WHERE g.arbitro_rc = 0 AND pa.imagen LIKE 'zoo/%'").fetchone()
     n = c.execute("SELECT COUNT(*) FROM partidas WHERE arbitro_rc = 0").fetchone()[0] or 1
     to, con, otros, movs = [x or 0 for x in fila]
-    return {"timeouts": to, "conexion": con, "otros": otros, "movimientos_rivales": movs,
-            "fallos_por_partida": round((to + con + otros) / n, 3),
-            "columnas_nuevas": con is not None}
+    return {"medido": True, "timeouts": to, "conexion": con, "otros": otros,
+            "movimientos_rivales": movs,
+            "fallos_por_partida": round((to + con + otros) / n, 3)}
 
 
 def media(xs):
@@ -267,13 +284,22 @@ def main():
     if veredicto == "NO CONCLUYENTE":
         print("  El intervalo cruza el cero o el efecto no llega al delta declarado. Eso")
         print("  NO dice que B sea igual que A: dice que con estos bloques no se distingue.")
-    fa, fb = salud_a["fallos_por_partida"], salud_b["fallos_por_partida"]
     print(f"\n-- salud del campo (peticiones que los RIVALES no contestaron) --")
-    print(f"  A  {fa}/partida   (timeout {salud_a['timeouts']}, "
-          f"conexion {salud_a['conexion']}, otros {salud_a['otros']})")
-    print(f"  B  {fb}/partida   (timeout {salud_b['timeouts']}, "
-          f"conexion {salud_b['conexion']}, otros {salud_b['otros']})")
-    if max(fa, fb) > 0 and min(fa, fb) < 0.6 * max(fa, fb):
+    for etiqueta, s_ in (("A", salud_a), ("B", salud_b)):
+        if not s_["medido"]:
+            print(f"  {etiqueta}  SIN MEDIR ({s_['motivo']}). "
+                  "Corre `tr.py reanaliza --out <corrida>`.")
+        else:
+            print(f"  {etiqueta}  {s_['fallos_por_partida']}/partida   "
+                  f"(timeout {s_['timeouts']}, conexion {s_['conexion']}, "
+                  f"otros {s_['otros']})")
+    if not (salud_a["medido"] and salud_b["medido"]):
+        print("  AVISO sin la salud de las dos, el veredicto de arriba va sin su contexto:"
+              "\n        un campo averiado regala puestos y no se sabe si lo estaba.")
+    fa = salud_a["fallos_por_partida"] or 0.0
+    fb = salud_b["fallos_por_partida"] or 0.0
+    if salud_a["medido"] and salud_b["medido"] and max(fa, fb) > 0 \
+            and min(fa, fb) < 0.6 * max(fa, fb):
         peor, mejor = ("A", "B") if fa > fb else ("B", "A")
         print(f"  AVISO los campos NO estaban igual de sanos: en {peor} los rivales "
               f"fallaron\n        {max(fa, fb) / max(min(fa, fb), 1e-9):.1f}x mas que en "

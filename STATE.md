@@ -6,8 +6,9 @@ Fase: 3 (Training Room MVP) — COMPLETA
 Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
 El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
-Snake activa: v0-baseline. v1 (Voronoi) medida y RECHAZADA: mismo puesto medio, 17 turnos
-mas de vida (ver docs/strategy.md#s-v1r)
+Snake activa: v0-baseline. Dos heuristicas estaticas medidas y RECHAZADAS: v1/Voronoi
+(ver docs/strategy.md#s-v1r) y cuellos (ver docs/strategy.md#s-cuellos-r). Siguiente paso:
+busqueda, no una tercera heuristica
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -86,7 +87,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v0 -la unica version medida- y registrar la URL. En paralelo, medir v2
-(cuellos), que esta escrita y probada pero nunca se ha medido y ataca justo el diagnostico
-del torneo: 132 de 178 muertes sin ninguna salida. v1 ya se descarto por no mover el
-puesto medio (ver docs/strategy.md#s-v1r).
+Desplegar v0 -la unica version que gana su comparacion, por no perderla- y registrar la
+URL: falta el ID del proyecto GCP y nada mas. Despues, busqueda (fase 5 v2): las dos
+heuristicas estaticas medidas dan NO CONCLUYENTE contra rivales que simulan.
