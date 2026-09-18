@@ -16,6 +16,7 @@ la cuota CFS y no el algoritmo, y entonces el torneo mide la maquina.
 nucleos y la rotacion de asientos sin tener docker delante.
 """
 import argparse
+import fcntl
 import hashlib
 import json
 import os
@@ -101,6 +102,32 @@ def topologia():
         "gobernador": gob.read_text().strip() if gob.exists() else "desconocido",
     }
 
+
+
+# --------------------------------------------------------------- exclusion mutua
+def toma_el_cerrojo():
+    """Un torneo a la vez por maquina, y no es una precaucion teorica.
+
+    Dos corridas simultaneas usan los mismos nombres de contenedor, los mismos puertos y
+    el mismo --out: cada una tumba los contenedores de la otra en su `finally` y las dos
+    escriben el mismo JSONL. Paso de verdad, y dejo 199 de 200 partidas con el arbitro en
+    error y archivos de cero bytes, con el arbitro jugando correctamente todo el rato.
+
+    El cerrojo es global, no del directorio de salida: dos torneos con --out distintos
+    chocarian igual, porque lo que comparten son los contenedores y los puertos."""
+    ruta = RAIZ / ".tr.lock"
+    fh = open(ruta, "w")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        muere(
+            f"ya hay un torneo corriendo en esta maquina ({ruta} esta tomado). Dos a la vez "
+            "se pisan los contenedores y los puertos, y el resultado no vale. Espera a que "
+            "termine, o matalo antes de lanzar otro."
+        )
+    fh.write(f"{os.getpid()}\n")
+    fh.flush()
+    return fh                      # se devuelve para que el cerrojo viva lo que el proceso
 
 
 # --------------------------------------------------------------- contenedores
@@ -325,6 +352,7 @@ def cmd_match(args):
         return 0
 
     # ---------------------------------------------------------- arranque
+    cerrojo = toma_el_cerrojo()    # noqa: F841 - vive hasta que el proceso muere
     docker = docker_bin()
     commit = nuestro_commit
     img_nuestra = construye_la_nuestra(docker, commit, seco=False)

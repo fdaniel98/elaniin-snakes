@@ -144,6 +144,25 @@ db2.commit()
 ya = {f[0] for f in db2.execute("SELECT id FROM partidas WHERE arbitro_rc = 0")}
 comprueba("g00001" not in ya, "una partida con el arbitro en error NO cuenta como jugada")
 
+# ---------------------------------------------------------------- cerrojo
+# Dos torneos a la vez comparten nombres de contenedor y puertos: el segundo tiene que
+# rebotar, no arrancar y destrozar al primero.
+import os as _os
+primero = tr.toma_el_cerrojo()
+hijo = _os.fork()
+if hijo == 0:                       # el hijo hereda el fichero pero no el cerrojo
+    try:
+        tr.toma_el_cerrojo()
+        _os._exit(0)                # lo consiguio: el cerrojo no sirve
+    except SystemExit:
+        _os._exit(3)                # rebotado, que es lo correcto
+    except Exception:
+        _os._exit(4)
+_, estado = _os.waitpid(hijo, 0)
+comprueba(_os.WEXITSTATUS(estado) == 3, "un segundo torneo en la misma maquina rebota")
+primero.close()
+comprueba(tr.toma_el_cerrojo() is not None, "el cerrojo se libera al cerrarse el proceso")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")

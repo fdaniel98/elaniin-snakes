@@ -44,3 +44,9 @@ endif()
 if(BSR_BUILD_BENCH)
   add_subdirectory(bench)
 endif()
+
+# Las herramientas acompañan a los tests: comparten el arnes de replay y ninguna entra al
+# deploy. Sin tests no hay arnes, asi que no hay herramientas.
+if(BSR_BUILD_TESTS)
+  add_subdirectory(tools)
+endif()
