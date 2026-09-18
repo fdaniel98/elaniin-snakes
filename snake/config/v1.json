@@ -1,5 +1,5 @@
 {
-  "_comment": "1:1 con snake::Params (snake/include/snake/params.hpp). tests/test_ruleset_parse.cpp falla si divergen. Los margenes de tiempo son normativos: cambiarlos exige aprobacion humana y un ADR.",
+  "_comment": "v1: territorio por Voronoi. Mismo binario que v0; solo cambia territory.version. ver docs/strategy.md#s-v1",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
@@ -25,7 +25,7 @@
     "low_health_multiplier": 4.0
   },
   "territory": {
-    "version": 0,
+    "version": 1,
     "weight": 120.0,
     "contested_weight": 0.0,
     "hazard_value_pct": 50

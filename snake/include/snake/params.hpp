@@ -59,6 +59,20 @@ struct HazardParams {
     double low_health_multiplier = 4.0;
 };
 
+/// Control de territorio (v1): espacio que se alcanza ANTES que el rival, no espacio que
+/// existe. ver docs/strategy.md#s-v1
+struct TerritoryParams {
+    /// 0 = v0, el flood fill de siempre. 1 = v1, el reparto de Voronoi.
+    /// v0 nunca se borra: es la referencia fija contra la que se mide todo lo demas.
+    std::int32_t version = 0;
+    /// Peso del territorio propio, normalizado por el tamaño del tablero.
+    double weight = 120.0;
+    /// Penalizacion por casilla disputada adyacente: son las que matan a dos.
+    double contested_weight = 0.0;
+    /// Lo que vale una casilla con hazard frente a una limpia, en porcentaje.
+    std::int32_t hazard_value_pct = 50;
+};
+
 /// Config completo del cerebro.
 struct Params {
     TimeParams time{};
@@ -66,6 +80,7 @@ struct Params {
     SpaceParams space{};
     HeadParams head{};
     HazardParams hazard{};
+    TerritoryParams territory{};
 };
 
 } // namespace snake

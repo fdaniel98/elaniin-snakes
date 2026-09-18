@@ -118,6 +118,10 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     REQUIRE(from_json.head.prefer_shorter == defaults.head.prefer_shorter);
     REQUIRE(from_json.hazard.weight == defaults.hazard.weight);
     REQUIRE(from_json.hazard.low_health_multiplier == defaults.hazard.low_health_multiplier);
+    REQUIRE(from_json.territory.version == defaults.territory.version);
+    REQUIRE(from_json.territory.weight == defaults.territory.weight);
+    REQUIRE(from_json.territory.contested_weight == defaults.territory.contested_weight);
+    REQUIRE(from_json.territory.hazard_value_pct == defaults.territory.hazard_value_pct);
 
     // 2. Y al reves: ningun grupo ni clave sobra en el JSON. Si alguien añade una clave
     //    al config sin añadirla al struct, este test la caza.
@@ -126,7 +130,8 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
       "food": ["seek_below", "seek_below_in_hazard", "free_food_distance", "weight"],
       "space": ["min_space_ratio", "weight", "tail_escape"],
       "head": ["avoid_equal_or_longer", "prefer_shorter"],
-      "hazard": ["weight", "low_health_multiplier"]
+      "hazard": ["weight", "low_health_multiplier"],
+      "territory": ["version", "weight", "contested_weight", "hazard_value_pct"]
     })");
 
     for (const auto& [group, keys] : doc.items()) {

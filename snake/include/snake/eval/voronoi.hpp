@@ -46,10 +46,17 @@ template <int MaxSnakes> struct Territory {
 ///
 /// `hazard_value_pct` es lo que vale una casilla con hazard frente a una limpia, en
 /// porcentaje. 100 = valen igual.
+///
+/// `from_id`/`from_cell` mueven la cabeza de UNA serpiente antes de repartir, sin tocar el
+/// estado. Es como el cerebro pregunta "si voy ahi, cuanto territorio me queda": copiar el
+/// estado entero y aplicar el turno costaria mas y exigiria inventar los movimientos de
+/// los demas, que es justo lo que v1 no hace todavia.
 template <int W, int H, int MaxSnakes>
 [[nodiscard]] Territory<MaxSnakes> voronoi(const engine::GameState<W, H, MaxSnakes>& state,
                                            const engine::Bitboard<W, H>& blocked,
-                                           int hazard_value_pct = 50) noexcept {
+                                           int hazard_value_pct = 50,
+                                           int from_id = -1,
+                                           int from_cell = -1) noexcept {
     using Board = engine::Bitboard<W, H>;
     constexpr int kCells = W * H;
 
@@ -73,9 +80,10 @@ template <int W, int H, int MaxSnakes>
             continue;
         }
         ++alive;
-        front[static_cast<std::size_t>(s)].set(snake.head());
-        dist[static_cast<std::size_t>(snake.head())] = 0;
-        owner[static_cast<std::size_t>(snake.head())] = static_cast<std::int8_t>(s);
+        const int source = (s == from_id && from_cell >= 0) ? from_cell : snake.head();
+        front[static_cast<std::size_t>(s)].set(source);
+        dist[static_cast<std::size_t>(source)] = 0;
+        owner[static_cast<std::size_t>(source)] = static_cast<std::int8_t>(s);
     }
     if (alive == 0) {
         return out;

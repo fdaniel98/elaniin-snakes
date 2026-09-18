@@ -12,6 +12,7 @@
 
 #include <snake/brain.hpp>
 #include <snake/eval/floodfill.hpp>
+#include <snake/eval/voronoi.hpp>
 
 namespace snake {
 
@@ -98,6 +99,10 @@ struct Candidate {
     bool safe{false};
     int space{0};
     double score{0.0};
+    /// Territorio propio tras el movimiento, en centesimas de casilla (v1).
+    int territory{0};
+    /// Casillas que nadie gana porque dos llegan a la vez con la misma longitud (v1).
+    int contested{0};
 };
 
 /// Puntuacion de un movimiento ya filtrado. Todos los pesos salen del config:
@@ -111,9 +116,24 @@ double score_candidate(const State& state,
     const auto my_length = static_cast<int>(me.length);
     double score = 0.0;
 
-    // 1. Espacio alcanzable, normalizado por el tamaño del tablero.
-    score += params.space.weight * static_cast<double>(candidate.space) /
-             static_cast<double>(State::cells);
+    // 1. Espacio.
+    //
+    // v0 cuenta el espacio que EXISTE desde la casilla candidata. v1 cuenta el que se
+    // alcanza ANTES que los rivales: un pasillo que el rival sella primero nunca fue
+    // nuestro. El cambio sale de que 132 de 178 muertes del torneo no tenian ninguna
+    // salida ese turno -la trampa se tiende antes-. ver docs/strategy.md#s-v1
+    //
+    // v0 se conserva entero y seleccionable con `territory.version = 0`: es la referencia
+    // fija contra la que se mide todo lo demas y no se borra nunca.
+    if (params.territory.version >= 1 && !degraded) {
+        score += params.territory.weight * static_cast<double>(candidate.territory) /
+                 static_cast<double>(State::cells * 100);
+        score -= params.territory.contested_weight * static_cast<double>(candidate.contested) /
+                 static_cast<double>(State::cells);
+    } else {
+        score += params.space.weight * static_cast<double>(candidate.space) /
+                 static_cast<double>(State::cells);
+    }
 
     // 2. Zona de cabeza: se evitan las casillas adyacentes a cabezas iguales o mas
     //    largas y se prefieren las adyacentes a cabezas estrictamente mas cortas.
@@ -232,6 +252,19 @@ Move decide_impl(const State& state,
         Board reachable = free_cells;
         reachable.set(candidate.cell);
         candidate.space = eval::flood(reachable, candidate.cell).cells;
+
+        // v1: ademas del espacio que existe, el que se alcanza antes que los rivales. Se
+        // calcula desde la casilla candidata, sin copiar el estado ni inventar los
+        // movimientos de los demas. ver docs/strategy.md#s-v1
+        if (params.territory.version >= 1 && !degraded) {
+            const auto t = eval::voronoi(state,
+                                         blocked,
+                                         params.territory.hazard_value_pct,
+                                         static_cast<int>(state.you),
+                                         candidate.cell);
+            candidate.territory = t.weighted[static_cast<std::size_t>(state.you)];
+            candidate.contested = t.contested;
+        }
     }
 
     // Escalon 1: el deadline ya vencio antes de puntuar nada. Se devuelve el movimiento

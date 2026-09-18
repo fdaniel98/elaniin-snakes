@@ -157,6 +157,14 @@ Params parse_params(const json& doc) {
     params.hazard.low_health_multiplier =
         read_double(hazard, "low_health_multiplier", params.hazard.low_health_multiplier);
 
+    const json& territory = child(doc, "territory");
+    params.territory.version = read_plain_int(territory, "version", params.territory.version);
+    params.territory.weight = read_double(territory, "weight", params.territory.weight);
+    params.territory.contested_weight =
+        read_double(territory, "contested_weight", params.territory.contested_weight);
+    params.territory.hazard_value_pct =
+        read_plain_int(territory, "hazard_value_pct", params.territory.hazard_value_pct);
+
     return params;
 }
 

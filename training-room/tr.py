@@ -132,14 +132,17 @@ def toma_el_cerrojo():
 
 
 # --------------------------------------------------------------- contenedores
-def imagen_nuestra(commit):
-    return f"battlesnake/ours:{commit}"
+def imagen_nuestra(commit, hash_cfg):
+    # La etiqueta lleva el hash del config: dos versiones de estrategia son binarios
+    # distintos aunque el commit sea el mismo, y confundirlas seria medir una creyendo
+    # medir la otra.
+    return f"battlesnake/ours:{commit}-{hash_cfg}"
 
 
-def construye_la_nuestra(docker, commit, seco):
+def construye_la_nuestra(docker, commit, hash_cfg, config, seco):
     """Nuestra snake corre en contenedor como las demas. Compararla fuera seria regalarle
     la maquina entera mientras los rivales viven con una cuota."""
-    img = imagen_nuestra(commit)
+    img = imagen_nuestra(commit, hash_cfg)
     if seco:
         print(f"DRY docker build -f deploy/Dockerfile -t {img} .")
         return img
@@ -147,7 +150,21 @@ def construye_la_nuestra(docker, commit, seco):
         print(f"OK   {img} ya existe")
         return img
     print(f"-- construyendo {img} (compila el proyecto entero, unos minutos) --")
-    r = subprocess.run([docker, "build", "-f", "deploy/Dockerfile", "-t", img, "."], cwd=RAIZ)
+    # El Dockerfile copia snake/config/default.json. Para medir OTRA estrategia se copia
+    # ese config al sitio durante el build y se restaura despues: asi la imagen lleva
+    # dentro exactamente el config cuyo hash se acaba de etiquetar, y no hay forma de
+    # correr un torneo creyendo medir una version y estar midiendo la otra.
+    destino = RAIZ / "snake/config/default.json"
+    original = destino.read_bytes()
+    cambiado = Path(config) != destino
+    try:
+        if cambiado:
+            destino.write_bytes(Path(config).read_bytes())
+        r = subprocess.run([docker, "build", "-f", "deploy/Dockerfile", "-t", img, "."],
+                           cwd=RAIZ)
+    finally:
+        if cambiado:
+            destino.write_bytes(original)
     if r.returncode != 0:
         muere("fallo el docker build de nuestra snake")
     return img
@@ -420,7 +437,11 @@ def cmd_match(args):
 
     db = abre_db(salida / "torneo.sqlite")
     nuestro_commit = commit_actual()
-    nuestro_hash = hash_config(RAIZ / "snake/config/default.json")
+    ruta_config = Path(args.config) if args.config else RAIZ / "snake/config/default.json"
+    if not ruta_config.exists():
+        muere(f"no existe el config {ruta_config}")
+    nuestro_hash = hash_config(ruta_config)
+    print(f"config:        {ruta_config} (hash {nuestro_hash})")
 
     plan = []
     for g in range(args.games):
@@ -445,7 +466,7 @@ def cmd_match(args):
     cerrojo = toma_el_cerrojo()    # noqa: F841 - vive hasta que el proceso muere
     docker = docker_bin()
     commit = nuestro_commit
-    img_nuestra = construye_la_nuestra(docker, commit, seco=False)
+    img_nuestra = construye_la_nuestra(docker, commit, nuestro_hash, ruta_config, seco=False)
 
     # Los contenedores se levantan UNA vez para todo el torneo, no por partida: un
     # servidor de Battlesnake es apatrida entre partidas -recibe /start cada vez- y
@@ -626,6 +647,8 @@ def main():
     m.add_argument("--games", type=int, required=True)
     m.add_argument("--out", required=True)
     m.add_argument("--seed-base", type=int, default=1)
+    m.add_argument("--config", default=None,
+                   help="config de estrategia a meter en la imagen; por defecto el del repo")
     m.add_argument("--dry-run", action="store_true")
     m.set_defaults(func=cmd_match)
     r = sub.add_parser("reanaliza", help="recalcula lo derivado de una corrida ya jugada")
