@@ -14,8 +14,12 @@ cd "$(dirname "$0")/.."
 MODE="${1:---check}"
 
 # Presupuestos (docs/INDEX.md#i-02). Subirlos exige aprobacion humana y un ADR.
+# El de tarea subio una vez, de 49152 a 65536, porque gate-selftest.sh crece unos 640
+# bytes por veneno y anadir veneno es obligatorio al endurecer un check: dos reglas del
+# proyecto tirando en contra. ver docs/decisions/ADR-0015-presupuesto-por-tarea.md#d-0141
+# El de arranque no se ha movido y es el que de verdad protege una sesion nueva.
 STARTUP_BUDGET=12288
-TASK_BUDGET=49152
+TASK_BUDGET=65536
 
 docs_with_frontmatter() {
     find docs -name '*.md' -not -path 'docs/results/*' | sort

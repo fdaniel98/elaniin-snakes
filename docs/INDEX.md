@@ -2,8 +2,8 @@
 title: Mapa de lectura y presupuesto de bytes
 read_when: "al empezar cualquier sesion, para decidir que NO leer"
 authority: canonical
-last_verified: 2026-09-15
-size_bytes: 3189
+last_verified: 2026-09-18
+size_bytes: 3379
 ---
 
 ## I-01 Que leer segun la tarea {#i-01}
@@ -33,11 +33,14 @@ de tokens.
 | Presupuesto | Que incluye | Techo |
 |---|---|---|
 | Arranque | `CLAUDE.md` + `STATE.md` + `docs/INDEX.md` | 12288 bytes |
-| Por tarea | arranque + su context pack + los archivos que el pack lista | 49152 bytes |
+| Por tarea | arranque + su context pack + los archivos que el pack lista | 65536 bytes |
 
 Lo comprueba `scripts/docs_meta.sh --budget` (check 6 del gate). Pasarse se corrige
-recortando o dividiendo, **nunca** subiendo el techo: subirlo exige aprobacion humana y
-un ADR.
+recortando o dividiendo; subirlo exige aprobacion humana y un ADR, y ha pasado una vez:
+ver docs/decisions/ADR-0015-presupuesto-por-tarea.md#d-0141.
+
+El de **arranque** no se ha movido, y es el que importa: protege que una sesion nueva
+reconstruya el estado sin leer medio repositorio.
 
 `size_bytes` de cada doc lo calcula y reescribe `scripts/docs_meta.sh --fix` con `wc -c`.
 No se edita a mano; el gate falla si el valor commiteado difiere del real.
