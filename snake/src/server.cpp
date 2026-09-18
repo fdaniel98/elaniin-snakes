@@ -229,13 +229,17 @@ int main() {
     // peor que puede pasar -el arbitro aplica su propio movimiento por defecto- asi que
     // se responde el ultimo escalon del fail-safe. ver docs/invariants.md#inv-12
     server.set_exception_handler(
-        [](const httplib::Request& req, httplib::Response& res, std::exception_ptr ep) {
+        [](const httplib::Request& req, httplib::Response& res, const std::exception_ptr& ep) {
             std::string motivo = "desconocido";
             try {
                 std::rethrow_exception(ep);
             } catch (const std::exception& error) {
                 motivo = error.what();
             } catch (...) {
+                // Algo que ni siquiera hereda de std::exception. No hay nada que
+                // consultarle, pero tragarselo es justo el punto: la alternativa es que
+                // cpp-httplib responda 500, que es lo que esta funcion existe para evitar.
+                motivo = "excepcion que no hereda de std::exception";
             }
             std::cerr << "WARN=excepcion ruta=" << req.path << " motivo=" << motivo << "\n";
             res.status = 200;
