@@ -482,6 +482,115 @@ comprueba("port is already allocated" in _salida.getvalue(),
 d_vacio = rep.recoge(vacio2, None)
 comprueba(d_vacio["partidas_ok"] == 0, "un torneo sin partidas buenas se detecta antes de escribir")
 
+
+# ==================================================================================
+# compara.py — la comparacion pareada por bloques
+# ==================================================================================
+cmp_spec = importlib.util.spec_from_file_location("compara", RAIZ / "training-room/compara.py")
+cmpm = importlib.util.module_from_spec(cmp_spec)
+cmp_spec.loader.exec_module(cmpm)
+
+
+def _corrida(dirname, slug, puestos_por_semilla, topo, hash_cfg, gauntlet="gauntlet-v1"):
+    """Fabrica una corrida: {semilla: [puesto de cada asiento]}."""
+    d = Path(tempfile.mkdtemp()) / dirname
+    d.mkdir()
+    db = tr.abre_db(d / "torneo.sqlite")
+    g = 0
+    for semilla, puestos in sorted(puestos_por_semilla.items()):
+        for asiento, puesto in enumerate(puestos):
+            pid = f"g{g:05d}"
+            g += 1
+            db.execute("INSERT INTO partidas VALUES (?,?,?,?,?,?,?,?,?,?)",
+                       (pid, gauntlet, semilla, "x", asiento, 100, 0, "t",
+                        json.dumps(topo), "r"))
+            db.execute("INSERT INTO participantes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                       (pid, slug, slug, "v", "c", hash_cfg, "local/snake", asiento,
+                        puesto, 100, "cabezazo"))
+            db.execute("INSERT INTO participantes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                       (pid, "rival", "rival", "v", "c", "h2", "zoo/battlesnake-rs",
+                        asiento + 1, 1.0, 120, "sobrevivio"))
+    db.commit()
+    db.close()
+    return d
+
+
+SERIE = {"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 1}
+PAR2 = {"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 2}
+
+
+def _compara(a, b, extra=()):
+    import subprocess
+    r = subprocess.run([sys.executable, str(RAIZ / "training-room/compara.py"),
+                        "--a", str(a), "--b", str(b), "--json", *extra],
+                       capture_output=True, text=True)
+    return r
+
+
+# B gana un puesto entero en cada bloque: eso tiene que salir MEJORA.
+a1 = _corrida("a", "v0-baseline", {1: [3, 3, 3, 3], 2: [3, 3, 3, 3], 3: [3, 3, 3, 3]},
+              SERIE, "hA")
+b1 = _corrida("b", "cuellos", {1: [2, 2, 2, 2], 2: [2, 2, 2, 2], 3: [2, 2, 2, 2]},
+              SERIE, "hB")
+r = _compara(a1, b1)
+d = json.loads(r.stdout)
+comprueba(d["veredicto"] == "MEJORA", "una mejora de un puesto entero se detecta")
+comprueba(d["diferencia_pareada"] == -1.0, "y el signo es el correcto: negativo es mejor")
+comprueba(d["bloques_pareados"] == 3, "la unidad es el bloque, no la partida")
+comprueba(d["partidas_b"] == 12, "aunque las partidas se cuenten aparte")
+
+# Ruido simetrico: no puede salir veredicto.
+a2 = _corrida("a", "v0-baseline", {1: [2, 3, 2, 3], 2: [3, 2, 3, 2], 3: [2, 3, 3, 2]},
+              SERIE, "hA")
+b2 = _corrida("b", "cuellos", {1: [3, 2, 3, 2], 2: [2, 3, 2, 3], 3: [3, 2, 2, 3]},
+              SERIE, "hB")
+comprueba(json.loads(_compara(a2, b2).stdout)["veredicto"] == "NO CONCLUYENTE",
+          "el ruido simetrico no produce veredicto")
+
+# Una mejora real pero por debajo del delta declarado tampoco entra.
+a3 = _corrida("a", "v0-baseline", {1: [3, 3, 3, 3], 2: [3, 3, 3, 3], 3: [3, 3, 3, 3]},
+              SERIE, "hA")
+b3 = _corrida("b", "cuellos", {1: [2.98] * 4, 2: [2.98] * 4, 3: [2.98] * 4}, SERIE, "hB")
+comprueba(json.loads(_compara(a3, b3).stdout)["veredicto"] == "NO CONCLUYENTE",
+          "una mejora por debajo del delta declarado no entra aunque sea consistente")
+comprueba(json.loads(_compara(a3, b3, ("--delta", "0.01")).stdout)["veredicto"] == "MEJORA",
+          "y con el delta bajado a sabiendas, si")
+
+# Los cuatro casos en que se tiene que NEGAR.
+comprueba(_compara(a1, _corrida("b", "cuellos", {1: [2] * 4}, PAR2, "hB")).returncode == 2,
+          "se niega a comparar topologias distintas")
+comprueba(_compara(a1, _corrida("b", "cuellos", {1: [2] * 4}, SERIE, "hB",
+                                gauntlet="gauntlet-v2")).returncode == 2,
+          "se niega a comparar gauntlets distintos")
+comprueba(_compara(a1, _corrida("b", "v0-baseline", {1: [2] * 4}, SERIE, "hA")).returncode == 2,
+          "se niega a comparar una corrida consigo misma (mismo hash de config)")
+comprueba(_compara(a1, _corrida("b", "cuellos", {99: [2] * 4}, SERIE, "hB")).returncode == 2,
+          "se niega si no comparten ni una semilla: sin bloques no hay pareo")
+
+# Un bloque a medias NO es un bloque. La corrida de v1 se corto en 61 partidas y dejo un
+# ultimo bloque con un asiento en vez de cuatro; promediar ese uno contra los cuatro del
+# otro lado mete el sesgo de asiento que la rotacion existe para cancelar.
+a5 = _corrida("a", "v0-baseline", {1: [3, 3, 3, 3], 2: [3, 3, 3, 3], 3: [3, 3, 3, 3]},
+              SERIE, "hA")
+b5 = _corrida("b", "cuellos", {1: [2, 2, 2, 2], 2: [2, 2, 2, 2], 3: [2]}, SERIE, "hB")
+d5 = json.loads(_compara(a5, b5).stdout)
+comprueba(d5["bloques_pareados"] == 2, "un bloque con menos asientos se descarta")
+comprueba(len(d5["bloques_descartados_por_incompletos"]) == 1,
+          "y se dice cual y con que asientos, no se descarta en silencio")
+comprueba(d5["bloques_descartados_por_incompletos"][0]["semilla"] == 3,
+          "el bloque descartado es el que estaba a medias")
+
+solo_medios = _corrida("b", "cuellos", {1: [2], 2: [2], 3: [2]}, SERIE, "hB")
+comprueba(_compara(a5, solo_medios).returncode == 2,
+          "si TODOS los bloques estan a medias, no hay comparacion que hacer")
+
+# Y la trampa mas facil de colar: comparar solo los bloques comunes, no todos.
+a4 = _corrida("a", "v0-baseline", {n: [3] * 4 for n in range(1, 11)}, SERIE, "hA")
+b4 = _corrida("b", "cuellos", {n: [2] * 4 for n in range(1, 4)}, SERIE, "hB")
+d4 = json.loads(_compara(a4, b4).stdout)
+comprueba(d4["bloques_pareados"] == 3,
+          "con 10 bloques en A y 3 en B solo se parean 3, no se promedia sobre 10")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")
