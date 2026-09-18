@@ -27,7 +27,16 @@ using nlohmann::json;
 
 constexpr std::size_t max_payload_bytes = std::size_t{256} * 1024;
 constexpr int default_port = 8080;
-constexpr time_t socket_timeout_seconds = 5;
+// Una peticion de Battlesnake son unos pocos KiB por loopback: si el cuerpo no ha
+// llegado en 2 s, no va a llegar. Con 5 s bastaban ocho conexiones a medio abrir
+// -`Content-Length` anunciado y cuerpo que nunca llega- para agotar el pool de hilos y
+// dejar sin respuesta a una peticion legitima, que es peor que un 5xx: el arbitro no
+// recibe nada y aplica su movimiento por defecto.
+constexpr time_t socket_timeout_seconds = 2;
+/// Hilos del servidor. El default de cpp-httplib es 8, y ocho conexiones lentas lo
+/// agotan. No elimina el problema -un atacante decidido abre mas- pero lo aleja del
+/// accidente, y el timeout corto recicla los hilos deprisa.
+constexpr unsigned int thread_pool_size = 64;
 
 const char* direction_name(engine::Direction d) {
     switch (d) {
@@ -119,6 +128,7 @@ int main() {
 
     httplib::Server server;
     server.set_payload_max_length(max_payload_bytes);
+    server.new_task_queue = [] { return new httplib::ThreadPool(thread_pool_size); };
     server.set_read_timeout(socket_timeout_seconds, 0);
     server.set_write_timeout(socket_timeout_seconds, 0);
 
@@ -140,7 +150,10 @@ int main() {
 
     server.Post("/start", [](const httplib::Request& req, httplib::Response& res) {
         const json request = json::parse(req.body, nullptr, false);
-        if (!request.is_discarded()) {
+        // `is_object()` y no solo `!is_discarded()`: `value()` sobre un array o un escalar
+        // lanza `type_error.306`, y sin nadie que lo recoja cpp-httplib respondia 500 con
+        // el mensaje interno en una cabecera. ver docs/invariants.md#inv-12
+        if (request.is_object()) {
             const engine::Ruleset rules =
                 snake::parse_ruleset(request.value("game", json::object()));
             std::cerr << "start ruleset=" << variant_name(rules.variant)
@@ -210,6 +223,28 @@ int main() {
     server.set_error_handler([](const httplib::Request&, httplib::Response& res) {
         res.set_content(R"({"error":"not found"})", "application/json");
     });
+
+    // Red de ultimo recurso para CUALQUIER ruta: sin esto cpp-httplib responde 500 y
+    // ademas filtra el mensaje de la excepcion en una cabecera. En /move el 500 es lo
+    // peor que puede pasar -el arbitro aplica su propio movimiento por defecto- asi que
+    // se responde el ultimo escalon del fail-safe. ver docs/invariants.md#inv-12
+    server.set_exception_handler(
+        [](const httplib::Request& req, httplib::Response& res, std::exception_ptr ep) {
+            std::string motivo = "desconocido";
+            try {
+                std::rethrow_exception(ep);
+            } catch (const std::exception& error) {
+                motivo = error.what();
+            } catch (...) {
+            }
+            std::cerr << "WARN=excepcion ruta=" << req.path << " motivo=" << motivo << "\n";
+            res.status = 200;
+            if (req.path == "/move") {
+                res.set_content(R"({"move":"up","shout":""})", "application/json");
+            } else {
+                res.set_content("{}", "application/json");
+            }
+        });
 
     const int port = port_from_env();
     std::cerr << "listening 0.0.0.0:" << port << '\n';

@@ -9,15 +9,23 @@
 #
 # Dos instrumentos, y ninguno sobra:
 #
-#   - `you.latency` del JSONL es lo que el ARBITRO midio de ida y vuelta, que es con lo
-#     que decide si llegamos tarde (`cli/commands/play.go:455,738`). Viene en
-#     milisegundos ENTEROS, truncados por `.Milliseconds()`, asi que sirve para contar
-#     timeouts y para ver la cola, no para un p99 fino.
+#   - el stderr del ARBITRO es la unica fuente fiable de timeouts y respuestas malas. El
+#     JSONL no sirve para eso: la serpiente eliminada desaparece de `board.snakes`
+#     (`cli/commands/play.go:818-820`), asi que el timeout del turno que la mata -el que
+#     importa- no se exporta nunca, y el ultimo turno de toda partida tampoco, porque el
+#     bucle hace `break` antes de exportar (`cli/commands/play.go:273-276`).
+#   - `latency` del JSONL es lo que el arbitro midio de ida y vuelta en la peticion
+#     anterior (`cli/commands/play.go:797-802`), en milisegundos ENTEROS. Sirve para ver
+#     la forma de la distribucion, no para contar timeouts ni para un p99 fino.
 #   - el campo `us=` del log del servidor es el tiempo dentro de decide(), con resolucion
 #     de microsegundos. Es lo que cuesta nuestro codigo.
 #
-# La diferencia entre ambos es transporte. NO se mete un proxy en medio para medirla: un
-# salto de Python que en produccion no existe inflaba la cifra trece veces.
+# NO se mete un proxy en medio: un salto de Python que en produccion no existe inflaba la
+# cifra trece veces.
+#
+# El analisis FALLA si el numero de partidas jugadas no es el pedido o si hay pocas
+# muestras. Un soak que no jugo nada decia "0 timeouts" y salia 0, que es la peor forma
+# posible de pasar.
 #
 # Una partida cada vez y una sola instancia nuestra, con tres rivales cautos en Python:
 # lanzar partidas en paralelo mide la maquina, no el cerebro. El numero de nucleos y el
@@ -87,6 +95,7 @@ trap 'limpia; exit 130' INT TERM
 
 SERVERLOG="$OUT/server.log"
 : > "$SERVERLOG"
+: > "$OUT/partidas.jsonl"
 FALLOS=0
 
 for ((g = 0; g < GAMES; ++g)); do
@@ -126,16 +135,25 @@ for ((g = 0; g < GAMES; ++g)); do
         continue
     fi
 
+    ID="g$(printf '%05d' "$g")"
+    # El stderr del arbitro NO se tira: es donde viven los timeouts.
     "$CLI" play -W 11 -H 11 -g royale -m royale -t "$TIMEOUT_MS" -r "$SEED" \
-        "${ARGS[@]}" -o "$OUT/g$(printf '%05d' "$g").jsonl" >/dev/null 2>&1
+        "${ARGS[@]}" -o "$OUT/$ID.jsonl" >/dev/null 2>"$OUT/$ID.ref.log"
+    RC_ARBITRO=$?
     limpia
+    printf '{"id":"%s","seed":%d,"url":"http://127.0.0.1:%d","rc":%d}\n' \
+        "$ID" "$SEED" "$NUESTRO" "$RC_ARBITRO" >> "$OUT/partidas.jsonl"
+    if [[ $RC_ARBITRO -ne 0 ]]; then
+        echo "FAIL partida $g: el arbitro salio con $RC_ARBITRO" >&2
+        FALLOS=$((FALLOS + 1))
+    fi
     printf '.'
     [[ $(((g + 1) % 50)) -eq 0 ]] && printf ' %d\n' $((g + 1))
 done
 echo
 
 # ---------------------------------------------------------------- analisis
-python3 scripts/soak_analiza.py "$OUT" "$TIMEOUT_MS"
+python3 scripts/soak_analiza.py "$OUT" "$TIMEOUT_MS" "$GAMES"
 RC=$?
 
 echo "resultados en $OUT"

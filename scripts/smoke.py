@@ -103,33 +103,91 @@ PAYLOADS_ADVERSOS = [
 
 
 def adversos(url):
-    """Devuelve la lista de fallos; vacia si el servidor aguanta todo."""
+    """Devuelve la lista de fallos; vacia si el servidor aguanta todo.
+
+    Las tres rutas POST, no solo /move: `/start` devolvia 500 con cualquier JSON que no
+    fuera un objeto, y ademas filtraba el mensaje de la excepcion en una cabecera. El
+    check 8 no lo veia porque nunca le mandaba nada a esa ruta.
+    """
     fallos = []
-    for nombre, cuerpo in PAYLOADS_ADVERSOS:
-        peticion = urllib.request.Request(
-            f"{url}/move", data=cuerpo.encode("utf-8"),
-            headers={"Content-Type": "application/json"}, method="POST")
-        try:
-            with urllib.request.urlopen(peticion, timeout=5) as respuesta:
-                codigo = respuesta.status
-                datos = respuesta.read()
-        except urllib.error.HTTPError as error:
-            fallos.append(f"adverso '{nombre}': HTTP {error.code}, y /move nunca es 5xx")
-            continue
-        except (urllib.error.URLError, OSError) as error:
-            fallos.append(f"adverso '{nombre}': sin respuesta ({error})")
-            continue
-        if codigo != 200:
-            fallos.append(f"adverso '{nombre}': HTTP {codigo}")
-            continue
-        try:
-            movimiento = json.loads(datos).get("move")
-        except ValueError:
-            fallos.append(f"adverso '{nombre}': la respuesta no es JSON")
-            continue
-        if movimiento not in DIRECTIONS:
-            fallos.append(f"adverso '{nombre}': movimiento invalido '{movimiento}'")
+    for ruta in ("/move", "/start", "/end"):
+        for nombre, cuerpo in PAYLOADS_ADVERSOS:
+            etiqueta = f"adverso '{nombre}' en {ruta}"
+            peticion = urllib.request.Request(
+                f"{url}{ruta}", data=cuerpo.encode("utf-8"),
+                headers={"Content-Type": "application/json"}, method="POST")
+            try:
+                with urllib.request.urlopen(peticion, timeout=5) as respuesta:
+                    codigo = respuesta.status
+                    datos = respuesta.read()
+                    cabeceras = dict(respuesta.headers)
+            except urllib.error.HTTPError as error:
+                fallos.append(f"{etiqueta}: HTTP {error.code}, y estas rutas nunca son 5xx")
+                continue
+            except (urllib.error.URLError, OSError) as error:
+                fallos.append(f"{etiqueta}: sin respuesta ({error})")
+                continue
+            if codigo != 200:
+                fallos.append(f"{etiqueta}: HTTP {codigo}")
+                continue
+            # Un 500 de cpp-httplib viaja con el mensaje de la excepcion en una cabecera:
+            # aunque el codigo fuera 200, filtrar internos es un fallo por si solo.
+            for clave in cabeceras:
+                if "EXCEPTION" in clave.upper():
+                    fallos.append(f"{etiqueta}: filtra la excepcion en la cabecera {clave}")
+            if ruta != "/move":
+                continue
+            try:
+                movimiento = json.loads(datos).get("move")
+            except ValueError:
+                fallos.append(f"{etiqueta}: la respuesta no es JSON")
+                continue
+            if movimiento not in DIRECTIONS:
+                fallos.append(f"{etiqueta}: movimiento invalido '{movimiento}'")
     return fallos
+
+
+def conexiones_colgadas(url, cuantas=24):
+    """Ocupa hilos con peticiones que anuncian cuerpo y no lo mandan.
+
+    Con el pool por defecto de cpp-httplib y un read timeout de 5 s, ocho de estas
+    dejaban sin respuesta a una peticion legitima durante segundos. No devolver nada es
+    peor que un 5xx: el arbitro aplica su movimiento por defecto igualmente, pero encima
+    se come el timeout entero.
+    """
+    import socket
+    from urllib.parse import urlparse
+
+    destino = urlparse(url)
+    host = destino.hostname or "127.0.0.1"
+    puerto = destino.port or 80
+    abiertas = []
+    try:
+        for _ in range(cuantas):
+            sock = socket.create_connection((host, puerto), timeout=2)
+            sock.sendall(b"POST /move HTTP/1.1\r\nHost: x\r\nContent-Length: 100\r\n\r\n")
+            abiertas.append(sock)
+        cuerpo = json.dumps({"board": {"width": 11, "height": 11, "snakes": [],
+                                       "food": [], "hazards": []}}).encode("utf-8")
+        peticion = urllib.request.Request(f"{url}/move", data=cuerpo,
+                                          headers={"Content-Type": "application/json"},
+                                          method="POST")
+        inicio = time.monotonic()
+        try:
+            with urllib.request.urlopen(peticion, timeout=4) as respuesta:
+                if respuesta.status != 200:
+                    return [f"con {cuantas} conexiones colgadas: HTTP {respuesta.status}"]
+        except (urllib.error.URLError, OSError) as error:
+            return [f"con {cuantas} conexiones colgadas: sin respuesta ({error})"]
+        transcurrido = (time.monotonic() - inicio) * 1000.0
+        if transcurrido > 1000.0:
+            return [f"con {cuantas} conexiones colgadas: respondio en {transcurrido:.0f} ms"]
+    except OSError as error:
+        return [f"no se pudieron abrir las conexiones colgadas ({error})"]
+    finally:
+        for sock in abiertas:
+            sock.close()
+    return []
 
 
 def main():
@@ -197,6 +255,8 @@ def main():
     # El servidor sigue vivo tras los fixtures: ahora se le manda lo que no espera.
     fallos_adversos = adversos(args.url)
     failures.extend(fallos_adversos)
+    fallos_adversos.extend(conexiones_colgadas(args.url))
+    failures.extend(conexiones_colgadas(args.url))
 
     if not latencies:
         print("FAIL ninguna respuesta del servidor")
@@ -208,7 +268,8 @@ def main():
     worst = latencies[-1]
 
     cold_txt = f"{cold_start:.2f}ms" if cold_start is not None else "no medido"
-    print(f"adversos={len(PAYLOADS_ADVERSOS)} sin 5xx={len(PAYLOADS_ADVERSOS) - len(fallos_adversos)}")
+    total_adversos = len(PAYLOADS_ADVERSOS) * 3
+    print(f"adversos={total_adversos} en /move,/start,/end  fallos={len(fallos_adversos)}")
     print(f"fixtures={len(fixtures)} peticiones={len(latencies)} "
           f"p50={p50:.2f}ms p99={p99:.2f}ms max={worst:.2f}ms "
           f"arranque_en_frio={cold_txt}")
