@@ -220,6 +220,25 @@ int main(int argc, char** argv) {
                     registro["causa"] = nombre_causa(copia.snakes[i].status);
                     registro["certeza"] = "modelada";
                     registro["fallback"] = elegido.fallback_level;
+
+                    // La pregunta que decide si esto es un fallo de evaluacion o una
+                    // trampa tendida veinte turnos antes: con los movimientos REALES de
+                    // los demas, ¿habia alguna direccion que sobreviviera ese turno?
+                    int vivas = 0;
+                    json direcciones = json::array();
+                    for (const auto d : kDirecciones) {
+                        auto alternativos = base;
+                        alternativos[i] = d;
+                        Estado prueba = estado;
+                        engine::apply(prueba, std::span<const engine::Direction>(
+                                                  alternativos.data(), ids.size()));
+                        if (engine::is_alive(prueba.snakes[i].status)) {
+                            ++vivas;
+                            direcciones.push_back(static_cast<int>(d));
+                        }
+                    }
+                    registro["alternativas_vivas"] = vivas;
+                    registro["alternativas"] = direcciones;
                     continue;
                 }
                 registro["causa"] = "modelo_discrepa";
