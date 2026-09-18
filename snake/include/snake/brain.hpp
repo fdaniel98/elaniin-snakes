@@ -37,4 +37,19 @@ Move decide_degraded(const engine::State11& state,
                      Deadline deadline,
                      const Params& params) noexcept;
 
+/// Calienta el camino de decision y devuelve los microsegundos que costo la primera
+/// llamada.
+///
+/// Por que existe, con el numero delante: en la maquina de referencia la PRIMERA llamada
+/// a `decide()` tardo **9 ms** sobre un fixture que despues tarda menos de uno. No es el
+/// algoritmo: es el coste de traer a memoria las paginas de codigo y de resolver los
+/// simbolos la primera vez. En una partida real eso lo paga el primer `/move` de una
+/// instancia recien arrancada -exactamente el turno 0 de la partida-, y con `min-instances`
+/// por debajo del numero de partidas simultaneas hay arranques en frio de verdad.
+/// ver docs/decisions/ADR-0021-arranque-en-frio.md
+///
+/// Es idempotente y no toca ningun estado global: solo ejecuta `decide()` sobre un estado
+/// sintetico con deadline holgado para que el codigo quede residente.
+long long warmup(const Params& params) noexcept;
+
 } // namespace snake

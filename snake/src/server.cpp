@@ -148,7 +148,12 @@ int main() {
         res.set_content(R"({"status":"ok"})", "application/json");
     });
 
-    server.Post("/start", [](const httplib::Request& req, httplib::Response& res) {
+    server.Post("/start", [&params](const httplib::Request& req, httplib::Response& res) {
+        // Segundo calentamiento, en el unico momento de la partida en que sobra tiempo.
+        // El arranque ya calento una vez, pero en Cloud Run con CPU asignada la instancia
+        // puede llevar minutos sin ejecutar este codigo y haber perdido las paginas.
+        // ver docs/decisions/ADR-0021-arranque-en-frio.md
+        std::cerr << "start warmup_us=" << snake::warmup(params) << '\n';
         const json request = json::parse(req.body, nullptr, false);
         // `is_object()` y no solo `!is_discarded()`: `value()` sobre un array o un escalar
         // lanza `type_error.306`, y sin nadie que lo recoja cpp-httplib respondia 500 con
@@ -251,6 +256,10 @@ int main() {
         });
 
     const int port = port_from_env();
+    // Antes de aceptar el primer request. En la maquina de referencia la primera llamada
+    // a decide() costo 9 ms y las siguientes menos de 1: ese coste lo pagaba el primer
+    // movimiento de la partida. ver docs/decisions/ADR-0021-arranque-en-frio.md
+    std::cerr << "warmup_us=" << snake::warmup(params) << '\n';
     std::cerr << "listening 0.0.0.0:" << port << '\n';
     if (!server.listen("0.0.0.0", port)) {
         std::cerr << "ERROR=no_se_pudo_escuchar port=" << port << '\n';

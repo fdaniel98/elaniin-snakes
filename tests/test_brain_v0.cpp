@@ -149,9 +149,27 @@ TEST_CASE("brain_v0: se cumplen las expectativas de cada fixture", "[brain][fixt
     }
 }
 
+TEST_CASE("brain_v0: el arranque en frio esta acotado y se puede pagar antes de jugar",
+          "[brain][deadline][inv-11][arranque]") {
+    // La PRIMERA llamada a decide() en la maquina de referencia costo 9 ms sobre un
+    // fixture que despues tarda menos de uno: paginas de codigo que hay que traer a
+    // memoria, no algoritmo. En produccion lo pagaba el primer /move de la partida.
+    // `warmup()` lo paga antes de escuchar y otra vez en /start.
+    // ver docs/decisions/ADR-0021-arranque-en-frio.md
+    const snake::Params params;
+    const long long us = snake::warmup(params);
+    INFO("warmup_us=" << us);
+    REQUIRE(us >= 0);     // no lanzo
+    REQUIRE(us < 350000); // cabe de sobra en el presupuesto de un movimiento
+}
+
 TEST_CASE("brain_v0: un deadline de 5 ms no se excede en ningun fixture",
           "[brain][deadline][inv-11]") {
     const snake::Params params;
+    // Se calienta primero, igual que hace el servidor antes de escuchar: lo que este
+    // test mide es el presupuesto del ALGORITMO, y una primera llamada en frio mide el
+    // cargador del sistema. El coste en frio tiene su propio test, arriba.
+    snake::warmup(params);
     for (const auto& fixture : load_fixtures()) {
         INFO("fixture: " << fixture.name);
         engine::State11 state;
@@ -169,6 +187,54 @@ TEST_CASE("brain_v0: un deadline de 5 ms no se excede en ningun fixture",
             REQUIRE(engine::mask_has(legal, move.direction));
         }
     }
+}
+
+TEST_CASE("v1 y v2 tampoco se salen del deadline, que es donde de verdad costaba",
+          "[brain][deadline][inv-11]") {
+    // El bucle de evaluacion hacia un Voronoi y una busqueda de cuellos por candidato y
+    // no miraba el reloj hasta despues de los cuatro. Con v0 eso costaba poco y no se
+    // notaba; con v1/v2 encendidos es el bloque mas caro de decide(). Aqui se encienden
+    // los dos y se exige el mismo presupuesto.
+    snake::Params v2;
+    v2.territory.version = 1;
+    v2.space.worst_case_weight = 150.0;
+    snake::warmup(v2);
+
+    for (const auto& fixture : load_fixtures()) {
+        INFO("fixture: " << fixture.name);
+        engine::State11 state;
+        REQUIRE(snake::parse_state(fixture.doc, state));
+
+        const auto started = snake::Deadline::Clock::now();
+        const snake::Deadline tight(started + std::chrono::milliseconds(5));
+        const snake::Move move = snake::decide(state, tight, v2);
+        const auto elapsed = snake::Deadline::Clock::now() - started;
+
+        REQUIRE(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() <= 5);
+        const engine::MoveMask legal = engine::legal_moves(state, state.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, move.direction));
+        }
+    }
+}
+
+TEST_CASE("con el deadline ya vencido v2 sigue devolviendo un movimiento legal",
+          "[brain][deadline][inv-11]") {
+    // El caso que el codigo nuevo tiene que cubrir: el reloj se acaba DENTRO del bucle
+    // de heuristicas caras. Entonces no se puntua a medias -unos candidatos con
+    // territorio y otros con cero, que descartaria al que llego tarde por tardon y no por
+    // malo-, sino que se vuelve a la puntuacion de v0 para todos.
+    snake::Params v2;
+    v2.territory.version = 1;
+    v2.space.worst_case_weight = 150.0;
+
+    engine::State11 state;
+    REQUIRE(snake::parse_state(load_fixtures().front().doc, state));
+
+    const snake::Deadline vencido(snake::Deadline::Clock::now() - std::chrono::seconds(1));
+    const snake::Move move = snake::decide(state, vencido, v2);
+    REQUIRE(engine::mask_has(engine::legal_moves(state, state.you), move.direction));
+    REQUIRE(move.fallback_level <= 1);
 }
 
 TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {
@@ -315,6 +381,7 @@ engine::State11 random_state(engine::Rng& rng) {
 TEST_CASE("fuzz: 10000 estados aleatorios sin movimiento ilegal ni deadline excedido",
           "[fuzz][brain][inv-10][inv-11]") {
     const snake::Params params;
+    snake::warmup(params);
     engine::Rng rng(20260915);
 
     int illegal = 0;

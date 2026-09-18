@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <cstdint>
 #include <exception>
 
 #include <engine/rules.hpp>
@@ -113,7 +115,8 @@ double score_candidate(const State& state,
                        const Params& params,
                        const Candidate& candidate,
                        const Board& free_cells,
-                       bool degraded) noexcept {
+                       bool degraded,
+                       bool deep) noexcept {
     const auto& me = state.snake(state.you);
     const auto my_length = static_cast<int>(me.length);
     double score = 0.0;
@@ -127,7 +130,7 @@ double score_candidate(const State& state,
     //
     // v0 se conserva entero y seleccionable con `territory.version = 0`: es la referencia
     // fija contra la que se mide todo lo demas y no se borra nunca.
-    if (params.territory.version >= 1 && !degraded) {
+    if (deep && params.territory.version >= 1 && !degraded) {
         score += params.territory.weight * static_cast<double>(candidate.territory) /
                  static_cast<double>(State::cells * 100);
         score -= params.territory.contested_weight * static_cast<double>(candidate.contested) /
@@ -160,8 +163,8 @@ double score_candidate(const State& state,
 
     // Salas con una sola puerta. La penalizacion es proporcional a lo que se PIERDE en el
     // peor caso, asi que un hueco abierto no paga nada y un callejon paga todo.
-    if (params.space.worst_case_weight > 0.0 && !degraded) {
-        const double perdido = static_cast<double>(candidate.space - candidate.worst_space);
+    if (deep && params.space.worst_case_weight > 0.0 && !degraded) {
+        const auto perdido = static_cast<double>(candidate.space - candidate.worst_space);
         score -= params.space.worst_case_weight * perdido / static_cast<double>(State::cells);
         // Y si el peor caso no da ni para el propio cuerpo, es una tumba con puerta.
         if (candidate.worst_space < my_length) {
@@ -258,35 +261,67 @@ Move decide_impl(const State& state,
         return Move{Direction::up, 3, 0.0, 0};
     }
 
+    // Pasada 1: el espacio, que es lo barato y lo unico que el escalon 1 necesita.
+    // El deadline se comprueba ANTES de cada candidato, no despues del bucle entero:
+    // con v1 o v2 encendidos ese bucle hace cuatro Voronoi y cuatro busquedas de
+    // cuellos, y comprobar solo al final permite rebasar el deadline por todo el
+    // trabajo de los cuatro. ver docs/invariants.md#inv-11
     for (auto& candidate : candidates) {
         if (!candidate.safe) {
             continue;
         }
+        if (deadline.expired()) {
+            break;
+        }
         Board reachable = free_cells;
         reachable.set(candidate.cell);
         candidate.space = eval::flood(reachable, candidate.cell).cells;
+        candidate.worst_space = candidate.space;
+    }
 
-        // El espacio que quedaria si el rival tapase el peor cuello de la region. Lo
-        // paga solo quien lo enciende: en un tablero abierto no hay cuellos de grado 2 o
-        // 3 y el bucle no llega a hacer ningun flood extra.
-        if (params.space.worst_case_weight > 0.0 && !degraded) {
-            candidate.worst_space = eval::worst_case_space(
-                reachable, candidate.cell, params.space.worst_case_max_cuellos);
-        } else {
-            candidate.worst_space = candidate.space;
+    // Pasada 2: las heuristicas caras. O se calculan para TODOS los candidatos o no se
+    // usa ninguna: comparar un candidato puntuado con territorio contra otro puntuado
+    // sin el es peor que no tener territorio, porque el que se quedo sin calcular saca
+    // cero y se descarta por haber llegado tarde, no por ser malo.
+    const bool wants_bottleneck = params.space.worst_case_weight > 0.0 && !degraded;
+    const bool wants_territory = params.territory.version >= 1 && !degraded;
+    bool deep = wants_bottleneck || wants_territory;
+    if (deep) {
+        for (auto& candidate : candidates) {
+            if (!candidate.safe) {
+                continue;
+            }
+            if (deadline.expired()) {
+                deep = false;
+                break;
+            }
+            Board reachable = free_cells;
+            reachable.set(candidate.cell);
+            // El espacio que quedaria si el rival tapase el peor cuello de la region. Lo
+            // paga solo quien lo enciende: en un tablero abierto no hay cuellos de grado
+            // 2 o 3 y el bucle no llega a hacer ningun flood extra.
+            if (wants_bottleneck) {
+                candidate.worst_space = eval::worst_case_space(
+                    reachable, candidate.cell, params.space.worst_case_max_cuellos);
+            }
+            // v1: ademas del espacio que existe, el que se alcanza antes que los
+            // rivales. Se calcula desde la casilla candidata, sin copiar el estado ni
+            // inventar los movimientos de los demas. ver docs/strategy.md#s-v1
+            if (wants_territory) {
+                const auto t = eval::voronoi(state,
+                                             blocked,
+                                             params.territory.hazard_value_pct,
+                                             static_cast<int>(state.you),
+                                             candidate.cell);
+                candidate.territory = t.weighted[static_cast<std::size_t>(state.you)];
+                candidate.contested = t.contested;
+            }
         }
-
-        // v1: ademas del espacio que existe, el que se alcanza antes que los rivales. Se
-        // calcula desde la casilla candidata, sin copiar el estado ni inventar los
-        // movimientos de los demas. ver docs/strategy.md#s-v1
-        if (params.territory.version >= 1 && !degraded) {
-            const auto t = eval::voronoi(state,
-                                         blocked,
-                                         params.territory.hazard_value_pct,
-                                         static_cast<int>(state.you),
-                                         candidate.cell);
-            candidate.territory = t.weighted[static_cast<std::size_t>(state.you)];
-            candidate.contested = t.contested;
+    }
+    if (!deep) {
+        // Degradacion consistente: se vuelve a la puntuacion de v0 para todos.
+        for (auto& candidate : candidates) {
+            candidate.worst_space = candidate.space;
         }
     }
 
@@ -326,14 +361,16 @@ Move decide_impl(const State& state,
         if (roomy_count > 0 && candidate.space < min_space) {
             continue;
         }
-        candidate.score = score_candidate(state, params, candidate, free_cells, degraded);
+        // El deadline se comprueba ANTES de puntuar, no despues: `score_candidate`
+        // hace una BFS de hasta 121 turnos buscando comida, y mirar el reloj cuando ya
+        // se ha pagado es enterarse tarde. Con un candidato ya puntuado siempre hay un
+        // mejor movimiento conocido que devolver. ver docs/invariants.md#inv-11
+        if (best != nullptr && deadline.expired()) {
+            break;
+        }
+        candidate.score = score_candidate(state, params, candidate, free_cells, degraded, deep);
         if (best == nullptr || candidate.score > best->score) {
             best = &candidate;
-        }
-        // El deadline se comprueba entre candidatos: siempre hay un mejor movimiento
-        // conocido que devolver. ver docs/invariants.md#inv-11
-        if (deadline.expired()) {
-            break;
         }
     }
 
@@ -375,6 +412,53 @@ Move decide_degraded(const State& state, Deadline deadline, const Params& params
         return decide_impl(state, deadline, params, true);
     } catch (...) {
         return Move{Direction::up, 3, 0.0, 0};
+    }
+}
+
+/// Destino de los movimientos de calentamiento. Es `volatile` para que el optimizador no
+/// pueda demostrar que la llamada no hace nada y borrarla, que es justo lo contrario de lo
+/// que este codigo quiere. ver docs/decisions/ADR-0021-arranque-en-frio.md
+namespace {
+volatile int warmup_sink = 0;
+} // namespace
+
+long long warmup(const Params& params) noexcept {
+    try {
+        // Un estado de spawn corriente: dos serpientes de tres segmentos apilados y una
+        // comida. No pretende ser representativo de nada, solo tocar el mismo codigo que
+        // tocara el primer movimiento de verdad.
+        State state{};
+        state.snake_count = 2;
+        state.you = 0;
+        for (int s = 0; s < 2; ++s) {
+            auto& snake = state.snakes[static_cast<unsigned>(s)];
+            snake.head_slot = 0;
+            snake.length = 3;
+            snake.health = 100;
+            snake.status = engine::Elimination::alive;
+            snake.eliminated_on_turn = -1;
+            const int cell = Board::index_of(s == 0 ? Coord{1, 1} : Coord{9, 9});
+            for (int seg = 0; seg < 3; ++seg) {
+                snake.cells[static_cast<unsigned>(seg)] = static_cast<std::uint16_t>(cell);
+            }
+        }
+        state.food.set(Board::index_of(Coord{5, 5}));
+        state.refresh_occupancy();
+
+        const auto started = Deadline::Clock::now();
+        const Deadline holgado(started + std::chrono::seconds(1));
+        // El resultado se descarta a proposito; lo que importa es el efecto secundario de
+        // haber ejecutado el camino. El destino es `volatile` para que -O3 no se lleve la
+        // llamada entera por no usarse el valor.
+        warmup_sink = static_cast<int>(decide(state, holgado, params).direction);
+        // Y una segunda pasada por el camino degradado, que es el que corre cuando el
+        // ruleset no es royale y que no comparte todas las ramas con el normal.
+        warmup_sink = static_cast<int>(decide_degraded(state, holgado, params).direction);
+        return std::chrono::duration_cast<std::chrono::microseconds>(Deadline::Clock::now() -
+                                                                     started)
+            .count();
+    } catch (...) {
+        return -1;
     }
 }
 
