@@ -173,10 +173,16 @@ verify_ledger() {
         | [range(0; ($t|length)-1) | $t[.] < $t[.+1]] | all' "$ledger")"
     [[ "$increasing" == "true" ]] || fail "$slug: started_at no es estrictamente creciente"
 
+    # "En la historia" quiere decir ALCANZABLE desde HEAD, no solo que el objeto exista:
+    # un commit reescrito con --amend sigue resolviendo en la maquina donde se reescribio
+    # y no existe en ningun clon. ver docs/decisions/ADR-0013-auditorias-fuera-del-loop.md#d-0123
     while read -r commit; do
         [[ -z "$commit" ]] && continue
-        git cat-file -e "${commit}^{commit}" 2>/dev/null ||
+        if ! git cat-file -e "${commit}^{commit}" 2>/dev/null; then
             fail "$slug: el commit $commit no existe en la historia"
+        elif ! git merge-base --is-ancestor "$commit" HEAD 2>/dev/null; then
+            fail "$slug: el commit $commit no es alcanzable desde HEAD (reescrito?)"
+        fi
     done < <(jq -r '.iterations[] | .commit_before, .commit_after' "$ledger")
 
     # 4. exit_code, duration_ms >= min_duration_ms de la clase, y log con sha256 correcto.
@@ -342,8 +348,15 @@ verify_ledger() {
         a_real="$(sha256sum "$a_log" | awk '{print $1}')"
         [[ "$a_real" == "$a_sha" ]] ||
             fail "$slug: sha256 de $a_log no coincide con el declarado"
-        git cat-file -e "${a_commit}^{commit}" 2>/dev/null ||
+        # ALCANZABLE desde HEAD, no solo existente: un commit reescrito con --amend sigue
+        # resolviendo como objeto huerfano en la maquina donde se reescribio, y no existe
+        # en ningun clon. Exigir solo `cat-file -e` dejaba pasar un ledger que apuntaba a
+        # un commit que nadie mas iba a ver.
+        if ! git cat-file -e "${a_commit}^{commit}" 2>/dev/null; then
             fail "$slug: la auditoria $((a + 1)) audito un commit inexistente ($a_commit)"
+        elif ! git merge-base --is-ancestor "$a_commit" HEAD 2>/dev/null; then
+            fail "$slug: la auditoria $((a + 1)) audito $a_commit, que no es alcanzable desde HEAD (reescrito?)"
+        fi
     done
 
     # Ningun hallazgo de auditoria puede quedarse abierto: REPARADO con su commit, o

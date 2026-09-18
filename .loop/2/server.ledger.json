@@ -139,9 +139,9 @@
     {
       "n": 1,
       "agent": "rules-auditor",
-      "commit_auditado": "53e2994691e6d827b3b95f87ad9c1a67eecd5d02",
+      "commit_auditado": "ca695c964550c6aa2b85bb4016ac12992b6b0bf5",
       "log": ".loop/2/server/auditoria-1.log",
-      "log_sha256": "90931e1ea7fad9e5b5bbc2cc1550c539f549b1f672c7624d0d4be5d471dc2af9",
+      "log_sha256": "683f687980b9dd74ff33b0435b6ce005997d1cb64e5db9fc33dffa21317fab4e",
       "payload_sha256": "bbe416e3c284d6c695d27f7832617bfcb6626a30045b64c6dfeca47dbdaaed9b",
       "started_at": "2026-09-18T02:00:00Z",
       "duration_ms": 884183,
@@ -308,7 +308,8 @@
           "estado": "REPARADO",
           "fixed_in": "5fa700caa08b6a7bcc3ee306fa0e9de4b36acb50"
         }
-      ]
+      ],
+      "nota": "El commit auditado se reescribio con `git commit --amend` para arreglar el mensaje justo despues de la auditoria. El arbol es el mismo; el sha, no. El ledger apuntaba al viejo, que en la maquina donde se hizo el amend todavia resolvia como objeto huerfano y en un repo limpio no existe: lo caza el check 9 al exigir que el commit sea alcanzable desde HEAD y no solo que exista."
     }
   ]
 }

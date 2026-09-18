@@ -348,6 +348,30 @@ sys.exit(1)
 EOF
 }
 
+poison_9h() {
+    # Un commit que existe como objeto pero no es alcanzable desde HEAD. Es lo que deja
+    # un `git commit --amend`: en la maquina donde se reescribio el sha viejo todavia
+    # resuelve, y en cualquier clon no existe. Paso de verdad en la fase 2.
+    local ledger
+    ledger="$(ledger_en_ambito)" || return 1
+    python3 - "$ledger" <<'EOF'
+import json, subprocess, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    doc = json.load(fh)
+# Un commit real que existe en la historia pero se deja fuera de HEAD: se fabrica uno
+# huerfano sobre el arbol actual, que resuelve con cat-file y no es ancestro de HEAD.
+huerfano = subprocess.run(
+    ["git", "commit-tree", "HEAD^{tree}", "-m", "huerfano del veneno"],
+    capture_output=True, text=True, check=True).stdout.strip()
+destino = doc.get("auditorias") or doc["iterations"]
+destino[0]["commit_auditado" if "auditorias" in doc else "commit_before"] = huerfano
+with open(path, "w", encoding="utf-8", newline="\n") as fh:
+    json.dump(doc, fh, indent=2)
+    fh.write("\n")
+EOF
+}
+
 poison_10() {
     sed -i 's|^FROM gcr.io/distroless/cc-debian12:nonroot|FROM gcr.io/distroless/static-debian12:nonroot|' \
         deploy/Dockerfile
@@ -384,6 +408,7 @@ POISONS=(
     "poison_9e|9|ledger sin bloque de auditorias|sin bloque auditorias"
     "poison_9f|9|hallazgo de auditoria abierto|hallazgos de auditoria abiertos"
     "poison_9g|9|arreglo de auditoria que no toca el archivo citado|que no toca ese archivo"
+    "poison_9h|9|commit del ledger que existe pero no es alcanzable desde HEAD|no es alcanzable desde HEAD"
     "poison_10|10|runtime distroless sin libstdc++"
 )
 

@@ -1,5 +1,5 @@
 == auditoria 1 (criterio 14): subagente independiente sobre el diff de la fase 2 ==
-Commit auditado: 53e2994 (diff 3df38cd..HEAD)
+Commit auditado: ca695c9 (diff 3df38cd..HEAD)
 El auditor recibio el diff, el clon del SHA fijado, el binario del servidor y el arbitro.
 NO recibio resumen del autor. Reprodujo cada hallazgo con un comando.
 
