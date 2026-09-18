@@ -2,9 +2,9 @@
 
 ## Estado actual
 
-Fase: 1 (Motor) — **COMPLETA** (2026-09-18)
-Gate: 12 checks PASS y 25 venenos cazados en la maquina de referencia
-Loop: engine/src/rules.cpp → CLOSED (8 iteraciones y 3 auditorias) en `.loop/1/`
+Fase: 2 (Servidor endurecido) — pendiente de las 200 partidas en la maquina de referencia
+Gate: la fase 1 cerro con 12 checks PASS y 25 venenos cazados alli
+Loop: snake/src/server.cpp → en `.loop/2/`; el de la fase 1 quedo CLOSED en `.loop/1/`
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -27,7 +27,7 @@ La regenera `./scripts/sync_state.sh` desde su dueño, `docs/performance.md`.
 <!-- BEGIN:loop-deliverables -->
 | slug | archivo | clases obligatorias |
 |---|---|---|
-| rules | engine/src/rules.cpp | correctness, robustness, perf |
+| server | snake/src/server.cpp | correctness, robustness, perf |
 <!-- END:loop-deliverables -->
 
 Que entra aqui lo decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
@@ -68,6 +68,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Abrir la fase 2 (servidor endurecido): 0 timeouts en 200 partidas locales, p99 documentado,
-fail-safe probado en sus cuatro escalones y variantes no soportadas en modo degradado con
-`WARN`. Proponer plan y esperar aprobacion antes de escribir codigo.
+Correr `./scripts/soak.sh --games 200` en la maquina de referencia: es la DoD de la fase 2
+y lo unico que falta. Los numeros del contenedor, con la mitad de nucleos, no sirven para
+publicar (ver docs/performance.md#p-06).
