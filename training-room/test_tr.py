@@ -6,6 +6,7 @@ errores que mienten en silencio. Que un contenedor no arranque se ve; que los pu
 esten mal repartidos, no.
 """
 import importlib.util
+from collections import Counter
 import json
 import sys
 import tempfile
@@ -244,6 +245,30 @@ comprueba(pagina.count("prefers-color-scheme") >= 2 and 'data-theme="dark"' in p
 
 vacio2 = Path(tempfile.mkdtemp())
 tr.abre_db(vacio2 / "torneo.sqlite").close()
+# La tabla de causas tiene que dar cuenta de TODAS las filas. La primera version
+# construia las columnas solo con las causas "de verdad" mas ambigua y sobrevivio, y una
+# fila con `modelo_discrepa` o `final_no_exportado` desaparecia: las nuestras sumaban 199
+# de 200 partidas y la tabla no lo decia.
+datos_c = dict(datos)
+datos_c["partidas_ok"] = 10
+datos_c["causas"] = {
+    "v0-baseline": Counter({"cabezazo": 4, "hazard": 3, "modelo_discrepa": 1,
+                            "final_no_exportado": 1, "sobrevivio": 1}),
+    "rival": Counter({"ambigua": 9, "sobrevivio": 1}),
+}
+texto_c = rep.md(datos_c)
+comprueba("modelo_discrepa" in texto_c and "final_no_exportado" in texto_c,
+          "ninguna categoria se cae de la tabla de causas")
+comprueba("| 10 |" in texto_c, "cada fila publica su total")
+comprueba("AVISO" not in texto_c, "sin descuadre no se avisa de nada")
+
+datos_d = dict(datos_c)
+datos_d["causas"] = {"v0-baseline": Counter({"cabezazo": 3, "sobrevivio": 1})}
+comprueba("AVISO" in rep.md(datos_d),
+          "una fila que no suma las partidas jugadas se denuncia en el propio reporte")
+comprueba("De nuestras 9 muertes, 7 estan determinadas" in texto_c,
+          "modelo_discrepa y final_no_exportado son muertes, pero NO determinadas")
+
 d_vacio = rep.recoge(vacio2, None)
 comprueba(d_vacio["partidas_ok"] == 0, "un torneo sin partidas buenas se detecta antes de escribir")
 

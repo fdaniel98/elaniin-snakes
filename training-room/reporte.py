@@ -150,32 +150,47 @@ def md(d):
     a("Los fallos de `/end` **no** se cuentan: no cuestan un movimiento.")
     a("")
     if d["causas"]:
-        NO_ES_CAUSA = ("sobrevivio", "final_no_exportado", "sin_candidato",
-                       "ambigua", "modelo_discrepa")
-        etiquetas = sorted({c for cont in d["causas"].values() for c in cont
-                            if c not in NO_ES_CAUSA})
+        # TODAS las categorias son columnas, incluidas `modelo_discrepa` y
+        # `final_no_exportado`. La primera version solo listaba las causas "de verdad" mas
+        # `ambigua` y `sobrevivio`, y una fila con cualquier otra cosa desaparecia de la
+        # tabla sin dejar rastro: nuestras filas sumaban 199 de 200. Una tabla de la que se
+        # cae una fila miente aunque cada celda sea correcta.
+        orden = ("cabezazo", "cuerpo_propio", "cuerpo_rival", "pared", "hambre", "hazard",
+                 "ambigua", "modelo_discrepa", "sin_candidato", "final_no_exportado",
+                 "sobrevivio")
+        vistas = {c for cont in d["causas"].values() for c in cont}
+        columnas = [c for c in orden if c in vistas] + sorted(vistas - set(orden))
         a("## T-05 Causas de muerte {#t-05}")
         a("")
-        a("| snake | " + " | ".join(etiquetas) + " | ambigua | sobrevivio |")
-        a("|---" * (len(etiquetas) + 3) + "|")
+        a("| snake | " + " | ".join(columnas) + " | total |")
+        a("|---" * (len(columnas) + 2) + "|")
+        descuadre = []
         for nombre in sorted(d["causas"]):
             cont = d["causas"][nombre]
-            fila = [str(cont.get(e, 0)) for e in etiquetas]
-            a(f"| {nombre} | " + " | ".join(fila) +
-              f" | {cont.get('ambigua', 0)} | {cont.get('sobrevivio', 0)} |")
+            total_fila = sum(cont.values())
+            if total_fila != d["partidas_ok"]:
+                descuadre.append((nombre, total_fila))
+            a(f"| {nombre} | " + " | ".join(str(cont.get(c, 0)) for c in columnas) +
+              f" | {total_fila} |")
         a("")
+        if descuadre:
+            # No se esconde: si una snake no aparece en todas las partidas, el que lea la
+            # tabla tiene que saberlo antes de sacar porcentajes de ella.
+            a(f"**AVISO** estas filas no suman las {d['partidas_ok']} partidas: " +
+              ", ".join(f"{n} ({t})" for n, t in descuadre) + ".")
+            a("")
         nuestras = d["causas"].get("v0-baseline", Counter())
-        muertes_nuestras = sum(v for k, v in nuestras.items() if k != "sobrevivio")
-        ambiguas_nuestras = nuestras.get("ambigua", 0) + nuestras.get("modelo_discrepa", 0)
-        a(f"**De nuestras {muertes_nuestras} muertes, "
-          f"{muertes_nuestras - ambiguas_nuestras} estan determinadas.**")
-        a("El JSONL no exporta los movimientos, asi que el de una")
-        a("serpiente que muere se enumera y se queda con los candidatos que reproducen el")
-        a("turno siguiente observado; cuando varios llevan a causas distintas, es `ambigua`")
-        a("y se cuenta como tal. Para la nuestra hay atajo: el cerebro es determinista, asi")
-        a("que se le pregunta. El movimiento modelado tiene que estar entre los candidatos")
-        a("consistentes o la fila sale como `modelo_discrepa`, que seria un hallazgo -el")
-        a("replay creyendo que hicimos algo que no hicimos- y no un detalle a tapar.")
+        muertes = sum(v for k, v in nuestras.items() if k != "sobrevivio")
+        sin_determinar = sum(nuestras.get(k, 0) for k in
+                             ("ambigua", "modelo_discrepa", "sin_candidato", "final_no_exportado"))
+        a(f"**De nuestras {muertes} muertes, {muertes - sin_determinar} estan determinadas.**")
+        a("El JSONL no exporta los movimientos, asi que el de una serpiente que muere se")
+        a("enumera y se queda con los candidatos que reproducen el turno siguiente")
+        a("observado; cuando varios llevan a causas distintas, es `ambigua` y se cuenta como")
+        a("tal. Para la nuestra hay atajo: el cerebro es determinista, asi que se le")
+        a("pregunta. El movimiento modelado tiene que estar entre los candidatos")
+        a("consistentes o la fila sale `modelo_discrepa`, que seria un hallazgo -el replay")
+        a("creyendo que hicimos algo que no hicimos- y no un detalle a tapar.")
         a("")
         a("Las de los rivales siguen siendo ambiguas en su mayoria y asi se quedan: no")
         a("tenemos su cerebro, y elegir la causa mas probable seria inventar un dato.")
