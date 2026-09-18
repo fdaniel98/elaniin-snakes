@@ -20,6 +20,7 @@
 
 #include <snake/brain.hpp>
 #include <snake/config_loader.hpp>
+#include <snake/search.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
@@ -434,6 +435,76 @@ TEST_CASE("busqueda: con el presupuesto de torneo no se pasa de 250 ms",
             REQUIRE(engine::mask_has(legal, move.direction));
         }
     }
+}
+
+TEST_CASE("busqueda: el tope de profundidad no rompe el deadline ni la pila",
+          "[brain][search][inv-11]") {
+    // El tope paso de 8 a 64 porque 8 dejaba 158 de 200 ms sin usar en los finales de dos
+    // (ver docs/decisions/ADR-0024-el-tope-de-profundidad.md). Lo que hay que fijar es que
+    // subirlo no rompe nada: con presupuestos muy cortos se sigue cortando por reloj, y
+    // con uno largo la recursion profunda no se lleva la pila por delante.
+    snake::Params p;
+    p.search.version = 1;
+    p.search.max_depth = 64;
+    snake::warmup(p);
+
+    for (const int presupuesto_ms : {1, 5, 50, 200}) {
+        for (const auto& fixture : load_fixtures()) {
+            INFO("fixture: " << fixture.name << " presupuesto=" << presupuesto_ms);
+            engine::State11 state;
+            REQUIRE(snake::parse_state(fixture.doc, state));
+            const auto t0 = snake::Deadline::Clock::now();
+            const snake::Deadline d(t0 + std::chrono::milliseconds(presupuesto_ms));
+            const snake::Move move = snake::decide(state, d, p);
+            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                snake::Deadline::Clock::now() - t0)
+                                .count();
+            REQUIRE(ms <= presupuesto_ms);
+            const engine::MoveMask legal = engine::legal_moves(state, state.you);
+            if (legal != engine::move_mask_none) {
+                REQUIRE(engine::mask_has(legal, move.direction));
+            }
+        }
+    }
+}
+
+TEST_CASE("busqueda: un final de dos usa el presupuesto, no se planta en el tope",
+          "[search][profundidad]") {
+    // La regresion concreta que el tope de 8 producia: con dos serpientes la busqueda
+    // llegaba a 8, se plantaba y devolvia el 79% del tiempo sin usar.
+    engine::State11 s{};
+    s.snake_count = 2;
+    s.you = 0;
+    for (int k = 0; k < 2; ++k) {
+        auto& sn = s.snakes[static_cast<unsigned>(k)];
+        sn.head_slot = 0;
+        sn.length = 8;
+        sn.health = 80;
+        sn.status = engine::Elimination::alive;
+        sn.eliminated_on_turn = -1;
+        for (int seg = 0; seg < 8; ++seg) {
+            sn.cells[static_cast<unsigned>(seg)] =
+                static_cast<std::uint16_t>(engine::State11::Board::index_of(
+                    {static_cast<std::int8_t>(k == 0 ? 2 : 8), static_cast<std::int8_t>(2 + seg)}));
+        }
+    }
+    s.food.set(engine::State11::Board::index_of({5, 5}));
+    s.refresh_occupancy();
+
+    snake::Params p;
+    p.search.version = 1;
+    snake::warmup(p);
+    // Deadline holgado A PROPOSITO. Lo que se fija aqui es que el TOPE ya no muerde, no
+    // lo rapida que es la maquina: con 200 ms este test pasaba en release y fallaba en
+    // debug, donde los sanitizers van veinte veces mas lentos. Un test que mide velocidad
+    // disfrazado de test que mide comportamiento es un test que falla por sorpresa.
+    const auto t0 = snake::Deadline::Clock::now();
+    const snake::SearchResult r =
+        snake::search(s, snake::Deadline(t0 + std::chrono::seconds(5)), p);
+    INFO("profundidad alcanzada: " << r.depth);
+    // Con el tope en 8 esto era exactamente 8, con cualquier deadline.
+    REQUIRE(r.depth > 8);
+    REQUIRE(r.depth <= p.search.max_depth);
 }
 
 TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {

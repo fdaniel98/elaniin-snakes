@@ -34,7 +34,7 @@
   },
   "search": {
     "version": 1,
-    "max_depth": 8,
+    "max_depth": 64,
     "max_rivals": 2,
     "death_value": -100000.0,
     "win_value": 100000.0,

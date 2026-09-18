@@ -17,3 +17,7 @@ add_executable(sonda_busqueda sonda_busqueda.cpp)
 target_link_libraries(sonda_busqueda PRIVATE engine snake_brain bsr_warnings)
 target_compile_definitions(sonda_busqueda PRIVATE
   BSR_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures")
+
+# Cuanto tiempo deja sin usar el tope de profundidad segun cuantas serpientes viven.
+add_executable(sonda_tope sonda_tope.cpp)
+target_link_libraries(sonda_tope PRIVATE engine snake_brain bsr_warnings)

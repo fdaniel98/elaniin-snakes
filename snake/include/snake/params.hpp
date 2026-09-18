@@ -88,9 +88,24 @@ struct SearchParams {
     /// 0 = v0, decision de un turno. 1 = busqueda con profundizacion iterativa.
     /// v0 nunca se borra: es la referencia fija contra la que se mide todo lo demas.
     std::int32_t version = 0;
-    /// Techo de profundidad. Es un tope de seguridad, no un objetivo: quien manda es el
+    /// Techo de profundidad. Es un tope de SEGURIDAD, no un objetivo: quien manda es el
     /// deadline, y se devuelve la mejor jugada de la ultima profundidad COMPLETADA.
-    std::int32_t max_depth = 8;
+    ///
+    /// 64 y no 8 porque 8 era un freno de mano. Medido sobre 40 posiciones por escenario
+    /// con presupuesto de 200 ms (`tools/sonda_tope.cpp`):
+    ///
+    ///   vivas | tope 8            | tope 64
+    ///   ------|-------------------|------------------
+    ///     2   | 8.00, 42 ms usados| 12.18, 188 ms
+    ///     3   | 5.95              |  7.47
+    ///     4   | 6.03              | 12.08
+    ///
+    /// Con 2 vivas -el final que decide el 1o contra el 2o- las 39 posiciones tocaban el
+    /// tope y se devolvian 158 de los 200 ms sin usar. El coste en tiempo de subirlo es
+    /// CERO: el deadline sigue siendo quien corta. La pila son 1096 B por estado y ~2.4 KB
+    /// por nivel, o sea ~154 KB a profundidad 64, sobre los 8 MB de una pila normal.
+    /// ver docs/decisions/ADR-0024-el-tope-de-profundidad.md
+    std::int32_t max_depth = 64;
     /// Rivales que se simulan de verdad, los mas cercanos primero. Los demas repiten su
     /// ultimo movimiento. Cada rival simulado multiplica por ~3 el arbol, asi que este
     /// numero es el que decide si se llega a profundidad 4 o se queda en 2.

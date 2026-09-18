@@ -87,6 +87,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Ampliar el A/B de v3 con los bloques 16-25 (`--games 100` sobre el mismo `--out`, que
-reanuda), que es lo que manda §10.4 cuando el intervalo no cruza frontera por 0.029. En
-paralelo, desplegar: falta el ID del proyecto GCP.
+Medir v3 con el tope de profundidad en 64 (ver docs/decisions/ADR-0024-el-tope-de-profundidad.md):
+son de 6.03 a 12.08 niveles al mismo coste, asi que el A/B anterior midio una snake mas
+floja que la de ahora. 60 partidas, mismo protocolo. En paralelo, desplegar: falta el ID
+del proyecto GCP.
