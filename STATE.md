@@ -74,6 +74,12 @@ corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-
       partida oficial casilla por casilla. La forma si esta verificada.
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
+- [ ] Con el JSONL solo, la causa de muerte queda ambigua en 20 de 24 casos medidos: los
+      movimientos no se exportan y los cuatro de la serpiente que muere son enumerables
+      pero no distinguibles. Nuestro servidor ya registra el movimiento elegido; falta
+      capturar su log por partida, y entonces nuestras muertes pasan a ser exactas. Las de
+      los rivales seguiran siendo ambiguas y hay que decirlo en el reporte.
+
 - [ ] El repositorio sigue sin remoto: toda la historia vive en un solo disco.
 - [ ] `royale_hazards()` no tiene llamante todavia y su precondicion -cadencia >= 1- no
       la comprueba nadie: la arena de la fase 4 tendra que validarla antes de llamar.
@@ -84,5 +90,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr el torneo de 200 partidas del `gauntlet-v1` en la maquina de referencia, que es
-donde hay docker. Despues, las causas de muerte y el reporte.
+Leer el resultado del torneo de 200 partidas que corre en la maquina de referencia, y
+escribir el reporte. Las causas de muerte necesitan antes capturar el log de nuestro
+propio servidor: con el JSONL solo, 20 de 24 muertes quedan ambiguas.
