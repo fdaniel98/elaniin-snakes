@@ -1,0 +1,55 @@
+OK   cuatro eliminadas a la vez comparten puesto 2.5
+OK   los puestos de 4 suman 10
+OK   dos empates de dos dan 1.5 y 3.5
+OK   sin empates, el orden es por turnos sobrevividos
+OK   la suma de puestos es n(n+1)/2 en todas las combinaciones de 2, 3 y 4
+OK   cuatro snakes reciben cuatro cpusets disjuntos
+OK   un torneo que no cabe en la maquina se rechaza
+OK   una cuota fraccionaria de CPU se rechaza: compartiria nucleo
+OK   en una partida real, el ganador queda primero
+OK   hay una latencia por turno jugado del ganador
+OK   se persisten las cuatro snakes, no solo la nuestra
+OK   el asiento guardado es la posicion real en el arbitro
+OK   ninguna snake se guarda sin asiento
+OK   hay una fila de latencias por snake
+OK   la partida guarda semilla, asiento nuestro y codigo del arbitro
+OK   lo guardado sigue ahi al reabrir la base: el commit no espera al final
+OK   una segunda pasada reconoce la partida ya jugada
+OK   una partida con el arbitro en error NO cuenta como jugada
+ERROR ya hay un torneo corriendo en esta maquina (/root/bs/.tr.lock esta tomado). Dos a la vez se pisan los contenedores y los puertos, y el resultado no vale. Espera a que termine, o matalo antes de lanzar otro.
+OK   un segundo torneo en la misma maquina rebota
+OK   el cerrojo se libera al cerrarse el proceso
+OK   un timeout de /move cuenta UNA vez, no dos (el fallo ocupa dos lineas)
+OK   un fallo de conexion no se cuenta como timeout
+OK   una queja sobre otra snake no se nos apunta
+OK   la queja se apunta a quien le toca
+filas de latencias modificadas: 2
+   v0-baseline      timeouts=1     movimientos=10
+   a                timeouts=0     movimientos=10
+OK   reanaliza sale con 0 cuando modifica filas
+OK   el config v1 hace que juguemos como 'v1'
+OK   el config por defecto sigue siendo v0-baseline
+OK   el timeout de /move llega a la fila correcta
+OK   una snake sin quejas queda en 0, no en NULL
+OK   el contador cuenta filas modificadas, no snakes vistas en el log
+OK   un JSONL sin ninguna serpiente se rechaza, no se resume a cero
+filas de latencias modificadas: 0
+FAIL no se modifico ninguna fila: el recalculo no hizo nada
+OK   un recalculo que no modifica nada FALLA en vez de decir que hizo algo
+OK   el reporte se genera sin binario de causas, y lo dice
+OK   el markdown lleva la clasificacion
+OK   el reporte declara que no da veredicto ni p-valores
+OK   una corrida en paralelo declara que no mide latencia, arriba del todo
+OK   esa advertencia va ANTES de la clasificacion, no en una nota al pie
+OK   el puesto compartido llega al reporte sin redondearse a entero
+OK   T-03 agrupa por punto de salida, no por asiento
+OK   sin JSONL, T-03 declara que falta la comprobacion en vez de salir vacia
+OK   el HTML trae modo oscuro por las dos vias, no solo la del sistema
+OK   ninguna categoria se cae de la tabla de causas
+OK   cada fila publica su total
+OK   sin descuadre no se avisa de nada
+OK   una fila que no suma las partidas jugadas se denuncia en el propio reporte
+OK   modelo_discrepa y final_no_exportado son muertes, pero NO determinadas
+OK   un torneo sin partidas buenas se detecta antes de escribir
+
+todos los tests del orquestador pasan

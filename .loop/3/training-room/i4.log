@@ -1,0 +1,17 @@
+== front-matter ==
+OK   front-matter valido
+== size_bytes y presupuestos ==
+size_bytes correcto en 35 docs
+OK   arranque: 11766 / 12288 bytes
+OK   docs/context-packs/debug-partida.md: 42052 / 65536 bytes
+OK   docs/context-packs/implementar-regla.md: 47068 / 65536 bytes
+OK   docs/context-packs/nueva-heuristica.md: 51444 / 65536 bytes
+OK   docs/context-packs/optimizar-hotpath.md: 42145 / 65536 bytes
+OK   docs/context-packs/tocar-el-harness.md: 60043 / 65536 bytes
+== anchors ==
+OK   262 citas resueltas
+INFO 109 anchors huerfanos de 163
+== duplicados ==
+hechos duplicados: 0 (n-grama de 12 palabras, 38 archivos)
+== STATE.md ==
+OK   perf-snapshot de STATE.md sincronizado con docs/performance.md

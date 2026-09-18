@@ -2,10 +2,10 @@
 
 ## Estado actual
 
-Fase: 3 (Training Room MVP) — en curso. La 2 cerro en c5cead7
+Fase: 3 (Training Room MVP) — loop CLOSED; falta el gate completo en la maquina de referencia
 Gate: 14 checks; el 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta
 fase, con cinco venenos. El veredicto vigente sigue siendo el de la fase 2 en bb99e84
-Loop: `.loop/3/` sin abrir todavia; los de las fases 1 y 2 quedaron CLOSED
+Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
 Snake activa: v0-baseline. v1 (Voronoi) medida y RECHAZADA: mismo puesto medio, 17 turnos
 mas de vida (ver docs/strategy.md#s-v1r)
 

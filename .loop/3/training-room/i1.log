@@ -1,0 +1,66 @@
+{
+  "fuzz_states": 10000,
+  "semilla": 1,
+  "excepciones": 0,
+  "resultados_incoherentes": 0,
+  "devolvieron_none": 831
+}
+{
+  "mutants": 10,
+  "muertos": 10,
+  "mutants_killed_ratio": 1.0,
+  "supervivientes": [],
+  "arnes_roto": [],
+  "detalle": [
+    {
+      "id": "m1",
+      "estado": "MUERTO",
+      "descripcion": "el asiento es siempre 0: la rotacion deja de registrarse"
+    },
+    {
+      "id": "m2",
+      "estado": "MUERTO",
+      "descripcion": "los empates se desempatan por orden de aparicion"
+    },
+    {
+      "id": "m3",
+      "estado": "MUERTO",
+      "descripcion": "se quita la guarda de tipo sobre board"
+    },
+    {
+      "id": "m4",
+      "estado": "MUERTO",
+      "descripcion": "los fallos de /end cuentan como incidencias"
+    },
+    {
+      "id": "m5",
+      "estado": "MUERTO",
+      "descripcion": "el contador suma vueltas del bucle, no filas modificadas"
+    },
+    {
+      "id": "m6",
+      "estado": "MUERTO",
+      "descripcion": "los grupos de la expresion regular cruzados"
+    },
+    {
+      "id": "m7",
+      "estado": "MUERTO",
+      "descripcion": "el reparto de CPU acepta cualquier torneo"
+    },
+    {
+      "id": "m8",
+      "estado": "MUERTO",
+      "descripcion": "el descuadre de una fila deja de denunciarse"
+    },
+    {
+      "id": "m9",
+      "estado": "MUERTO",
+      "descripcion": "el total de cada fila se publica como cero"
+    },
+    {
+      "id": "m10",
+      "estado": "MUERTO",
+      "descripcion": "un JSONL sin ninguna serpiente devuelve un resultado vacio en vez de None"
+    }
+  ]
+}

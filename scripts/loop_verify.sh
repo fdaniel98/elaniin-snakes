@@ -436,9 +436,9 @@ verify_applicability() {
             | select($m[.] == null)
             | if ($na[.] // "") == "" then "falta la metrica \(.) y no esta declarada inaplicable"
               else empty end ]
-          + [ $na | to_entries[]
-              | select(($exigidas | index(.key)) == null)
-              | "se declara inaplicable \(.key), que no es una metrica exigida de \($class)" ]
+          + [ $na | to_entries[] | . as $e
+              | select(($exigidas | index($e.key)) == null)
+              | "se declara inaplicable \($e.key), que no es una metrica exigida de \($class)" ]
           + [ $na | to_entries[] | select(.value == "")
               | "\(.key) declarada inaplicable sin motivo" ]
         | join("; ")' "$ledger")"

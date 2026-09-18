@@ -1,0 +1,18 @@
+Rendimiento del orquestador: partidas por minuto en modo HTTP.
+
+Fuente: las dos corridas reales en la maquina de referencia (8 nucleos, 1 hilo por
+nucleo, governor desconocido - WSL2 no expone cpufreq).
+
+  torneo-v1 (v0):            200 partidas en 252.6 min  ->  0.79 partidas/min
+  torneo-v1-territorio (v1):  60 partidas en ~76 min    ->  0.79 partidas/min
+
+De donde sale el tiempo, medido en el propio torneo: devious-devin gasta 409 ms de
+mediana por movimiento y hovering-hobbs 363, de un deadline de 500. Con partidas de ~200
+turnos eso son ~85 s de los ~90 s que dura cada una. El orquestador no aparece.
+
+Nuestra latencia en esas mismas partidas: p50 0.0 ms, p99 10.5 ms (enteros del arbitro).
+
+Conclusion: el throughput lo fija el modo HTTP, no este codigo. Subirlo exige o quitar
+fidelidad -bajar el timeout cambia la fuerza de los rivales- o la arena in-process de la
+fase 4. `--paralelo` lo divide por N a cambio de dejar de medir latencia, y esa corrida
+lo declara en la base y en el reporte.

@@ -1,0 +1,202 @@
+{
+  "deliverable": "training-room/",
+  "phase": 3,
+  "status": "CLOSED",
+  "thresholds_sha256": "492e55d283f41bb07f36ef68709a086a38d7f46293439c1e0591f9e7bdbfaa28",
+  "iterations": [
+    {
+      "n": 1,
+      "class": "robustness",
+      "agent": "main",
+      "commit_before": "57d564a",
+      "commit_after": "b1eafc7",
+      "cmd": "python3 scripts/fuzz_tr.py --estados 10000 && python3 scripts/mutants_tr.py --json",
+      "exit_code": 0,
+      "started_at": "2026-09-18T14:00:00Z",
+      "duration_ms": 240000,
+      "log_sha256": "507e4087c1183e13bf1f722018d9824d0eb095ccf36cbd41d3efc6be1239c5bf",
+      "payload_sha256": "be5f8ce014460df134e8f6b89689e93f9976c24fed501603f0416c9775d740b3",
+      "metrics": {
+        "fuzz_states": 10000,
+        "excepciones": 0,
+        "resultados_incoherentes": 0,
+        "mutants": 10,
+        "mutants_killed_ratio": 1.0
+      },
+      "commands_run": [
+        "python3 scripts/fuzz_tr.py --estados 10000",
+        "python3 scripts/mutants_tr.py --json",
+        "python3 training-room/test_tr.py"
+      ],
+      "checks_added": [
+        "scripts/fuzz_tr.py: 10 000 estados de JSONL y log del arbitro rotos",
+        "scripts/mutants_tr.py: 10 mutantes con su oraculo",
+        "training-room/test_tr.py::el contador cuenta filas modificadas, no snakes vistas",
+        "training-room/test_tr.py::un JSONL sin ninguna serpiente se rechaza"
+      ],
+      "findings": [
+        {
+          "id": "F-04",
+          "sev": "blocker",
+          "cite": "training-room/tr.py",
+          "resumen": "lee_partida lanzaba AttributeError con un JSONL malformado, en el estado 7 de 500. Una excepcion ahi aborta un torneo de cinco horas por un fichero roto, y estuvo cerca de pasar cuando dos corridas se pisaron",
+          "estado": "REPARADO",
+          "fixed_in": "b1eafc7"
+        },
+        {
+          "id": "F-05",
+          "sev": "mayor",
+          "cite": "training-room/tr.py",
+          "resumen": "dos mutantes sobrevivieron a la primera y los dos eran huecos reales: el contador de reanaliza sumaba vueltas del bucle -el bug publicado como 'recalculadas 800 filas' con la base intacta- y un JSONL sin serpientes se resumia a cero en vez de rechazarse",
+          "estado": "REPARADO",
+          "fixed_in": "b1eafc7"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "class": "correctness",
+      "agent": "rules-auditor",
+      "commit_before": "b1eafc7",
+      "commit_after": "de0b598",
+      "cmd": "subagente rules-auditor (solo lectura) contra BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057",
+      "exit_code": 0,
+      "started_at": "2026-09-18T15:00:00Z",
+      "duration_ms": 456544,
+      "log_sha256": "5ddc66ac2983da2571f6fd9e84ebbf5a9c4e2a3d9f7608b9427e09678d33e3c4",
+      "payload_sha256": "f79cc63c6f617e707bc7eb5bf6904483716a848c63e609960872163408ce53e0",
+      "metrics": {
+        "diverge": 0,
+        "sin_verificar": 0,
+        "fixtures_pass": 47
+      },
+      "commands_run": [
+        "subagente rules-auditor contra el Go del SHA fijado",
+        "python3 -c: conteo honesto de incidencias sobre los 200 ref.log del torneo",
+        "analisis de los 200 JSONL: cada asiento acabo en 8 puntos de salida distintos",
+        "python3 training-room/test_tr.py"
+      ],
+      "checks_added": [
+        "training-room/test_tr.py::un timeout de /move cuenta UNA vez, no dos",
+        "training-room/test_tr.py::un fallo de conexion no se cuenta como timeout",
+        "training-room/test_tr.py::T-03 agrupa por punto de salida, no por asiento",
+        "training-room/test_tr.py::sin JSONL, T-03 declara que falta la comprobacion"
+      ],
+      "findings": [
+        {
+          "id": "F-01",
+          "sev": "mayor",
+          "cite": "training-room/tr.py",
+          "resumen": "cada timeout se contaba dos veces: el arbitro escribe el fallo en dos lineas y las dos llevan la url dentro. Verificado sobre los 200 logs: 8/12/192/172 publicados contra 4/6/96/86 reales",
+          "estado": "REPARADO",
+          "fixed_in": "6988fd6"
+        },
+        {
+          "id": "F-03",
+          "sev": "mayor",
+          "cite": "training-room/reporte.py",
+          "resumen": "T-03 agrupaba por el orden de los argumentos del arbitro, que no decide donde sale cada serpiente: play.go:349-352 recorre un map de Go, cuyo orden de iteracion esta aleatorizado por especificacion. Era un test que no podia fallar, y se uso para afirmar que la rotacion funcionaba",
+          "estado": "REPARADO",
+          "fixed_in": "de0b598"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "class": "perf",
+      "agent": "perf-analyst",
+      "commit_before": "de0b598",
+      "commit_after": "b51fd72",
+      "cmd": "medido sobre las dos corridas reales de la maquina de referencia",
+      "exit_code": 0,
+      "started_at": "2026-09-18T18:00:00Z",
+      "duration_ms": 120000,
+      "log_sha256": "540df6de95259b8ef5f7cf1507c57c192fd9036d31887bda3ed49aca668a4316",
+      "payload_sha256": "1f74eee48fe6250b78388f0eab9ac300ca7d0cf22c55ec477a9886777b1d9d21",
+      "metrics": {
+        "partidas_por_minuto": 0.79
+      },
+      "commands_run": [
+        "docs/results/torneo-v1: 200 partidas en 252.6 min",
+        "docs/results/torneo-v1-territorio: 60 partidas en ~76 min",
+        "consulta SQL de latencia por snake sobre las dos bases"
+      ],
+      "checks_added": [
+        "training-room/tr.py: --paralelo, que declara en la base y en el reporte que la corrida deja de medir latencia"
+      ],
+      "findings": []
+    },
+    {
+      "n": 4,
+      "class": "context",
+      "agent": "context-curator",
+      "commit_before": "b51fd72",
+      "commit_after": "b51fd72",
+      "cmd": "./scripts/lint-docs.sh",
+      "exit_code": 0,
+      "started_at": "2026-09-18T18:30:00Z",
+      "duration_ms": 30000,
+      "log_sha256": "12ad3bdaf59c9a62c6a0f168a7a1e41fc729ccb042f02a72f5f464a14e77b6a9",
+      "payload_sha256": "4d4e0b57385ffd1285efe3808aafc4e5914290eaa7e32874ad7ddd701a876310",
+      "metrics": {
+        "frontmatter_invalid": 0,
+        "broken_anchors": 0,
+        "duplicated_facts": 0,
+        "size_bytes_mismatch": 0
+      },
+      "commands_run": [
+        "./scripts/lint-docs.sh",
+        "./scripts/docs_meta.sh --check",
+        "./scripts/docs_meta.sh --budget"
+      ],
+      "checks_added": [
+        "docs/strategy.md#s-v1r: el resultado de v1 queda medido y citable desde el codigo"
+      ],
+      "findings": []
+    }
+  ],
+  "auditorias": [
+    {
+      "n": 1,
+      "agent": "rules-auditor",
+      "commit_auditado": "3888c21",
+      "log": ".loop/3/training-room/i2.log",
+      "log_sha256": "5ddc66ac2983da2571f6fd9e84ebbf5a9c4e2a3d9f7608b9427e09678d33e3c4",
+      "payload_sha256": "f79cc63c6f617e707bc7eb5bf6904483716a848c63e609960872163408ce53e0",
+      "started_at": "2026-09-18T15:00:00Z",
+      "duration_ms": 456544,
+      "metrics": {
+        "blocker": 0,
+        "mayor": 3,
+        "menor": 4,
+        "reparados": 2,
+        "descartados": 0,
+        "auditor": "subagente independiente, solo lectura, contra el Go del SHA fijado"
+      },
+      "findings": [
+        {
+          "id": "F-01",
+          "sev": "mayor",
+          "cite": "training-room/tr.py",
+          "estado": "REPARADO",
+          "fixed_in": "6988fd6"
+        },
+        {
+          "id": "F-03",
+          "sev": "mayor",
+          "cite": "training-room/reporte.py",
+          "estado": "REPARADO",
+          "fixed_in": "de0b598"
+        },
+        {
+          "id": "F-02",
+          "sev": "mayor",
+          "cite": "docs/rules-parametros.md",
+          "resumen": "el auditor afirma que la premisa 'el ultimo turno no se exporta', de la fase 1, es falsa. No cambia ningun numero de esta fase y tocar un doc canonical exige verificarlo a fondo",
+          "estado": "DESCARTADO",
+          "razon": "queda anotado en STATE.md como pendiente de verificacion; ver docs/decisions/ADR-0019-aplicabilidad-de-umbrales.md#d-0183 para el precedente de no tapar lo que no se ha comprobado"
+        }
+      ]
+    }
+  ]
+}
