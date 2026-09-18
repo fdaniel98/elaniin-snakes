@@ -32,7 +32,12 @@
         "sin_verificar_max": 0,
         "fixtures_pass_ratio_min": 1.0,
         "citations_required": true
-      }
+      },
+      "metricas_exigidas": [
+        "diverge",
+        "sin_verificar",
+        "fixtures_pass"
+      ]
     },
     "robustness": {
       "agent": "main",
@@ -45,7 +50,16 @@
         "deadline_violations_max": 0,
         "mutants_min": 5,
         "mutants_killed_ratio_min": 0.8
-      }
+      },
+      "metricas_exigidas": [
+        "sanitizer_findings",
+        "failsafe_levels_covered",
+        "fuzz_states",
+        "illegal_moves",
+        "deadline_violations",
+        "mutants",
+        "mutants_killed_ratio"
+      ]
     },
     "perf": {
       "agent": "perf-analyst",
@@ -57,7 +71,13 @@
         "timeouts_max": 0,
         "regression_pct": 5.0,
         "hot_path_allocs_max": 0
-      }
+      },
+      "metricas_exigidas": [
+        "p99_move_ms",
+        "max_move_ms",
+        "timeouts",
+        "hot_path_allocs"
+      ]
     },
     "context": {
       "agent": "context-curator",
@@ -68,6 +88,84 @@
         "duplicated_facts_max": 0,
         "last_verified_max_age_days": 7,
         "size_bytes_mismatch_max": 0
+      },
+      "metricas_exigidas": [
+        "frontmatter_invalid",
+        "broken_anchors",
+        "duplicated_facts",
+        "size_bytes_mismatch"
+      ]
+    }
+  },
+  "applicability": {
+    "_comment": [
+      "Por entregable: que metricas exigidas NO aplican, y por que. Omitir una metrica",
+      "sin declararla aqui hace fallar el check 9 (ver ADR-0019). El motivo no puede",
+      "estar vacio: un umbral que no aplica 'porque no' es un umbral que se ajusto."
+    ],
+    "training-room": {
+      "robustness": {
+        "no_aplica": {
+          "sanitizer_findings": "ASan y UBSan son del binario de C++; esto es Python y no se enlaza con ellos",
+          "failsafe_levels_covered": "los 4 escalones del fail-safe son del cerebro (ver docs/rules.md#r-03); el orquestador no decide movimientos",
+          "illegal_moves": "el orquestador no devuelve movimientos: los cuenta",
+          "deadline_violations": "no hay deadline de 350 ms aqui; el orquestador espera al arbitro y a docker"
+        }
+      },
+      "perf": {
+        "no_aplica": {
+          "p99_move_ms": "el orquestador no responde a /move; su rendimiento son partidas por minuto (ver ADR-0018)",
+          "max_move_ms": "misma razon que p99_move_ms",
+          "timeouts": "los timeouts que mide son de las snakes, no suyos; van al reporte del torneo",
+          "hot_path_allocs": "no hay ruta caliente: el 99% del tiempo esta bloqueado esperando a docker y al arbitro"
+        },
+        "metricas_extra": [
+          "partidas_por_minuto"
+        ]
+      }
+    },
+    "rules": {
+      "perf": {
+        "no_aplica": {
+          "p99_move_ms": "el p99 de /move es del servidor HTTP, no del motor; el motor se mide en apply()/s (ver docs/performance.md#p-01)",
+          "max_move_ms": "misma razon que p99_move_ms",
+          "timeouts": "el motor no responde peticiones"
+        }
+      }
+    },
+    "brain-v0": {
+      "perf": {
+        "no_aplica": {
+          "p99_move_ms": "el p99 de /move lo mide el servidor; el cerebro se mide en decide()/s (ver docs/performance.md#p-01)",
+          "max_move_ms": "misma razon que p99_move_ms",
+          "timeouts": "el cerebro no responde peticiones: devuelve un movimiento antes del deadline"
+        }
+      }
+    },
+    "gate": {
+      "correctness": {
+        "no_aplica": {
+          "fixtures_pass": "el entregable era scripts/gate.sh, un script de shell: no tiene fixtures de posiciones"
+        }
+      },
+      "robustness": {
+        "no_aplica": {
+          "sanitizer_findings": "shell, no se enlaza con ASan ni UBSan",
+          "failsafe_levels_covered": "el fail-safe de 4 escalones es del cerebro",
+          "fuzz_states": "no consume estados de juego: su entrada son ficheros del repositorio",
+          "illegal_moves": "no devuelve movimientos",
+          "deadline_violations": "no tiene deadline de 350 ms",
+          "mutants": "los venenos de gate-selftest.sh SON su prueba de mutacion, y son 27",
+          "mutants_killed_ratio": "misma razon que mutants: el ratio equivalente es venenos cazados sobre venenos, y esta en el propio selftest"
+        }
+      },
+      "perf": {
+        "no_aplica": {
+          "p99_move_ms": "el gate no responde peticiones",
+          "max_move_ms": "misma razon",
+          "timeouts": "misma razon",
+          "hot_path_allocs": "no hay ruta caliente en un script de shell"
+        }
       }
     }
   }

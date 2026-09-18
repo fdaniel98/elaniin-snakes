@@ -258,6 +258,7 @@ verify_ledger() {
              | max == $n' "$ledger")"
         if [[ "$is_annulled" != "true" && "$is_last_of_class" == "true" ]]; then
             verify_metrics "$slug" "$n" "$class" "$ledger"
+            verify_applicability "$slug" "$n" "$class" "$ledger"
         fi
     done
 
@@ -413,6 +414,35 @@ verify_ledger() {
         awk -v a="$killed" -v b="$min_ratio" 'BEGIN{exit !(a >= b)}' ||
             fail "$slug: ratio de mutantes muertos $killed < $min_ratio"
     fi
+}
+
+# Toda metrica exigida por la clase esta presente, o declarada inaplicable con motivo.
+#
+# Sin esto, un umbral se saltaba simplemente no reportando su metrica: `verify_metrics`
+# solo compara cuando el valor existe. Era una puerta abierta en TODOS los entregables
+# desde la fase 0, y ningun veneno la cubria.
+# ver docs/decisions/ADR-0019-aplicabilidad-de-umbrales.md#d-0181
+verify_applicability() {
+    local slug="$1" n="$2" class="$3" ledger="$4"
+    local idx=$((n - 1))
+    local problemas
+    problemas="$(jq -r --arg class "$class" --arg slug "$slug" --argjson i "$idx" \
+        --slurpfile cfg "$CONFIG" '
+        ($cfg[0].classes[$class].metricas_exigidas // []) as $exigidas
+        | ($cfg[0].applicability[$slug][$class].no_aplica // {}) as $na
+        | ($cfg[0].applicability[$slug][$class].metricas_extra // []) as $extra
+        | (.iterations[$i].metrics // {}) as $m
+        | [ ($exigidas + $extra)[]
+            | select($m[.] == null)
+            | if ($na[.] // "") == "" then "falta la metrica \(.) y no esta declarada inaplicable"
+              else empty end ]
+          + [ $na | to_entries[]
+              | select(($exigidas | index(.key)) == null)
+              | "se declara inaplicable \(.key), que no es una metrica exigida de \($class)" ]
+          + [ $na | to_entries[] | select(.value == "")
+              | "\(.key) declarada inaplicable sin motivo" ]
+        | join("; ")' "$ledger")"
+    [[ -z "$problemas" ]] || fail "$slug i$n ($class): $problemas"
 }
 
 verify_metrics() {

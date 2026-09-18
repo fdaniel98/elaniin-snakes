@@ -55,31 +55,31 @@ corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-
 
 ## Hallazgos abiertos del loop
 
-- [ ] El maximo que mide el arbitro son 169 ms y el de nuestro codigo 0.388: 168 ms que no
-      son el cerebro. Medido y sin tocar; importa al recalibrar el margen de red en la
-      fase 7 (ver docs/performance.md#p-07).
+- [ ] **La fase 2 cerro sin fuzz del servidor.** Su iteracion de `robustness` reporto 42
+      payloads adversos y no la metrica `fuzz_states`, asi que el umbral de 10 000 estados
+      nunca se comprobo: `verify_metrics` solo compara cuando el valor existe. Lo destapa
+      la ADR-0019 al endurecer el check 9. El gate no falla hoy porque el check 9 solo
+      mira la fase activa. Pendiente de decision humana: cubrirlo ahora con una correccion
+      en el ledger de la fase 2, como se hizo con la re-medicion de mutantes de la fase 0,
+      o reabrir la fase.
 
-- [ ] El servidor sigue siendo agotable con tantas conexiones a medio abrir como hilos
-      tiene el pool (64): entonces una peticion legitima espera hasta el read timeout de
-      2 s. Acotado, no eliminado; en la fase 7 hay un balanceador delante.
+- [ ] El transporte se come casi todo el presupuesto: el maximo del arbitro son 169 ms y
+      el de nuestro codigo 0.388. En el torneo eso costo 8 timeouts en 23 831 movimientos.
+      Importa al recalibrar el margen de red de la fase 7 (ver docs/performance.md#p-07).
 
-- [ ] La tabla de causas de muerte que pide el Training Room de la fase 3 no va a tener
-      contraste externo: ver docs/rules.md#r-12.
-- [ ] El reparto de puestos de `placements()` sigue siendo una convencion propia. El
-      diferencial verifica el turno de eliminacion y que el reparto es valido -suma
-      n(n+1)/2, ningun rango fuera de rango-, pero el desempate promediado no se deriva
-      de la fuente porque la fuente no lo define.
-- [ ] La secuencia de lados del shrink es nuestra
-      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091): la arena no reproducira una
-      partida oficial casilla por casilla. La forma si esta verificada.
+- [ ] El servidor sigue siendo agotable con 64 conexiones a medio abrir (los hilos del
+      pool): una peticion legitima espera hasta el read timeout de 2 s. Acotado, no
+      eliminado; en la fase 7 hay un balanceador delante.
+
+- [ ] Dos convenciones propias que la fuente no define: el desempate promediado de
+      `placements()` y la secuencia de lados del shrink
+      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091). La forma del hazard si esta
+      verificada; la arena no reproducira una partida oficial casilla por casilla.
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
-- [ ] Con el JSONL solo, la causa de muerte queda ambigua en 20 de 24 casos medidos: los
-      movimientos no se exportan y los cuatro de la serpiente que muere son enumerables
-      pero no distinguibles. Nuestro servidor ya registra el movimiento elegido; falta
-      capturar su log por partida, y entonces nuestras muertes pasan a ser exactas. Las de
-      los rivales seguiran siendo ambiguas y hay que decirlo en el reporte.
-
+- [ ] Las causas de muerte de los RIVALES son ambiguas en su mayoria (349 de 600 en el
+      torneo) y seguiran siendolo: no tenemos su cerebro. Las nuestras si estan
+      determinadas, 193 de 194, preguntandole al nuestro.
 - [ ] El repositorio sigue sin remoto: toda la historia vive en un solo disco.
 - [ ] `royale_hazards()` no tiene llamante todavia y su precondicion -cadencia >= 1- no
       la comprueba nadie: la arena de la fase 4 tendra que validarla antes de llamar.
@@ -90,5 +90,4 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Generar el reporte del torneo en la maquina de referencia y cerrar el loop de
-`training-room/`, que es lo unico que le queda a la fase 3.
+Cerrar el loop de `training-room/`, que es lo unico que le queda a la fase 3.

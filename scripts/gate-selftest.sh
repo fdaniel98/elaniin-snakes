@@ -427,6 +427,28 @@ poison_0c() {
     git add -f training-room/__pycache__/tr.cpython-311.pyc
 }
 
+poison_9i() {
+    # Se borra una metrica exigida del ledger sin declararla inaplicable. Antes de la
+    # ADR-0019 esto no fallaba: `verify_metrics` solo compara cuando el valor existe, asi
+    # que omitir la metrica saltaba el umbral. Era una puerta abierta desde la fase 0.
+    local ledger
+    ledger="$(ledger_en_ambito)" || return 1
+    python3 - "$ledger" <<'EOF'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    doc = json.load(fh)
+for it in doc["iterations"]:
+    if it.get("annulled"):
+        continue
+    for clave in ("diverge", "fixtures_pass", "mutants", "partidas_por_minuto"):
+        it.get("metrics", {}).pop(clave, None)
+with open(path, "w", encoding="utf-8", newline="\n") as fh:
+    json.dump(doc, fh, indent=2)
+    fh.write("\n")
+EOF
+}
+
 # veneno | check esperado | descripcion | [mensaje exacto que debe aparecer]
 #
 # El cuarto campo es opcional y existe para los venenos del check 9: ese check puede
@@ -460,6 +482,7 @@ POISONS=(
     "poison_9f|9|hallazgo de auditoria abierto|hallazgos de auditoria abiertos"
     "poison_9g|9|arreglo de auditoria que no toca el archivo citado|que no toca ese archivo"
     "poison_9h|9|commit del ledger que existe pero no es alcanzable desde HEAD|no es alcanzable desde HEAD"
+    "poison_9i|9|metrica exigida omitida del ledger sin declararla inaplicable|no esta declarada inaplicable"
     "poison_10|10|runtime distroless sin libstdc++"
     "poison_11|11|contenedor del zoo sin --read-only|falta --read-only"
     "poison_11b|11|manifest que apunta a una rama en vez de a un commit|sha no es un commit completo"
