@@ -46,10 +46,9 @@ corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-
 
 ## Hallazgos abiertos del loop
 
-- [ ] El servidor sigue siendo agotable por conexiones a medio abrir: con el pool de 64
-      hilos hacen falta 64 a la vez, y entonces una peticion legitima espera hasta el
-      read timeout de 2 s. El pool aleja el accidente y el timeout acota el caso peor; no
-      lo elimina. En la fase 7 el servicio va detras de un balanceador que absorbe eso.
+- [ ] El servidor sigue siendo agotable con tantas conexiones a medio abrir como hilos
+      tiene el pool (64): entonces una peticion legitima espera hasta el read timeout de
+      2 s. Acotado, no eliminado; en la fase 7 hay un balanceador delante.
 
 - [ ] La tabla de causas de muerte que pide el Training Room de la fase 3 no va a tener
       contraste externo: ver docs/rules.md#r-12.
@@ -57,10 +56,9 @@ corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-
       diferencial verifica el turno de eliminacion y que el reparto es valido -suma
       n(n+1)/2, ningun rango fuera de rango-, pero el desempate promediado no se deriva
       de la fuente porque la fuente no lo define.
-- [ ] La secuencia de lados del shrink es nuestra por decision
-      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091): una partida de la arena no
-      reproducira nunca una oficial casilla por casilla. La forma del schedule si esta
-      verificada contra partidas reales (ver docs/SOURCES.md#s-02).
+- [ ] La secuencia de lados del shrink es nuestra
+      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091): la arena no reproducira una
+      partida oficial casilla por casilla. La forma si esta verificada.
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
 - [ ] El repositorio sigue sin remoto: toda la historia vive en un solo disco.
