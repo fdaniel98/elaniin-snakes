@@ -34,7 +34,7 @@ FAST_ONLY=0
 }
 
 # Checks que cubre `gate.sh --fast`.
-FAST_CHECKS=(0 1 3 4 6 7 9)
+FAST_CHECKS=(0 1 3 4 6 7 9 11)
 
 is_fast_check() {
     local needle="$1"
@@ -377,6 +377,27 @@ poison_10() {
         deploy/Dockerfile
 }
 
+poison_11() {
+    # Se le quita el --read-only al arranque de los contenedores del zoo. El check no
+    # puede cazarlo con un grep del texto: lo caza porque compara el comando efectivo que
+    # `zoo.sh up --dry-run` construye. ver zoo/README.md
+    sed -i 's|^        --read-only \\$|        \\|' scripts/zoo.sh
+}
+
+poison_11b() {
+    # Un manifest apunta a una rama en vez de a un commit: se estaria construyendo lo que
+    # haya hoy en un repositorio ajeno, no lo que se aprobo.
+    local m
+    m="$(ls zoo/manifests/*.toml | head -1)"
+    sed -i 's|^sha = .*|sha = "master"|' "$m"
+}
+
+poison_11c() {
+    # Se publica el puerto en todas las interfaces, exponiendo codigo de terceros a la red.
+    sed -i 's|-p "127.0.0.1:${puerto}:${puerto_snake}"|-p "${puerto}:${puerto_snake}"|' \
+        scripts/zoo.sh
+}
+
 # veneno | check esperado | descripcion | [mensaje exacto que debe aparecer]
 #
 # El cuarto campo es opcional y existe para los venenos del check 9: ese check puede
@@ -410,6 +431,9 @@ POISONS=(
     "poison_9g|9|arreglo de auditoria que no toca el archivo citado|que no toca ese archivo"
     "poison_9h|9|commit del ledger que existe pero no es alcanzable desde HEAD|no es alcanzable desde HEAD"
     "poison_10|10|runtime distroless sin libstdc++"
+    "poison_11|11|contenedor del zoo sin --read-only|falta --read-only"
+    "poison_11b|11|manifest que apunta a una rama en vez de a un commit|sha no es un commit completo"
+    "poison_11c|11|puerto del zoo publicado en todas las interfaces|no se publica en 127.0.0.1"
 )
 
 passed=0

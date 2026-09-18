@@ -1,0 +1,23 @@
+# Manifest propio de una snake publica del zoo. ver zoo/README.md
+#
+# Mismo repositorio y mismo commit que eremetic-eric: la confirmacion humana es **por
+# repositorio**, y `coreyja/battlesnake-rs` ya esta aprobado en
+# zoo/manifests/eremetic-eric.toml. Una imagen sirve a las tres por segmento de ruta, asi
+# que `zoo.sh build` solo compila una vez.
+
+name = "Hovering Hobbs"
+slug = "hovering-hobbs"
+repo = "https://github.com/coreyja/battlesnake-rs"
+sha = "d3a9bed45789f00918ea25df6025ed4e01462ae3"
+dockerfile = "./Dockerfile"
+entrypoint = "hovering-hobbs"
+port = 8000
+strategy = "Minimax + Flood Fill"
+
+# Confirmacion humana, una vez por repositorio (ver zoo/README.md).
+approved_by = "Daniel"
+approved_at = "2026-09-15"
+
+# Catalogo de origen, para trazar de donde sale este slug.
+catalog = "github.com/BattlesnakeOfficial/snake-zoo@6c2edcdb6e35a5ccc03a9cdd80e4af74e9baf4a8"
+catalog_file = "snakes/hovering-hobbs.toml"

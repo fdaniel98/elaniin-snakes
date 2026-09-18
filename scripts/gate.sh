@@ -5,7 +5,7 @@
 # ver docs/harness.md#h-01
 #
 #   ./scripts/gate.sh          todos los checks; es lo unico que cierra una fase
-#   ./scripts/gate.sh --fast   checks 0,1,3(release),4,6,7,9; NO cierra fase
+#   ./scripts/gate.sh --fast   checks 0,1,3(release),4,6,7,9,11; NO cierra fase
 #
 # Salida: una linea `CHECK <n> <nombre> PASS|FAIL|SKIP <segundos>` por check.
 # Codigos: 0 = PASA, 1 = fallo de check, 2 = error de entorno o toolchain.
@@ -335,6 +335,10 @@ else
         report 10 deploy-real SKIP 0
     fi
 fi
+
+# Barato y sin docker: se comprueba el comando que `zoo.sh up` construiria, en seco, asi
+# que corre tambien en --fast.
+run_check 11 lint-zoo ./scripts/lint-zoo.sh || true
 
 PENDING=0
 if [[ -x build/release/bin/unit_tests ]]; then
