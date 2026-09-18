@@ -398,6 +398,13 @@ poison_11c() {
         scripts/zoo.sh
 }
 
+poison_11d() {
+    # La imagen se etiqueta por snake en vez de por repositorio y commit: trece etiquetas
+    # para una sola imagen, y el gauntlet congelaria trece digests del mismo binario.
+    sed -i "s|printf 'zoo/%s:%s.n' \"\$repo\" \"\${sha:0:12}\"|printf 'zoo/%s:%s\\\\n' \"\$1\" \"\${sha:0:12}\"|" \
+        scripts/zoo.sh
+}
+
 # veneno | check esperado | descripcion | [mensaje exacto que debe aparecer]
 #
 # El cuarto campo es opcional y existe para los venenos del check 9: ese check puede
@@ -434,6 +441,7 @@ POISONS=(
     "poison_11|11|contenedor del zoo sin --read-only|falta --read-only"
     "poison_11b|11|manifest que apunta a una rama en vez de a un commit|sha no es un commit completo"
     "poison_11c|11|puerto del zoo publicado en todas las interfaces|no se publica en 127.0.0.1"
+    "poison_11d|11|imagen etiquetada por snake en vez de por repositorio|pero otra imagen"
 )
 
 passed=0

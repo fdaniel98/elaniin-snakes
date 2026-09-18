@@ -94,6 +94,31 @@ else
 fi
 echo "OK   el clon va fuera del arbol"
 
+echo "== una imagen por repositorio y commit, no por snake =="
+# Trece de las snakes del catalogo salen de un solo repositorio que enruta por segmento de
+# ruta. Etiquetar la imagen por slug daba trece etiquetas para una imagen: `zoo.sh check`
+# decia "no existe" de snakes ya construidas, y el gauntlet habria congelado trece digests
+# del mismo binario. El check compara la etiqueta EFECTIVA que zoo.sh resuelve.
+declare -A imagen_por_clave=()
+for m in zoo/manifests/*.toml; do
+    [[ -e "$m" ]] || continue
+    slug="$(basename "$m" .toml)"
+    repo="$(grep -E '^repo *= *' "$m" | head -1 | sed -E 's/^[^=]*= *"?([^"]*)"?.*/\1/')"
+    sha="$(grep -E '^sha *= *' "$m" | head -1 | sed -E 's/^[^=]*= *"?([^"]*)"?.*/\1/')"
+    img="$(./scripts/zoo.sh up "$slug" --port 8199 --dry-run 2>&1 >/dev/null |
+        grep '^DRY docker run' | awk '{print $NF}')"
+    [[ -n "$img" ]] || {
+        mal "$slug: no se pudo resolver la imagen"
+        continue
+    }
+    clave="$repo@$sha"
+    if [[ -n "${imagen_por_clave[$clave]:-}" && "${imagen_por_clave[$clave]}" != "$img" ]]; then
+        mal "$slug: mismo repositorio y commit que otra snake, pero otra imagen (${imagen_por_clave[$clave]} vs $img)"
+    fi
+    imagen_por_clave[$clave]="$img"
+done
+echo "OK   ${#imagen_por_clave[@]} imagenes para $encontrados manifests"
+
 if [[ $FALLOS -gt 0 ]]; then
     echo "check 11 FAIL: $FALLOS problemas"
     exit 1

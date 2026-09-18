@@ -94,11 +94,19 @@ valida_manifest() {
     [[ -n "$aprobado" ]] || die "$m sin approved_by: falta la confirmacion humana del repositorio"
 }
 
+# La imagen se identifica por REPOSITORIO y commit, no por snake. `coreyja/battlesnake-rs`
+# sirve trece snakes desde un solo binario que enruta por segmento de ruta: etiquetarla por
+# slug daba trece etiquetas para una imagen, y `zoo.sh check` decia "no existe" de dos
+# snakes que ya estaban construidas.
 imagen_de() {
-    local m sha
+    local m sha repo
     m="$(manifest_de "$1")"
     sha="$(campo "$m" sha)"
-    printf 'zoo/%s:%s\n' "$1" "${sha:0:12}"
+    repo="$(campo "$m" repo)"
+    repo="${repo%/}"
+    repo="${repo##*/}"
+    repo="${repo%.git}"
+    printf 'zoo/%s:%s\n' "$repo" "${sha:0:12}"
 }
 
 slugs_todos() {
@@ -117,7 +125,7 @@ cmd_list() {
     for slug in $(slugs_todos); do
         m="$MANIFIESTOS/$slug.toml"
         sha="$(campo "$m" sha)"
-        img="zoo/$slug:${sha:0:12}"
+        img="$(imagen_de "$slug")"
         estado="-"
         corriendo="-"
         if [[ -n "$DOCKER" ]]; then
@@ -146,7 +154,7 @@ cmd_build() {
         sha="$(campo "$m" sha)"
         dockerfile="$(campo "$m" dockerfile)"
         [[ -n "$dockerfile" ]] || die "$m sin dockerfile: este repo necesita uno propio y no se ha escrito"
-        img="zoo/$slug:${sha:0:12}"
+        img="$(imagen_de "$slug")"
 
         echo "== $slug =="
         if [[ -n "$DOCKER" || $DRY -eq 0 ]] && buscar_docker 2>/dev/null &&
