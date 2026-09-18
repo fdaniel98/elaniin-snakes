@@ -331,3 +331,40 @@ TEST_CASE("replay: el nombre del campo move no distingue mayusculas, el valor si
     REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"moves":"left"})")));
     REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"mov":"left"})")));
 }
+
+TEST_CASE("replay: dos claves move, y el tipo equivocado aborta el decode",
+          "[differential][r-03]") {
+    // Dos detalles de `encoding/json` que solo se ven comparando salidas con el Go:
+    // con varias claves que casan gana la ULTIMA del documento, y un valor del tipo
+    // equivocado en `move` o en `shout` tira el decode entero, asi que el arbitro se
+    // queda con LastMove aunque otra clave traiga un string valido.
+    // ver docs/rules.md#r-03
+    auto crudo = [](const std::string& cuerpo) {
+        replay::RespuestaCruda r;
+        r.status = 200;
+        r.elapsed_ms = 1.0;
+        r.timeout = 500;
+        r.body = cuerpo;
+        return r;
+    };
+
+    // Gana la ultima en orden del documento, no la primera ni la menor alfabeticamente.
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"Move":"left","move":"up"})")) ==
+            engine::Direction::up);
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"MOVE":"down","move":"up"})")) ==
+            engine::Direction::up);
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"MoVe":"left","mOvE":"up"})")) ==
+            engine::Direction::up);
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"move":"up","Move":"left"})")) ==
+            engine::Direction::left);
+
+    // Tipo equivocado: no hay movimiento, aunque otra clave si sea valida.
+    REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"move":5,"MOVE":"left"})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"move":"left","Move":5})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"move":"left","shout":5})")));
+    REQUIRE_FALSE(replay::movimiento_aceptado(crudo(R"({"move":"left","SHOUT":true})")));
+
+    // Un campo desconocido, del tipo que sea, lo ignora igual que `encoding/json`.
+    REQUIRE(replay::movimiento_aceptado(crudo(R"({"move":"left","latency":42})")) ==
+            engine::Direction::left);
+}

@@ -154,10 +154,19 @@ struct Partida {
 
 /// Movimiento que el arbitro habria aplicado, o `nullopt` si la respuesta no le sirvio.
 ///
-/// Reproduce `getSnakeUpdate` (`cli/commands/play.go:455-513`): status distinto de 200,
+/// Reproduce `getSnakeUpdate` (`cli/commands/play.go:437-513`): status distinto de 200,
 /// JSON no parseable o `move` fuera de las cuatro literales dejan `LastMove` intacto.
 /// El timeout del cliente HTTP (`cli/commands/play.go:129-135`) se reconstruye del
 /// tiempo que anoto el grabador.
+///
+/// Tres detalles de `encoding/json` que no son obvios y que el arbitro hereda al
+/// deserializar sobre `client.MoveResponse` (`client/models.go:99-103`):
+///
+///  1. el NOMBRE del campo casa sin distinguir mayusculas, el VALOR no;
+///  2. con varias claves que casan gana la ULTIMA en orden del documento, asi que hay que
+///     leer el cuerpo en orden y no por clave ordenada;
+///  3. un valor del tipo equivocado en `move` o en `shout` **aborta el decode entero** y
+///     el arbitro se queda con `LastMove`, aunque otra clave traiga un string valido.
 [[nodiscard]] inline std::optional<engine::Direction>
 movimiento_aceptado(const RespuestaCruda& respuesta) {
     if (respuesta.status != 200) {
@@ -166,28 +175,35 @@ movimiento_aceptado(const RespuestaCruda& respuesta) {
     if (respuesta.elapsed_ms >= static_cast<double>(respuesta.timeout)) {
         return std::nullopt;
     }
-    const json cuerpo = json::parse(respuesta.body, nullptr, false);
+    // `ordered_json` y no `json`: el segundo ordena las claves y perderia el orden del
+    // documento, que es lo que decide cual gana.
+    const nlohmann::ordered_json cuerpo =
+        nlohmann::ordered_json::parse(respuesta.body, nullptr, false);
     if (cuerpo.is_discarded() || !cuerpo.is_object()) {
         return std::nullopt;
     }
-    // `encoding/json` de Go casa el nombre del campo SIN distinguir mayusculas
-    // (`client/models.go:102` declara `json:"move"`), asi que el arbitro acepta
-    // `{"Move":"left"}` y nosotros tenemos que aceptarlo tambien. El VALOR si distingue:
-    // la comparacion contra las cuatro literales es textual (`cli/commands/play.go:501`).
-    for (const auto& [clave, valor] : cuerpo.items()) {
-        if (clave.size() != 4) {
-            continue;
-        }
-        std::string minusculas = clave;
-        for (char& c : minusculas) {
+
+    auto en_minusculas = [](std::string texto) {
+        for (char& c : texto) {
             c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         }
-        if (minusculas != "move" || !valor.is_string()) {
-            continue;
+        return texto;
+    };
+
+    std::optional<engine::Direction> elegido;
+    for (const auto& [clave, valor] : cuerpo.items()) {
+        const std::string nombre = en_minusculas(clave);
+        if (nombre != "move" && nombre != "shout") {
+            continue; // campo desconocido: `encoding/json` lo ignora
         }
-        return direccion_de(valor.get<std::string>());
+        if (!valor.is_string()) {
+            return std::nullopt; // error de tipo: el decode entero falla
+        }
+        if (nombre == "move") {
+            elegido = direccion_de(valor.get<std::string>());
+        }
     }
-    return std::nullopt;
+    return elegido;
 }
 
 /// Orden estable de serpientes: el del turno 0, que es el unico donde estan todas.

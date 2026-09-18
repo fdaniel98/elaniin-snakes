@@ -35,17 +35,28 @@ template <int W, int H, int MaxSnakes>
 /// Orden de fases identico al del pipeline oficial en las seis primeras: fin de partida,
 /// movimiento, hambre, daño de hazard, alimentacion, eliminacion. ver docs/rules.md#r-02
 ///
-/// La septima, la que genera hazards, se queda FUERA a proposito: depende de la semilla
-/// de la partida, que no viaja en el payload de `/move`, asi que en servidor no es
-/// calculable. `apply()` no la ejecuta y `GameState` no guarda semilla; quien quiera la
-/// partida completa -la arena de la fase 4- llama a `royale_hazards()` entre turnos.
-/// ver docs/rules.md#r-09
+/// Lo que queda fuera son las dos cosas que el arbitro hace por su cuenta entre turnos,
+/// no una: la septima fase, que genera hazards, y el spawn de comida del hook del mapa.
+/// Las dos dependen de la semilla de la partida, que no viaja en el payload de `/move`
+/// (ver docs/rules.md#r-09 y ver docs/rules.md#r-10), asi que en servidor no son
+/// calculables y `GameState` ni siquiera guarda semilla.
+///
+/// La arena de la fase 4 tendra que reponer las dos: `royale_hazards()` cubre la primera
+/// y el spawn de comida no tiene funcion todavia.
 ///
 /// `apply` NO filtra direcciones: acepta la inmediatamente mortal. Filtrar aqui
 /// impediria reproducir los logs del arbitro en el test diferencial.
 /// ver docs/rules.md#r-03
 ///
 /// `moves[i]` es el movimiento de la serpiente `i`. Las eliminadas se ignoran.
+///
+/// Si `moves` es mas corto que el numero de serpientes, las que se quedan sin entrada
+/// reciben `default_move()`. Es una EXTENSION nuestra y no lo que hace el motor oficial,
+/// donde una serpiente sin entrada en `moves` simplemente no se mueve (`standard.go:55-85`
+/// solo recorre las que la tienen). El test diferencial siempre pasa el array completo,
+/// asi que esa rama no entra en juego al reproducir partidas; existe para que ningun
+/// llamante consiga que una serpiente viva se quede quieta, que no es un estado que el
+/// juego produzca.
 template <int W, int H, int MaxSnakes>
 Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) noexcept;
 

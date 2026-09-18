@@ -4,7 +4,7 @@ read_when: "antes de tocar engine/src/rules.cpp, de escribir un fixture o de dis
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-17
-size_bytes: 13962
+size_bytes: 14149
 ---
 
 Toda afirmacion de este archivo cita `archivo.go:linea` del SHA del front-matter. Lo no verificable
@@ -163,9 +163,11 @@ los hazards antes de las guardas en vez de despues (`royale.go:21` frente a
 - Antes del turno `shrinkEveryNTurns` no hay hazard alguno (`maps/royale.go:54-56`).
 - Cada turno se **borran todos los hazards y se regeneran desde cero** (`maps/royale.go:59`).
 - `numShrinks = turn / shrinkEveryNTurns`, con `turn = estado.Turn + 1` (`maps/royale.go:47,64`).
-- El generador se re-siembra **siempre al turno 0**: `settings.GetRand(0)` (`maps/royale.go:62`),
-  que devuelve `NewSeedRand(seed + 0)` (`settings.go:41-52`). El bucle consume `numShrinks` valores
-  de `Intn(4)` de esa misma secuencia (`maps/royale.go:67-78`).
+- El generador se re-siembra **siempre al turno 0**: `settings.GetRand(0)` (`maps/royale.go:62`).
+  Con semilla distinta de 0 eso es `NewSeedRand(seed + 0)`; con semilla **0** devuelve el
+  generador global y no re-siembra nada (`settings.go:47-52`), aunque el arbitro siembre ese
+  global con la misma semilla al arrancar (`cli/commands/play.go:187`). El bucle consume
+  `numShrinks` valores de `Intn(4)` de esa secuencia (`maps/royale.go:67-78`).
 - Cada shrink mueve **un solo borde** en 1: `minX+1`, `maxX-1`, `minY+1` o `maxY-1`
   (`maps/royale.go:69-77`). El lado se repite si sale repetido.
 - El hazard es el **complemento del rectangulo** que va de `minX,minY` a `maxX,maxY`
