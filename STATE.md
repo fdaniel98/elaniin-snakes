@@ -55,14 +55,6 @@ corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-
 
 ## Hallazgos abiertos del loop
 
-- [ ] **La fase 2 cerro sin fuzz del servidor.** Su iteracion de `robustness` reporto 42
-      payloads adversos y no la metrica `fuzz_states`, asi que el umbral de 10 000 estados
-      nunca se comprobo: `verify_metrics` solo compara cuando el valor existe. Lo destapa
-      la ADR-0019 al endurecer el check 9. El gate no falla hoy porque el check 9 solo
-      mira la fase activa. Pendiente de decision humana: cubrirlo ahora con una correccion
-      en el ledger de la fase 2, como se hizo con la re-medicion de mutantes de la fase 0,
-      o reabrir la fase.
-
 - [ ] El transporte se come casi todo el presupuesto: el maximo del arbitro son 169 ms y
       el de nuestro codigo 0.388. En el torneo eso costo 8 timeouts en 23 831 movimientos.
       Importa al recalibrar el margen de red de la fase 7 (ver docs/performance.md#p-07).

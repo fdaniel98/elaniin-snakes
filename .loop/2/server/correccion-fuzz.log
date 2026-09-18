@@ -1,0 +1,11 @@
+{
+  "fuzz_states": 10000,
+  "semilla": 1,
+  "fixtures_semilla": 15,
+  "http_5xx": 0,
+  "movimientos_invalidos": 0,
+  "sin_respuesta": 0,
+  "servidor_vivo_al_final": true,
+  "segundos": 8.4,
+  "estados_por_segundo": 1193.9
+}

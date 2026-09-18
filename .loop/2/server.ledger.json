@@ -63,7 +63,8 @@
         "mutants_killed": 15,
         "mutants_killed_ratio": 1.0,
         "mutants_broken_patterns": 0,
-        "mutantes_del_servidor": 4
+        "mutantes_del_servidor": 4,
+        "fuzz_states": 10000
       },
       "checks_added": [],
       "findings": [],
@@ -310,6 +311,23 @@
         }
       ],
       "nota": "El commit auditado se reescribio con `git commit --amend` para arreglar el mensaje justo despues de la auditoria. El arbol es el mismo; el sha, no. El ledger apuntaba al viejo, que en la maquina donde se hizo el amend todavia resolvia como objeto huerfano y en un repo limpio no existe: lo caza el check 9 al exigir que el commit sea alcanzable desde HEAD y no solo que exista."
+    }
+  ],
+  "correcciones": [
+    {
+      "fecha": "2026-09-18",
+      "motivo": "La iteracion i2 (robustness) cerro con 42 payloads adversos y NO reporto la metrica `fuzz_states`, asi que el umbral de 10 000 estados nunca se comparo: `verify_metrics` solo compara cuando el valor existe. Lo destapa la ADR-0019 al exigir que toda metrica este presente o declarada inaplicable. El bug estaba en el gate, no en el servidor.",
+      "comando": "python3 scripts/fuzz_server.py --estados 10000",
+      "log": ".loop/2/server/correccion-fuzz.log",
+      "log_sha256": "ce027836636d82c5d37f12e7e0583fa4a5aba83b77414586bd21cd4fa076074b",
+      "metrics": {
+        "fuzz_states": 10000,
+        "http_5xx": 0,
+        "movimientos_invalidos": 0,
+        "servidor_vivo_al_final": true
+      },
+      "veredicto": "El umbral se cumple: 10 000 estados, 0 respuestas 5xx, 0 movimientos invalidos y el servidor en pie al final. La fase 2 seguia siendo correcta; lo que no era correcto es que nadie lo hubiera comprobado. El fuzzer se verifico contra el veneno 8b -5xx ante payload no soportado- y lo caza.",
+      "el_gate_ahora": "El fuzz entra en el check 8, asi que esto deja de depender de que alguien se acuerde: 10 000 estados en cada pasada del gate, 8 segundos."
     }
   ]
 }

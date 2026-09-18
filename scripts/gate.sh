@@ -214,8 +214,22 @@ check_smoke() {
 
     kill "$server_pid" 2>/dev/null
     wait "$server_pid" 2>/dev/null
+
+    # Fuzz de payloads: 10 000 estados en unos 8 segundos. Los 42 payloads adversos de
+    # smoke.py cubren lo que a una persona se le ocurre; esto cubre la tercera combinacion
+    # de tres mutaciones sobre un fixture valido, que es lo que de verdad tumba servidores.
+    # Levanta su propio servidor en otro puerto: ver docs/decisions/ADR-0019-aplicabilidad-de-umbrales.md#d-0183
+    python3 scripts/fuzz_server.py --estados 10000 --puerto 8098 \
+        >"$LOG_DIR/fuzz.json" 2>&1 || {
+        echo "FAIL el fuzz de payloads encontro algo"
+        tail -12 "$LOG_DIR/fuzz.json"
+        status=1
+    }
+
     return $status
 }
+
+
 
 # ---------------------------------------------------------------- check 10
 docker_bin() {
