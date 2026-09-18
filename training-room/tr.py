@@ -20,6 +20,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -291,41 +292,52 @@ def lee_partida(jsonl, log_arbitro):
             "ganador": ganador, "ultimo_turno": ultimo_turno}
 
 
-# Lo que el arbitro escribe cuando una snake no le sirve. Mismos patrones que
-# scripts/soak_analiza.py, y por la misma razon: el JSONL NO puede contar timeouts, porque
-# la eliminada desaparece del turno siguiente y el ultimo turno no se exporta
-# (ver docs/rules-parametros.md#r-20). El conteo sale del stderr del arbitro o no sale.
-PATRONES = (
+# El arbitro escribe un fallo en DOS lineas: la cabecera `Request to <url>/<ruta> failed`
+# y, debajo, `\tError: Post "<url>/<ruta>": <motivo>`. Las dos llevan la url dentro, asi
+# que contar "lineas que mencionan la url y hablan de un motivo" contaba cada fallo dos
+# veces: el torneo publico 8 timeouts nuestros cuando eran 4, y 192 de Devin cuando eran
+# 96. Ahora se cuenta UNA incidencia por cabecera y el motivo se lee de la linea siguiente.
+CABECERA = re.compile(r"Request to (\S+?)/(move|start|end) failed")
+NON_OK = re.compile(r"Got non-ok status code from (\S+?)/(move|start|end)")
+MOTIVOS = (
     ("timeout", "context deadline exceeded"),
-    ("status", "Got non-ok status code"),
     ("json", "Failed to decode JSON"),
+    ("json", "Failed to parse response"),
+    ("json", "Failed to read response body"),
     ("movimiento", "invalid move"),
 )
 
 
 def incidencias_de(reflog, url):
-    """Quejas del arbitro sobre `url`, por tipo. `/end` se excluye a proposito: fallar al
-    avisar del final no afecta a la partida, y hay rivales que no responden a `/end`
-    NUNCA -Eremetic Eric fallo las 198 veces-, asi que contarlo inflaria el numero con
-    algo que no cuesta ni un movimiento."""
-    cuenta = {etiqueta: 0 for etiqueta, _ in PATRONES}
-    ruta = Path(reflog)
-    if not ruta.exists():
+    """Quejas del arbitro sobre `url`, una por peticion fallida, clasificadas por motivo.
+
+    `/end` se excluye a proposito: el ganador se fija ANTES de enviarlo
+    (`cli/commands/play.go:314-319`), asi que fallar ahi no cuesta ni un movimiento, y hay
+    rivales que no responden a `/end` nunca -Eremetic Eric fallo las 198 veces del torneo-."""
+    cuenta = {"timeout": 0, "status": 0, "json": 0, "movimiento": 0, "conexion": 0}
+    ruta_log = Path(reflog)
+    if not ruta_log.exists():
         return cuenta
     try:
-        lineas = ruta.read_text(encoding="utf-8", errors="replace").splitlines()
+        lineas = ruta_log.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         return cuenta
     for i, linea in enumerate(lineas):
-        if f"{url}/end" in linea:
+        m = CABECERA.search(linea)
+        if m:
+            if m.group(1) != url or m.group(2) == "end":
+                continue
+            motivo = lineas[i + 1] if i + 1 < len(lineas) else ""
+            etiqueta = "conexion"
+            for nombre, patron in MOTIVOS:
+                if patron in motivo:
+                    etiqueta = nombre
+                    break
+            cuenta[etiqueta] += 1
             continue
-        if url not in linea:
-            continue
-        # El motivo del fallo va en la MISMA linea o en la siguiente, segun el caso.
-        contexto = linea + " " + (lineas[i + 1] if i + 1 < len(lineas) else "")
-        for etiqueta, patron in PATRONES:
-            if patron in contexto:
-                cuenta[etiqueta] += 1
+        m = NON_OK.search(linea)
+        if m and m.group(1) == url and m.group(2) != "end":
+            cuenta["status"] += 1
     return cuenta
 
 

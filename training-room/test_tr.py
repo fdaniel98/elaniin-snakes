@@ -170,15 +170,20 @@ comprueba(tr.toma_el_cerrojo() is not None, "el cerrojo se libera al cerrarse el
 # /end en el torneo real, y contarlo habria dado 198 "incidencias" de algo que no cuesta
 # ni un movimiento.
 ruta_log = Path(tempfile.mkstemp(suffix=".log")[1])
+# Forma REAL del log del arbitro: el fallo ocupa dos lineas y las DOS llevan la url, que
+# es lo que hacia contar cada timeout dos veces.
 ruta_log.write_text("""INFO Snake ID: id0 URL: http://127.0.0.1:9700, Name: "v0-baseline"
-WARN Request to http://127.0.0.1:9700/move failed
-ERROR context deadline exceeded
-WARN Request to http://127.0.0.1:9700/end failed
-ERROR context deadline exceeded
-WARN Got non-ok status code from http://127.0.0.1:9701/otra/move
+WARN 03:00:33.697467 Request to http://127.0.0.1:9700/move failed
+\tError: Post "http://127.0.0.1:9700/move": context deadline exceeded
+WARN 03:00:34.121253 Request to http://127.0.0.1:9700/end failed
+\tError: Post "http://127.0.0.1:9700/end": context deadline exceeded
+WARN 03:00:35.373514 Request to http://127.0.0.1:9700/move failed
+\tError: Post "http://127.0.0.1:9700/move": read: connection reset by peer
+WARN 03:16:14.274497 Got non-ok status code from http://127.0.0.1:9701/otra/move
 """, encoding="utf-8")
 inc = tr.incidencias_de(ruta_log, "http://127.0.0.1:9700")
-comprueba(inc["timeout"] == 1, "el timeout de /move cuenta una vez")
+comprueba(inc["timeout"] == 1, "un timeout de /move cuenta UNA vez, no dos (el fallo ocupa dos lineas)")
+comprueba(inc["conexion"] == 1, "un fallo de conexion no se cuenta como timeout")
 comprueba(inc["status"] == 0, "una queja sobre otra snake no se nos apunta")
 inc_otra = tr.incidencias_de(ruta_log, "http://127.0.0.1:9701/otra")
 comprueba(inc_otra["status"] == 1, "la queja se apunta a quien le toca")
