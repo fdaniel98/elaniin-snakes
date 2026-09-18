@@ -211,7 +211,8 @@ dir_run = Path(tempfile.mkdtemp())
 db3 = tr.abre_db(dir_run / "torneo.sqlite")
 db3.execute("INSERT INTO partidas VALUES ('g00000','t',1,'x.jsonl',0,10,0,'ahora','{}','x')")
 for slug in ("v0-baseline", "a"):
-    db3.execute("INSERT INTO latencias VALUES ('g00000',?,0,0,0,0,NULL,10)", (slug,))
+    db3.execute("INSERT INTO latencias (partida_id, slug, p50, p95, p99, maximo, timeouts, movimientos) VALUES ('g00000',?,0,0,0,0,NULL,10)",
+                (slug,))
 db3.commit()
 db3.close()
 
@@ -241,7 +242,8 @@ dir_run2 = Path(tempfile.mkdtemp())
     'ERROR context deadline exceeded\n', encoding="utf-8")
 db4 = tr.abre_db(dir_run2 / "torneo.sqlite")
 db4.execute("INSERT INTO partidas VALUES ('g00000','t',1,'x.jsonl',0,10,0,'ahora','{}','x')")
-db4.execute("INSERT INTO latencias VALUES ('g00000','v0-baseline',0,0,0,0,NULL,10)")
+db4.execute("INSERT INTO latencias (partida_id, slug, p50, p95, p99, maximo, timeouts, movimientos) "
+            "VALUES ('g00000','v0-baseline',0,0,0,0,NULL,10)")
 db4.commit(); db4.close()
 import io, contextlib
 salida_txt = io.StringIO()
@@ -277,7 +279,8 @@ dbr.execute("INSERT INTO partidas VALUES ('g0','gauntlet-x',1,'g0.jsonl',0,100,0
 for i, (slug, puesto) in enumerate([("v0-baseline", 1.0), ("a", 2.5), ("b", 2.5), ("c", 4.0)]):
     dbr.execute("INSERT INTO participantes VALUES ('g0',?,?,'v0','abc','hash','img',?,?,100,NULL)",
                 (slug, slug, i, puesto))
-    dbr.execute("INSERT INTO latencias VALUES ('g0',?,1,2,3,4,0,100)", (slug,))
+    dbr.execute("INSERT INTO latencias (partida_id, slug, p50, p95, p99, maximo, timeouts, movimientos) VALUES ('g0',?,1,2,3,4,0,100)",
+                (slug,))
 dbr.commit(); dbr.close()
 
 datos = rep.recoge(dir_rep, None)
@@ -491,7 +494,8 @@ cmpm = importlib.util.module_from_spec(cmp_spec)
 cmp_spec.loader.exec_module(cmpm)
 
 
-def _corrida(dirname, slug, puestos_por_semilla, topo, hash_cfg, gauntlet="gauntlet-v1"):
+def _corrida(dirname, slug, puestos_por_semilla, topo, hash_cfg, gauntlet="gauntlet-v1",
+             fallos_rival=0):
     """Fabrica una corrida: {semilla: [puesto de cada asiento]}."""
     d = Path(tempfile.mkdtemp()) / dirname
     d.mkdir()
@@ -510,6 +514,9 @@ def _corrida(dirname, slug, puestos_por_semilla, topo, hash_cfg, gauntlet="gaunt
             db.execute("INSERT INTO participantes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                        (pid, "rival", "rival", "v", "c", "h2", "zoo/battlesnake-rs",
                         asiento + 1, 1.0, 120, "sobrevivio"))
+            db.execute("INSERT INTO latencias (partida_id, slug, timeouts, movimientos, "
+                       "fallos_conexion) VALUES (?,?,?,?,?)",
+                       (pid, "rival", 0, 100, fallos_rival))
     db.commit()
     db.close()
     return d
@@ -517,6 +524,13 @@ def _corrida(dirname, slug, puestos_por_semilla, topo, hash_cfg, gauntlet="gaunt
 
 SERIE = {"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 1}
 PAR2 = {"nucleos": 8, "hilos_por_nucleo": "1", "paralelo": 2}
+
+
+def _compara_texto(a, b, extra=()):
+    import subprocess
+    return subprocess.run([sys.executable, str(RAIZ / "training-room/compara.py"),
+                           "--a", str(a), "--b", str(b), *extra],
+                          capture_output=True, text=True).stdout
 
 
 def _compara(a, b, extra=()):
@@ -566,6 +580,28 @@ comprueba(_compara(a1, _corrida("b", "v0-baseline", {1: [2] * 4}, SERIE, "hA")).
           "se niega a comparar una corrida consigo misma (mismo hash de config)")
 comprueba(_compara(a1, _corrida("b", "cuellos", {99: [2] * 4}, SERIE, "hB")).returncode == 2,
           "se niega si no comparten ni una semilla: sin bloques no hay pareo")
+
+# La salud del campo va al lado del veredicto. Un rival que no contesta -llegue tarde o
+# cierre la conexion- recibe el movimiento por defecto y suele morir: un campo averiado
+# regala puestos. Medido de verdad: torneo-v1 tuvo 1.76 fallos de rival por partida y
+# torneo-cuellos-serie 0.90, o sea que la linea base de v0 jugo contra un campo el doble
+# de roto.
+a6 = _corrida("a", "v0-baseline", {1: [3] * 4, 2: [3] * 4}, SERIE, "hA", fallos_rival=4)
+b6 = _corrida("b", "cuellos", {1: [3] * 4, 2: [3] * 4}, SERIE, "hB", fallos_rival=0)
+r6 = _compara(a6, b6)
+d6 = json.loads(r6.stdout)
+comprueba(d6["salud_del_campo"]["a"]["fallos_por_partida"] == 4.0
+          and d6["salud_del_campo"]["b"]["fallos_por_partida"] == 0.0,
+          "el veredicto viene con la salud del campo de cada corrida")
+
+r6t = _compara_texto(a6, b6)
+comprueba("AVISO los campos NO estaban igual de sanos" in r6t,
+          "y avisa cuando los dos campos no eran comparables")
+
+a7 = _corrida("a", "v0-baseline", {1: [3] * 4}, SERIE, "hA", fallos_rival=2)
+b7 = _corrida("b", "cuellos", {1: [3] * 4}, SERIE, "hB", fallos_rival=2)
+comprueba("AVISO los campos NO" not in _compara_texto(a7, b7),
+          "con los dos campos igual de sanos no avisa de nada")
 
 # Un bloque a medias NO es un bloque. La corrida de v1 se corto en 61 partidas y dejo un
 # ultimo bloque con un asiento en vez de cuatro; promediar ese uno contra los cuatro del

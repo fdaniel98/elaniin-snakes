@@ -473,6 +473,8 @@ CREATE TABLE IF NOT EXISTS participantes (
 CREATE TABLE IF NOT EXISTS latencias (
   partida_id TEXT NOT NULL REFERENCES partidas(id), slug TEXT NOT NULL,
   p50 REAL, p95 REAL, p99 REAL, maximo REAL, timeouts INTEGER, movimientos INTEGER,
+  fallos_status INTEGER, fallos_json INTEGER, fallos_movimiento INTEGER,
+  fallos_conexion INTEGER,
   PRIMARY KEY (partida_id, slug));
 """
 
@@ -482,6 +484,14 @@ def abre_db(ruta):
     # escrituras pasan por un candado en el llamante, que es lo que lo hace seguro.
     db = sqlite3.connect(ruta, check_same_thread=False)
     db.executescript(ESQUEMA)
+    # `CREATE TABLE IF NOT EXISTS` no añade columnas a una base que ya existe, y las
+    # corridas viejas -torneo-v1 entre ellas- tienen que poder rellenarse con `reanaliza`
+    # en vez de rejugarse.
+    hay = {f[1] for f in db.execute("PRAGMA table_info(latencias)")}
+    for col in ("fallos_status", "fallos_json", "fallos_movimiento", "fallos_conexion"):
+        if col not in hay:
+            db.execute(f"ALTER TABLE latencias ADD COLUMN {col} INTEGER")
+    db.commit()
     return db
 
 
@@ -721,10 +731,11 @@ def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit, hash_c
                     None))
         lat = datos["latencias"].get(sid, [])
         inc = incidencias_de(reflog, urls[slug])
-        db.execute("INSERT OR REPLACE INTO latencias VALUES (?,?,?,?,?,?,?,?)",
+        db.execute("INSERT OR REPLACE INTO latencias VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                    (p["id"], slug, percentil(lat, 0.50), percentil(lat, 0.95),
                     percentil(lat, 0.99), max(lat) if lat else None,
-                    inc["timeout"], len(lat)))
+                    inc["timeout"], len(lat), inc["status"], inc["json"],
+                    inc["movimiento"], inc["conexion"]))
 
 
 # --------------------------------------------------------------- reanaliza
@@ -759,8 +770,11 @@ def cmd_reanaliza(args):
         for _sid, url, nombre in LINEA.findall(texto):
             inc = incidencias_de(reflog, url)
             cur = db.execute(
-                "UPDATE latencias SET timeouts = ? WHERE partida_id = ? AND slug = ?",
-                (inc["timeout"], pid, nombre))
+                "UPDATE latencias SET timeouts = ?, fallos_status = ?, fallos_json = ?, "
+                "fallos_movimiento = ?, fallos_conexion = ? "
+                "WHERE partida_id = ? AND slug = ?",
+                (inc["timeout"], inc["status"], inc["json"], inc["movimiento"],
+                 inc["conexion"], pid, nombre))
             modificadas += cur.rowcount
     db.commit()
 
@@ -770,10 +784,20 @@ def cmd_reanaliza(args):
     if modificadas == 0:
         print("FAIL no se modifico ninguna fila: el recalculo no hizo nada", file=sys.stderr)
         return 1
-    for fila in db.execute("""SELECT l.slug, SUM(l.timeouts), SUM(l.movimientos)
+    # Se imprimen los cinco tipos, no solo el timeout. Un rival que cierra la conexion
+    # (EOF -> `conexion`) se queda igual de quieto que uno que llega tarde, y el arbitro le
+    # aplica el mismo movimiento por defecto. Publicar solo los timeouts hacia creer que el
+    # campo estaba sano: en torneo-v1 eran 192 timeouts Y 160 EOF, y solo salian los
+    # primeros. ver docs/performance.md#p-07
+    for fila in db.execute("""SELECT l.slug, SUM(l.timeouts),
+                                     SUM(COALESCE(l.fallos_conexion, 0)),
+                                     SUM(COALESCE(l.fallos_status, 0))
+                                   + SUM(COALESCE(l.fallos_json, 0))
+                                   + SUM(COALESCE(l.fallos_movimiento, 0)),
+                                     SUM(l.movimientos)
                               FROM latencias l JOIN partidas g ON g.id = l.partida_id
                               WHERE g.arbitro_rc = 0 GROUP BY l.slug ORDER BY 2 DESC"""):
-        print("   %-16s timeouts=%-5s movimientos=%s" % fila)
+        print("   %-16s timeouts=%-5s conexion=%-5s otros=%-4s movimientos=%s" % fila)
     return 0
 
 

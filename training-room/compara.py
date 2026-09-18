@@ -93,6 +93,32 @@ def bloques(c, slug):
     return por_semilla, turnos, causas
 
 
+def salud_del_campo(c):
+    """Cuantas peticiones pierden los RIVALES por partida, y de que forma.
+
+    Por que va al lado del veredicto: un rival que no contesta -llegue tarde o cierre la
+    conexion- recibe el movimiento por defecto del arbitro, y ese movimiento suele
+    matarlo. Un campo averiado regala puestos. Si las dos corridas no tuvieron el campo
+    igual de sano, parte de la diferencia no es la estrategia.
+
+    Medido: en torneo-v1 los rivales perdian 1.76 peticiones por partida y en
+    torneo-cuellos-serie 0.90. La linea base de v0 se midio contra un campo el doble de
+    averiado que el de ahora, asi que favorece a v0.
+    """
+    fila = c.execute(
+        "SELECT SUM(l.timeouts), SUM(COALESCE(l.fallos_conexion,0)), "
+        "       SUM(COALESCE(l.fallos_status,0) + COALESCE(l.fallos_json,0) "
+        "           + COALESCE(l.fallos_movimiento,0)), SUM(l.movimientos) "
+        "FROM latencias l JOIN partidas g ON g.id = l.partida_id "
+        "JOIN participantes pa ON pa.partida_id = l.partida_id AND pa.slug = l.slug "
+        "WHERE g.arbitro_rc = 0 AND pa.imagen LIKE 'zoo/%'").fetchone()
+    n = c.execute("SELECT COUNT(*) FROM partidas WHERE arbitro_rc = 0").fetchone()[0] or 1
+    to, con, otros, movs = [x or 0 for x in fila]
+    return {"timeouts": to, "conexion": con, "otros": otros, "movimientos_rivales": movs,
+            "fallos_por_partida": round((to + con + otros) / n, 3),
+            "columnas_nuevas": con is not None}
+
+
 def media(xs):
     return sum(xs) / len(xs) if xs else float("nan")
 
@@ -159,6 +185,8 @@ def main():
         muere(f"las dos corridas usan el MISMO config (hash {ha[0]}): no hay nada que "
               "comparar. Un A/A se hace a proposito, con --delta y a sabiendas.")
 
+    salud_a, salud_b = salud_del_campo(ca), salud_del_campo(cb)
+
     ba, turnos_a, causas_a = bloques(ca, sa)
     bb, turnos_b, causas_b = bloques(cb, sb)
     comunes = sorted(set(ba) & set(bb))
@@ -207,6 +235,7 @@ def main():
         "t": round(t, 3) if math.isfinite(t) else None, "gl": gl,
         "delta_declarado": args.delta,
         "veredicto": veredicto,
+        "salud_del_campo": {"a": salud_a, "b": salud_b},
         "descriptivo_sin_veredicto": {
             "turnos_vividos_a": round(media(turnos_a), 1),
             "turnos_vividos_b": round(media(turnos_b), 1),
@@ -238,6 +267,19 @@ def main():
     if veredicto == "NO CONCLUYENTE":
         print("  El intervalo cruza el cero o el efecto no llega al delta declarado. Eso")
         print("  NO dice que B sea igual que A: dice que con estos bloques no se distingue.")
+    fa, fb = salud_a["fallos_por_partida"], salud_b["fallos_por_partida"]
+    print(f"\n-- salud del campo (peticiones que los RIVALES no contestaron) --")
+    print(f"  A  {fa}/partida   (timeout {salud_a['timeouts']}, "
+          f"conexion {salud_a['conexion']}, otros {salud_a['otros']})")
+    print(f"  B  {fb}/partida   (timeout {salud_b['timeouts']}, "
+          f"conexion {salud_b['conexion']}, otros {salud_b['otros']})")
+    if max(fa, fb) > 0 and min(fa, fb) < 0.6 * max(fa, fb):
+        peor, mejor = ("A", "B") if fa > fb else ("B", "A")
+        print(f"  AVISO los campos NO estaban igual de sanos: en {peor} los rivales "
+              f"fallaron\n        {max(fa, fb) / max(min(fa, fb), 1e-9):.1f}x mas que en "
+              f"{mejor}. Un rival que no contesta recibe el movimiento\n        por "
+              f"defecto y suele morir, asi que {peor} regalo puestos. Parte de la "
+              f"diferencia\n        de arriba no es la estrategia.")
     print("\n-- descriptivo, SIN veredicto ni p-valores --")
     print(f"  turnos vividos   A {salida['descriptivo_sin_veredicto']['turnos_vividos_a']}"
           f"   B {salida['descriptivo_sin_veredicto']['turnos_vividos_b']}")
