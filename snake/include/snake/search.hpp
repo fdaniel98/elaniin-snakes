@@ -43,6 +43,10 @@ struct SearchResult {
     long long nodes{0};
     /// Rivales que se simularon de verdad (los lejanos van con movimiento fijo).
     int rivals_simulated{0};
+    /// Ultima profundidad en la que el mejor movimiento CAMBIO. Si es 2 y `depth` es 8,
+    /// las seis ultimas profundidades confirmaron lo que ya se sabia: ahi hay tiempo que
+    /// se puede devolver. ver docs/decisions/ADR-0023-cuando-parar-de-buscar.md
+    int last_change_depth{0};
 };
 
 /// Evalua una posicion entera desde el punto de vista de `us`. Es la evaluacion de v0

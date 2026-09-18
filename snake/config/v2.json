@@ -3,7 +3,7 @@
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
-    "max_compute_ms": 350
+    "max_compute_ms": 200
   },
   "food": {
     "seek_below": 50,

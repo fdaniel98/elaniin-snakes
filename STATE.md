@@ -7,8 +7,8 @@ Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
 El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
 Snake activa: v0-baseline. Dos heuristicas estaticas RECHAZADAS (ver
-docs/strategy.md#s-v1r y #s-cuellos-r). v3, busqueda paranoica, escrita y verde pero SIN
-MEDIR en partida (ver docs/strategy.md#s-v3)
+docs/strategy.md#s-v1r y #s-cuellos-r). v3 (busqueda) medida: -0.267 de puesto, IC95
+[-0.562, +0.029], NO CONCLUYENTE por 0.029 (ver docs/strategy.md#s-busq-r)
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -87,7 +87,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Medir la busqueda (v3) contra `gauntlet-v1`, 60 partidas en serie, mismo protocolo
-pareado que cuellos. Es lo primero que puede mover el marcador: v0 gasta el 0.03% de su
-presupuesto de tiempo y v3 llega a profundidad 7.7 de media
-(ver docs/strategy.md#s-v3). En paralelo, desplegar: falta el ID del proyecto GCP.
+Ampliar el A/B de v3 con los bloques 16-25 (`--games 100` sobre el mismo `--out`, que
+reanuda), que es lo que manda §10.4 cuando el intervalo no cruza frontera por 0.029. En
+paralelo, desplegar: falta el ID del proyecto GCP.

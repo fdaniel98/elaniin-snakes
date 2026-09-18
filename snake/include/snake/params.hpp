@@ -17,7 +17,10 @@ struct TimeParams {
     std::int32_t network_margin_ms = 100;
     std::int32_t safety_margin_ms = 50;
     /// Techo duro de computo aunque el timeout anunciado sea mayor.
-    std::int32_t max_compute_ms = 350;
+    /// Tope de computo, en ms. 200 y no 350 porque los ultimos 150 ms compran 0.19
+    /// niveles de profundidad -un 3%- y cuestan la mitad del colchon contra el timeout
+    /// del arbitro. Medido en ver docs/decisions/ADR-0023-presupuesto-de-computo.md.
+    std::int32_t max_compute_ms = 200;
 };
 
 /// Cuando merece la pena ir a por comida. No se come por comer.

@@ -1,9 +1,9 @@
 {
-  "_comment": "v3 = v0 mirando hacia delante. La evaluacion es la de v0 -las dos que intentamos mejorar, Voronoi y cuellos, dieron NO CONCLUYENTE- y lo que cambia es que ahora se simulan varios turnos en vez de uno. brain_v0 gastaba 100 us de 350 ms. ver docs/strategy.md#s-v3",
+  "_comment": "v3 = v0 mirando hacia delante. La evaluacion es la de v0 -las dos que intentamos mejorar, Voronoi y cuellos, dieron NO CONCLUYENTE- y lo que cambia es que ahora se simulan varios turnos en vez de uno. brain_v0 gastaba 100 us de 350 ms. ver docs/strategy.md#s-busq",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
-    "max_compute_ms": 350
+    "max_compute_ms": 200
   },
   "food": {
     "seek_below": 50,

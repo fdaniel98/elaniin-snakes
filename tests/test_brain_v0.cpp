@@ -363,6 +363,79 @@ TEST_CASE("busqueda: profundidad mayor no cambia el veredicto sobre una muerte s
     }
 }
 
+TEST_CASE("time manager: el colchon contra el timeout del arbitro", "[deadline][presupuesto]") {
+    // No habia ni un test de `from_timeout`, y con v0 daba igual: decidia en 100 us. Con
+    // la busqueda el presupuesto es carga estructural -p50 de 348 ms en el torneo- y el
+    // colchon es lo unico que separa un movimiento de un timeout.
+    // ver docs/decisions/ADR-0023-presupuesto-de-computo.md
+    const snake::Params p;
+
+    SECTION("con el timeout de torneo queda al menos 250 ms de colchon") {
+        const auto t0 = snake::Deadline::Clock::now();
+        const auto d = snake::Deadline::from_timeout(500, p.time, t0);
+        const auto presupuesto =
+            std::chrono::duration_cast<std::chrono::milliseconds>(d.end() - t0).count();
+        INFO("presupuesto de computo: " << presupuesto << " ms");
+        REQUIRE(presupuesto <= 250);
+        // Y que no se quede en nada: por debajo de 100 ms la busqueda pierde un nivel
+        // entero (tabla del ADR-0023).
+        REQUIRE(presupuesto >= 100);
+    }
+
+    SECTION("el techo manda sobre los margenes, no al reves") {
+        // Con un timeout generoso el presupuesto lo fija `max_compute_ms`, no la resta.
+        const auto t0 = snake::Deadline::Clock::now();
+        const auto d = snake::Deadline::from_timeout(5000, p.time, t0);
+        const auto presupuesto =
+            std::chrono::duration_cast<std::chrono::milliseconds>(d.end() - t0).count();
+        REQUIRE(presupuesto == p.time.max_compute_ms);
+    }
+
+    SECTION("un timeout absurdo no produce un deadline en el pasado") {
+        const auto t0 = snake::Deadline::Clock::now();
+        for (const int timeout : {0, 1, 50, 149, 150, 151}) {
+            const auto d = snake::Deadline::from_timeout(timeout, p.time, t0);
+            INFO("timeout=" << timeout);
+            REQUIRE(d.end() > t0);
+        }
+    }
+
+    SECTION("los margenes se restan de verdad") {
+        const auto t0 = snake::Deadline::Clock::now();
+        snake::Params sin_techo = p;
+        sin_techo.time.max_compute_ms = 100000;
+        const auto d = snake::Deadline::from_timeout(1000, sin_techo.time, t0);
+        const auto presupuesto =
+            std::chrono::duration_cast<std::chrono::milliseconds>(d.end() - t0).count();
+        REQUIRE(presupuesto == 1000 - p.time.network_margin_ms - p.time.safety_margin_ms);
+    }
+}
+
+TEST_CASE("busqueda: con el presupuesto de torneo no se pasa de 250 ms",
+          "[brain][search][inv-11][presupuesto]") {
+    // El presupuesto real, derivado del timeout real, sobre los fixtures reales. Es la
+    // comprobacion de punta a punta de que lo que se despliega cabe donde tiene que caber.
+    snake::Params p;
+    p.search.version = 1;
+    snake::warmup(p);
+    for (const auto& fixture : load_fixtures()) {
+        INFO("fixture: " << fixture.name);
+        engine::State11 state;
+        REQUIRE(snake::parse_state(fixture.doc, state));
+        const auto t0 = snake::Deadline::Clock::now();
+        const snake::Move move =
+            snake::decide(state, snake::Deadline::from_timeout(500, p.time, t0), p);
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            snake::Deadline::Clock::now() - t0)
+                            .count();
+        REQUIRE(ms <= 250);
+        const engine::MoveMask legal = engine::legal_moves(state, state.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, move.direction));
+        }
+    }
+}
+
 TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {
     const snake::Params params;
     const auto& fixtures = load_fixtures();

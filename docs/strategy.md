@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 10316
+size_bytes: 9909
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -36,31 +36,21 @@ al agotar `--max-games`, no entra.
 
 ### S-V1R Resultado: NO ENTRA {#s-v1r}
 
-Medido, 60 partidas contra `gauntlet-v1` (`snake/config/v1.json`, solo la parte de
-Voronoi; los puntos de articulacion quedaron en `v2.json` y no llegaron a medirse):
+60 partidas contra `gauntlet-v1` (`snake/config/v1.json`), 15 bloques pareados contra v0:
 
-| | v0 (200 partidas) | v1 (60 partidas) |
+| | v0 | v1 |
 |---|---|---|
-| puesto medio | 2.770 | **2.817** |
-| turnos vividos | 119.2 | **136.3** |
+| puesto medio | 2.767 | 2.817 |
+| turnos vividos | 119.2 | 136.3 |
 
-La hipotesis era que el territorio subiria la posicion media. **No la sube.** La
-diferencia de 0.05 esta muy por debajo del ruido de la propia corrida: su primera mitad
-promedia 2.683 y la segunda 2.950. Se corto en 60 partidas a proposito, porque distinguir
-0.05 con ese ruido pide cientos de bloques y no 140 partidas mas.
+Diferencia pareada **+0.0500**, dentro del ruido. **NO ENTRA.** El territorio hace algo
+-aguantamos 17 turnos mas- pero aguantar no adelanta a nadie.
 
-Lo que si cambia es la supervivencia: **17 turnos mas de media**. Asi que el territorio
-hace algo -aguantamos mas- pero aguantar no adelanta a nadie: Hobbs y Devin viven 185 y
-189 turnos y nos entierran igual.
-
-**Lo que este resultado enseña, y es el motivo de conservarlo:** contra un rival que
-busca, una evaluacion estatica mejor no basta. Da igual lo fina que sea la heuristica si
-el otro simula tres turnos y nosotros cero. Seguir afinando pesos aqui es trabajo que se
-siente productivo y no mueve el marcador.
-
-El codigo se conserva entero y seleccionable (`territory.version = 1`): cuando exista
-busqueda, una evaluacion mejor en las hojas si deberia notarse, y entonces esta medicion
-es la linea base contra la que comparar.
+**La leccion, que es el motivo de conservarlo:** contra un rival que busca, una evaluacion
+estatica mejor no basta. Da igual lo fina que sea la heuristica si el otro simula tres
+turnos y nosotros cero. El codigo se conserva y es seleccionable
+(`territory.version = 1`): con busqueda, una evaluacion mejor en las HOJAS si deberia
+notarse, y entonces esta medicion es la linea base.
 
 ### S-CUELLOS Hipotesis: no entrar donde solo hay una puerta {#s-cuellos}
 
@@ -89,48 +79,28 @@ partidas de heuristica.
 
 ### S-CUELLOS-R Resultado: NO ENTRA, y el motivo no es el que parecia {#s-cuellos-r}
 
-Medido, 60 partidas contra `gauntlet-v1` con `snake/config/cuellos.json`, comparadas
-contra las 60 primeras de `torneo-v1` por los mismos 15 bloques (misma semilla, misma
-rotacion de asientos, misma topologia en serie):
+60 partidas, 15 bloques pareados contra v0:
 
-| | v0 (15 bloques) | cuellos (15 bloques) |
+| | v0 | cuellos |
 |---|---|---|
-| puesto medio | **2.767** | 2.842 |
+| puesto medio | 2.767 | 2.842 |
 | turnos vividos | 119.2 | 120.1 |
 
-Diferencia pareada **+0.0750**, IC95 **[-0.169, +0.319]** sobre 15 bloques.
-Veredicto: **NO CONCLUYENTE**, con tendencia a peor. No entra.
+Diferencia pareada **+0.0750**, IC95 [-0.169, +0.319]. **NO ENTRA.**
 
-Lo interesante no es el veredicto sino los turnos vividos: **119.2 -> 120.1**. v1 dio
-+17 turnos; esto da +0.9. La heuristica casi no cambio el comportamiento, y eso admitia
-dos lecturas opuestas -que no se activara nunca, o que se activara siempre-. Escribir la
-primera cuando fuese la segunda seria publicar una leccion falsa, asi que se midio:
+Los turnos casi no se movieron (+0.9 frente a los +17 de v1), lo que admitia dos lecturas
+opuestas. Se midio con `tools/sonda_cuellos.cpp`:
 
-    $ ./build/release/bin/sonda_cuellos
     estados=20000  con cuello=18574 (92.9%)  perdida media=13.11 casillas
-    cuellos grandes(>10)=2492 (12.46%)
 
-**Se dispara en el 92.9% de los estados.** El problema es el contrario del que parecia:
-en un tablero de 11x11 con cuatro serpientes, «existe una casilla cuyo cierre encoge mi
-region» es cierto casi siempre. La penalizacion se aplica a casi todos los candidatos y
-con una magnitud parecida, asi que no los separa: entra en la puntuacion como ruido
-sumado al termino de espacio, no como el discriminador que se pretendia.
+**Se dispara en el 92.9% de los estados.** En 11x11 con cuatro serpientes, «existe una
+casilla cuyo cierre encoge mi region» es cierto casi siempre, asi que la penalizacion
+entra como ruido sumado al espacio y no separa a los candidatos. Una heuristica que se
+activa el 93% de las veces no es una heuristica, es una constante con varianza. Un detector
+de trampas tiene que ser *relativo* o estar *umbralado*, y ninguna de las dos formas se ha
+probado. Codigo conservado y apagado (`space.worst_case_weight = 0.0`).
 
-**Lo que esto enseña, y es el motivo de conservarlo:** una heuristica que se activa el
-93% de las veces no es una heuristica, es una constante con varianza. Un detector de
-trampas tiene que ser *relativo* -cuanto peor es este cuello que el de las otras
-opciones- o estar *umbralado* -solo cuenta si lo que se pierde no cabe en mi propia
-longitud-, y ninguna de las dos formas se ha probado todavia. El 12.46% de cuellos
-grandes sugiere que un umbral por longitud dispararia de forma bastante mas selectiva.
-
-El codigo se conserva entero y apagado por defecto (`space.worst_case_weight = 0.0`).
-
-**Segunda confirmacion del mismo diagnostico.** v1 subio la supervivencia sin subir el
-puesto; cuellos no sube ninguna de las dos. Dos heuristicas estaticas distintas, atacando
-el mismo sintoma medido -132 de 178 muertes sin salida-, y ninguna mueve el marcador
-contra rivales que simulan. El siguiente paso no es una tercera heuristica.
-
-### S-V3 Busqueda paranoica: la primera vez que miramos hacia delante {#s-v3}
+### S-BUSQ Busqueda paranoica: la primera vez que miramos hacia delante {#s-busq}
 
 **El numero que la justifica:** `brain_v0` decide en ~100 us sobre 350 ms. Gasta el
 **0.03%** del presupuesto. Las dos heuristicas que probamos -Voronoi y cuellos- dieron NO
@@ -161,6 +131,43 @@ despliega es v0. Se enciende con `snake/config/v3-busqueda.json`.
 
 Si tambien sale NO CONCLUYENTE, lo que falla no es la profundidad sino la evaluacion en
 las hojas, y eso cambia por completo donde hay que mirar despues.
+
+### S-BUSQ-R Resultado: la primera que mueve la aguja, pero NO CONCLUYENTE {#s-busq-r}
+
+Medido, 60 partidas contra `gauntlet-v1` con `snake/config/v3-busqueda.json`, pareadas por
+los mismos 15 bloques que v0:
+
+| | v0 | v3 |
+|---|---|---|
+| puesto medio | 2.767 | **2.500** |
+| victorias | 2 de 60 | **7 de 60** |
+| ultimos puestos | 4 | **2** |
+| turnos vividos | 119.2 | **170.5** (+43 %) |
+
+Diferencia pareada **-0.267** (negativo = mejor), IC95 **[-0.562, +0.029]**. El efecto es
+**2.7 veces el delta declarado** de 0.10 y el intervalo se queda a **0.029** de no cruzar
+el cero. De 15 bloques: 7 a favor, 3 en contra, 5 empatados.
+Veredicto formal: **NO CONCLUYENTE**.
+
+**El sesgo corre EN CONTRA de v3, no a favor.** Fallos de rival por partida en esas mismas
+60 partidas:
+
+| corrida | fallos de rival / partida |
+|---|---|
+| `torneo-v1` (base de v0) | **2.92** |
+| `torneo-v3` | **0.88** |
+
+v0 jugo contra un campo 3.3 veces mas averiado, y un rival que no contesta recibe el
+movimiento por defecto del arbitro y suele morir: puestos regalados. Asi que el 2.767 de
+v0 esta inflado y **-0.267 es una cota inferior** de la mejora real.
+
+**Lo que decide el protocolo (§10.4):** agotado el presupuesto sin cruzar frontera, no se
+relanza con otras semillas; se amplia el mismo run. Quedan pendientes los bloques 16-25.
+
+**Lo que si esta decidido:** v3 no es peor, sobrevive un 43 % mas, triplica las victorias
+y reduce los ultimos puestos a la mitad, contra un campo mas duro. Es la primera de las
+tres hipotesis que mueve algo, y confirma el diagnostico de
+ver docs/strategy.md#s-v1r: lo que faltaba era profundidad, no evaluacion.
 
 ## S-V2 Busqueda multijugador {#s-v2}
 

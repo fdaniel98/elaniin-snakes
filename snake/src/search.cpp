@@ -403,6 +403,9 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
         if (!completa) {
             break;
         }
+        if (depth == 1 || mejor_dir != out.best) {
+            out.last_change_depth = depth;
+        }
         out.best = mejor_dir;
         out.score = mejor_val;
         out.depth = depth;
