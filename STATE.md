@@ -2,8 +2,8 @@
 
 ## Estado actual
 
-Fase: 1 (Motor) — pendiente del gate completo en la maquina de referencia
-Gate: 11 checks PASS en el contenedor; el 10 queda SKIP por falta de registro de imagenes
+Fase: 1 (Motor) — **COMPLETA** (2026-09-18)
+Gate: 12 checks PASS y 25 venenos cazados en la maquina de referencia
 Loop: engine/src/rules.cpp → CLOSED (8 iteraciones y 3 auditorias) en `.loop/1/`
 Snake activa: v0-baseline
 
@@ -42,8 +42,6 @@ conservan en `.loop/0/`; el cerebro no es entregable de esta fase y no lleva led
       (ver docs/decisions/ADR-0013-auditorias-fuera-del-loop.md#d-0121), que es lo que
       atascaba el cierre, y el check 9 pasa a exigir su bloque.
 
-- [ ] **Gate completo y autoprueba en la maquina de referencia.** El contenedor no tiene
-      registro de imagenes, asi que el check 10 y su veneno no se han ejecutado.
 - [ ] **Linea base de la fase 1 en la maquina de referencia:** `./scripts/bench.sh` en
       WSL2. Lo medido hasta ahora, en ver docs/performance.md#p-06, es de otra maquina.
 - [x] **El ratio de mutantes de la fase 0, re-medido** con el arnes arreglado sobre
@@ -81,6 +79,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr `./scripts/gate.sh` y `./scripts/gate-selftest.sh` en la maquina de referencia: es
-lo unico que separa la fase 1 de COMPLETA. La autoprueba lleva 25 venenos, tres de ellos
-nuevos para lo que el check 9 comprueba desde el ADR-0013.
+Abrir la fase 2 (servidor endurecido): 0 timeouts en 200 partidas locales, p99 documentado,
+fail-safe probado en sus cuatro escalones y variantes no soportadas en modo degradado con
+`WARN`. Proponer plan y esperar aprobacion antes de escribir codigo.
