@@ -2,10 +2,10 @@
 
 ## Estado actual
 
-Fase: 2 (Servidor endurecido) — **COMPLETA**
+Fase: 3 (Training Room MVP) — en curso. La 2 cerro en c5cead7
 Gate: PASS en la maquina de referencia (2026-09-18, commit bb99e84): 12 checks, 27 de 27
 venenos cazados y 0 fallidos en `gate-selftest.sh`, y 200 de 200 partidas sin un timeout
-Loop: `snake/src/server.cpp` → CLOSED en `.loop/2/`; el de la fase 1, en `.loop/1/`
+Loop: `.loop/3/` sin abrir todavia; los de las fases 1 y 2 quedaron CLOSED
 Snake activa: v0-baseline
 
 <!-- BEGIN:perf-snapshot -->
@@ -28,12 +28,20 @@ La regenera `./scripts/sync_state.sh` desde su dueño, `docs/performance.md`.
 <!-- BEGIN:loop-deliverables -->
 | slug | archivo | clases obligatorias |
 |---|---|---|
-| server | snake/src/server.cpp | correctness, robustness, perf |
+| training-room | training-room/ | correctness, robustness, perf, context |
+
+El zoo se queda fuera del ambito a proposito
+(ver docs/decisions/ADR-0017-el-instrumento-lleva-loop.md#d-0161).
 <!-- END:loop-deliverables -->
 
 Que entra aqui lo decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Bloqueado / pendiente de decision humana
+
+- [ ] **Cuarta snake del campo:** `TheApX/battlesnake-hungry` (MIT, Dockerfile propio,
+      C++). Aprobar un repositorio es confirmacion humana por repositorio
+      (ver zoo/README.md); sin ella el `gauntlet-v1` se queda con tres snakes del mismo
+      motor, `coreyja/battlesnake-rs`, y eso mide menos de lo que parece.
 
 
 - [ ] **Linea base de la fase 1 en la maquina de referencia:** `./scripts/bench.sh` en
@@ -76,5 +84,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Empezar la fase 3 (Training Room MVP): proponer el plan y **esperar aprobacion** antes de
-escribir codigo.
+Escribir `scripts/zoo.sh` y los manifests de `devious-devin` y `hovering-hobbs`, que salen
+del repositorio ya aprobado. La cuarta snake del campo espera aprobacion humana.

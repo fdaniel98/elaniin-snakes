@@ -4,7 +4,8 @@
   "closing": {
     "deliverable_scope": [
       "engine/",
-      "snake/"
+      "snake/",
+      "training-room/"
     ],
     "min_iterations": 3,
     "max_iterations": 8,
