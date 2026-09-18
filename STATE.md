@@ -2,7 +2,8 @@
 
 ## Estado actual
 
-Fase: 3 (Training Room MVP) — loop CLOSED; falta el gate completo en la maquina de referencia
+Fase: 3 (Training Room MVP) — loop CLOSED; gate completo verde en el contenedor (13/14; el
+10 exige docker). Pendiente la corrida en la maquina de referencia sobre 480c9fa
 Gate: 14 checks; el 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta
 fase, con cinco venenos. El veredicto vigente sigue siendo el de la fase 2 en bb99e84
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
@@ -31,11 +32,10 @@ La regenera `./scripts/sync_state.sh` desde su dueño, `docs/performance.md`.
 |---|---|---|
 | training-room | training-room/ | correctness, robustness, perf, context |
 
-El zoo se queda fuera del ambito a proposito
-(ver docs/decisions/ADR-0017-el-instrumento-lleva-loop.md#d-0161).
+El zoo queda fuera a proposito
+(ver docs/decisions/ADR-0017-el-instrumento-lleva-loop.md#d-0161). Que entra aqui lo
+decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 <!-- END:loop-deliverables -->
-
-Que entra aqui lo decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Bloqueado / pendiente de decision humana
 
@@ -50,11 +50,14 @@ Que entra aqui lo decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Decisiones humanas
 
-Cada una con su ADR, que es donde vive el contenido: `docs/decisions/`. Las de la fase 1
-son el Rng propio del shrink (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091) y el
-corpus del diferencial (ver docs/decisions/ADR-0011-corpus-del-diferencial.md#d-0101).
+Cada una con su ADR en `docs/decisions/`, que es donde vive el contenido.
 
 ## Hallazgos abiertos del loop
+
+- [ ] 2 violaciones de deadline sobre 10 000 (fuzz, debug+ASan, maquina de referencia) que
+      el arranque en frio no explica. Si reaparecen ya calentado, decidir si un test de
+      reloj de 5 ms puede ser determinista ahi (ver
+      docs/decisions/ADR-0021-arranque-en-frio.md#adr-0021-abierto).
 
 - [ ] El transporte se come casi todo el presupuesto: el maximo del arbitro son 169 ms y
       el de nuestro codigo 0.388. En el torneo eso costo 8 timeouts en 23 831 movimientos.
@@ -83,6 +86,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v0 -la unica version medida- y registrarla. Despues, busqueda: v1 no mejoro el
-puesto medio (ver docs/strategy.md#s-v1r) y el diagnostico dice que contra un rival que
-busca una evaluacion estatica mejor no basta.
+Correr el gate completo sobre 480c9fa en la maquina de referencia: confirma que los dos
+tests de deadline pasan con el calentamiento (ver
+docs/decisions/ADR-0021-arranque-en-frio.md). Despues desplegar v0, la unica version
+medida, y luego busqueda: v1 no mejoro el puesto medio (ver docs/strategy.md#s-v1r).
