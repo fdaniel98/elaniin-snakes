@@ -1,0 +1,41 @@
+{
+  "nombre": "gauntlet-v1",
+  "congelado": "2026-09-18",
+  "comentario": [
+    "Campo de evaluacion congelado. Cambiar cualquier cosa de aqui crea gauntlet-v2 e",
+    "INVALIDA toda comparacion con numeros medidos contra esta version: en un juego de",
+    "cuatro la fuerza no es un orden total, asi que un veredicto solo vale contra el campo",
+    "declarado.",
+    "El digest es de una imagen construida localmente, no de un registro: sirve para",
+    "detectar que la imagen cambio, no para descargarla. El orquestador ABORTA si el",
+    "digest de la maquina no coincide."
+  ],
+  "rivales": [
+    { "slug": "eremetic-eric",  "nombre": "Eremetic Eric",  "estrategia": "Tail Chaser" },
+    { "slug": "devious-devin",  "nombre": "Devious Devin",  "estrategia": "Paranoid Minimax" },
+    { "slug": "hovering-hobbs", "nombre": "Hovering Hobbs", "estrategia": "Minimax + Flood Fill" }
+  ],
+  "imagenes": {
+    "zoo/battlesnake-rs:d3a9bed45789": "sha256:2d43ddfb2d73"
+  },
+  "composiciones": [
+    ["eremetic-eric", "devious-devin", "hovering-hobbs"]
+  ],
+  "limitacion_declarada": [
+    "Las tres salen del mismo repositorio y del mismo binario (coreyja/battlesnake-rs),",
+    "asi que sus errores estan correlacionados y este campo mide menos de lo que parece.",
+    "Con una cuarta snake de otro motor habria cuatro composiciones en vez de una. Falta",
+    "la aprobacion humana de ese repositorio; ver STATE.md."
+  ],
+  "recursos": {
+    "cpus": 1,
+    "memoria": "512m",
+    "comentario": [
+      "Identicos para todas las snakes, la nuestra incluida. --cpus se implementa con",
+      "cuota CFS sobre un periodo de 100 ms: sin pinning explicito el p99 lo domina el",
+      "throttling y no el algoritmo, asi que el orquestador fija --cpuset-cpus disjuntos.",
+      "Aborta si la suma de cuotas supera los nucleos fisicos menos dos."
+    ]
+  },
+  "partida": { "ancho": 11, "alto": 11, "ruleset": "royale", "mapa": "royale", "timeout_ms": 500 }
+}
