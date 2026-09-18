@@ -247,5 +247,18 @@
         }
       ]
     }
+  ],
+  "correcciones": [
+    {
+      "fecha": "2026-09-18",
+      "motivo": "El arnes de mutantes restauraba con `mv` y devolvia al fichero su fecha original. Tras un mutante de cabecera -m3 toca engine/include/engine/state.hpp- ninja no reconstruia y la mutacion se quedaba dentro del binario, asi que m4, m5 y m6 morian por m3 y no por si mismos. Arreglado en d877270.",
+      "comando": "git worktree add /tmp/f0 8082d1d; copiar el arnes arreglado conservando la lista original de 6 mutantes; ./scripts/mutants.sh --json",
+      "ratio_publicado": 1.0,
+      "ratio_real": 0.8333,
+      "mutantes": 6,
+      "muertos": 5,
+      "superviviente": "m4 - el cerebro trata toda cola como libre (snake/src/brain_v0.cpp)",
+      "veredicto": "El umbral de la clase robustness es 0.8, asi que la fase 0 lo cumplia igualmente. Ademas m4 resulto ser un mutante EQUIVALENTE: con la cola apilada, el segmento length-2 ocupa esa casilla y ya la marca, de modo que la condicion tail_is_stacked de blocked_cells no cambia ningun resultado. No faltaba ningun test. El 1.0 publicado era aritmeticamente falso y la conclusion que sostenia, correcta."
+    }
   ]
 }

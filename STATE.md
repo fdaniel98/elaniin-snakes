@@ -49,9 +49,10 @@ conservan en `.loop/0/`; el cerebro no es entregable de esta fase y no lleva led
       registro de imagenes, asi que el check 10 y su veneno no se han ejecutado.
 - [ ] **Linea base de la fase 1 en la maquina de referencia:** `./scripts/bench.sh` en
       WSL2. Lo medido hasta ahora, en ver docs/performance.md#p-06, es de otra maquina.
-- [ ] **El arnes de mutantes mentia y eso alcanza a la fase 0:** los ledgers de la fase 0
-      publicaron ratio 1.0 con el fallo dentro (arreglado en `d877270`). Decidir si se
-      re-mide o se anota como medicion invalidada.
+- [x] **El ratio de mutantes de la fase 0, re-medido** con el arnes arreglado sobre
+      `8082d1d` y su lista original: 0.8333, no 1.0. Sigue por encima del umbral de 0.8 y
+      el unico superviviente resulto ser un mutante equivalente, asi que no faltaba
+      ningun test. La correccion vive en `correcciones` de los dos ledgers de `.loop/0/`.
 
 ## Decisiones humanas
 
