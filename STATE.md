@@ -3,8 +3,8 @@
 ## Estado actual
 
 Fase: 3 (Training Room MVP) — en curso. La 2 cerro en c5cead7
-Gate: PASS en la maquina de referencia (2026-09-18, commit bb99e84): 12 checks, 27 de 27
-venenos cazados y 0 fallidos en `gate-selftest.sh`, y 200 de 200 partidas sin un timeout
+Gate: 13 checks; el 11 (lint-zoo) es nuevo de esta fase y trae sus tres venenos. El
+veredicto vigente es el de la fase 2 en bb99e84: 12 checks y 27 de 27 venenos
 Loop: `.loop/3/` sin abrir todavia; los de las fases 1 y 2 quedaron CLOSED
 Snake activa: v0-baseline
 
@@ -84,5 +84,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Escribir `scripts/zoo.sh` y los manifests de `devious-devin` y `hovering-hobbs`, que salen
-del repositorio ya aprobado. La cuarta snake del campo espera aprobacion humana.
+Escribir `gauntlet-v1.json` y el orquestador del torneo: un contenedor por snake con
+`--cpus`, `--cpuset-cpus` y `--memory` identicos, y aborto si la suma de cuotas supera los
+nucleos fisicos menos dos.
