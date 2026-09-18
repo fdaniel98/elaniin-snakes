@@ -1,0 +1,11 @@
+{
+  "diverge": 6,
+  "sin_verificar": 0,
+  "ok": 32,
+  "auditor": "rules-auditor (subagente independiente)",
+  "metodo": "replica de getSnakeUpdate en Go y de movimiento_aceptado en C++ corridas sobre 21 cuerpos de respuesta",
+  "diverge_reparados": 6,
+  "diverge_descartados": 0,
+  "casos_comparados": 21,
+  "casos_identicos_antes": 13
+}

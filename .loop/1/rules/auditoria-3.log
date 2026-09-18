@@ -1,0 +1,27 @@
+== auditoria 3 (criterio 14): rules-auditor sobre el HEAD posterior a los arreglos ==
+Commit auditado: d12efe2a50a9c83e657bf69af1e99a38826727b1
+El auditor recibio el diff y el clon del SHA fijado; NO recibio resumen del autor ni el
+informe del auditor anterior.
+
+Metodo: ademas de leer el Go, compilo una replica literal de la decision de
+getSnakeUpdate (client.MoveResponse + json.Unmarshal + comparacion contra las cuatro
+literales) y otra de movimiento_aceptado contra nlohmann, y las corrio sobre 21 cuerpos de
+respuesta. Las dos primeras filas no son deducciones: son salidas comparadas.
+
+| hallazgo | veredicto | cita |
+|---|---|---|
+| Con varias claves que casan con `move`, Go se queda con la ULTIMA del documento; el C++ con la primera en orden de clave, porque nlohmann::json ordena. {"Move":"left","move":"up"} daba up en Go y left aqui | DIVERGE | cli/commands/play.go:491 |
+| Un valor del tipo equivocado en una clave que casa aborta el decode ENTERO en Go y fuerza el por defecto aunque otra clave traiga un string valido; el C++ seguia buscando y aceptaba de mas | DIVERGE | cli/commands/play.go:491-500 |
+| El contrato de apply() decia que solo queda fuera la septima fase; tambien queda fuera el spawn de comida del hook del mapa, asi que una arena que solo llame a royale_hazards() nunca veria aparecer comida | DIVERGE | maps/royale.go:42, maps/standard.go:64-73 |
+| El contrato de apply() callaba que un span de moves mas corto sustituye por default_move(); en el Go esa serpiente simplemente no se mueve | DIVERGE | standard.go:55-85 |
+| R-09 afirmaba sin condicion que GetRand(0) devuelve NewSeedRand(seed+0); con semilla 0 devuelve el generador global, en la misma rama que el doc citaba | DIVERGE | settings.go:47-52 |
+| El docstring citaba getSnakeUpdate en play.go:455-513 y la funcion empieza en 437 | DIVERGE | cli/commands/play.go:437 |
+
+diverge=6 sin_verificar=0 ok=32
+
+Verificado ademas, sin hallazgo: los seis arreglos de la auditoria anterior (ab0ccf4), el
+orden de las seis fases, el sub-orden de la eliminacion, el <= del cabeza a cabeza, el
+salto del dano de hazard cuando hay comida, y que las dos rutas de hazard del CLI son
+idempotentes entre si, lo que cierra por lectura la pregunta abierta de SOURCES S-03.
+
+Los seis reparados en d18c500.

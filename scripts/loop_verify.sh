@@ -311,6 +311,78 @@ verify_ledger() {
         "$ledger")"
     [[ "$unverified" == "0" ]] || fail "$slug: hay $unverified hallazgos SIN_VERIFICAR abiertos"
 
+    # 9b. Auditorias del criterio 14. No son iteraciones -contarlas como tales hacia que
+    #     "la auditoria encontro algo" significara "el loop no cierra"- pero SI son
+    #     obligatorias, y sus hallazgos se cierran igual que los de una iteracion.
+    #     ver docs/decisions/ADR-0013-auditorias-fuera-del-loop.md#d-0121
+    local audits
+    audits="$(jq -r '.auditorias // [] | length' "$ledger")"
+    if [[ "$audits" == "0" ]]; then
+        fail "$slug: sin bloque auditorias; el criterio 14 exige al menos una"
+    fi
+
+    local sin_campos
+    sin_campos="$(jq -r '[.auditorias[]? | select(
+            (.agent // "") == "" or (.commit_auditado // "") == ""
+            or (.log_sha256 // "") == "" or (.findings | type) != "array")] | length' "$ledger")"
+    [[ "$sin_campos" == "0" ]] ||
+        fail "$slug: $sin_campos auditorias sin agent, commit_auditado, log_sha256 o findings"
+
+    local a_total
+    a_total="$(jq -r '.auditorias // [] | length' "$ledger")"
+    for ((a = 0; a < a_total; ++a)); do
+        local a_log a_sha a_real a_commit
+        a_log="$(jq -r ".auditorias[$a].log" "$ledger")"
+        a_sha="$(jq -r ".auditorias[$a].log_sha256" "$ledger")"
+        a_commit="$(jq -r ".auditorias[$a].commit_auditado" "$ledger")"
+        if [[ ! -f "$a_log" ]]; then
+            fail "$slug: la auditoria $((a + 1)) declara un log inexistente ($a_log)"
+            continue
+        fi
+        a_real="$(sha256sum "$a_log" | awk '{print $1}')"
+        [[ "$a_real" == "$a_sha" ]] ||
+            fail "$slug: sha256 de $a_log no coincide con el declarado"
+        git cat-file -e "${a_commit}^{commit}" 2>/dev/null ||
+            fail "$slug: la auditoria $((a + 1)) audito un commit inexistente ($a_commit)"
+    done
+
+    # Ningun hallazgo de auditoria puede quedarse abierto: REPARADO con su commit, o
+    # DESCARTADO con su razon. Nada mas.
+    local a_abiertos
+    a_abiertos="$(jq -r '[.auditorias[]?.findings[]?
+        | select(.estado != "REPARADO" and .estado != "DESCARTADO")] | length' "$ledger")"
+    [[ "$a_abiertos" == "0" ]] ||
+        fail "$slug: $a_abiertos hallazgos de auditoria abiertos"
+
+    local a_sin_commit
+    a_sin_commit="$(jq -r '[.auditorias[]?.findings[]?
+        | select(.estado == "REPARADO") | select((.fixed_in // "") == "")] | length' "$ledger")"
+    [[ "$a_sin_commit" == "0" ]] ||
+        fail "$slug: $a_sin_commit hallazgos de auditoria REPARADO sin fixed_in"
+
+    local a_sin_razon
+    a_sin_razon="$(jq -r '[.auditorias[]?.findings[]?
+        | select(.estado == "DESCARTADO") | select((.razon // "") == "")] | length' "$ledger")"
+    [[ "$a_sin_razon" == "0" ]] ||
+        fail "$slug: $a_sin_razon hallazgos de auditoria DESCARTADO sin razon"
+
+    # Mismo antifraude que en las iteraciones: el commit del arreglo tiene que tocar un
+    # archivo citado por el propio hallazgo.
+    local a_pares
+    a_pares="$(jq -r '.auditorias[]?.findings[]? | select(.estado == "REPARADO")
+        | "\(.fixed_in)|\(.cite)|\(.id)"' "$ledger")"
+    while IFS='|' read -r fixed cite fid; do
+        [[ -n "$fixed" ]] || continue
+        local tocados
+        tocados="$(git show --name-only --format= "$fixed" 2>/dev/null)"
+        if [[ -z "$tocados" ]]; then
+            fail "$slug: $fid dice arreglarse en $fixed, que no existe"
+            continue
+        fi
+        grep -qF "${cite%%#*}" <<<"$tocados" ||
+            fail "$slug: $fid ($cite) arreglado en $fixed, que no toca ese archivo"
+    done <<<"$a_pares"
+
     # 10. Si i1-i3 cerraron sin hallazgos, hace falta la prueba de mutantes de i2.
     local first_three_clean
     first_three_clean="$(jq -r '[.iterations[0:3][].findings | length] | all(. == 0)' "$ledger")"

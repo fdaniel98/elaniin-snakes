@@ -8,7 +8,7 @@
     ],
     "min_iterations": 3,
     "max_iterations": 8,
-    "clean_tail_iterations": 1,
+    "clean_tail_iterations": 2,
     "discarded_ratio_max": 0.3,
     "mandatory_classes": [
       "correctness",
