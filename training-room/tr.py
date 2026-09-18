@@ -43,6 +43,29 @@ def slug_del_config(ruta):
     return NUESTRO_SLUG_POR_DEFECTO if nombre == "default" else nombre
 
 
+def configs_disponibles():
+    return sorted(p.stem for p in (RAIZ / "snake/config").glob("*.json"))
+
+
+def resuelve_config(valor):
+    """Acepta un nombre (`cuellos`) o una ruta (`snake/config/cuellos.json`).
+
+    `deploy/cloud-run.sh --config` toma un NOMBRE y esto tomaba una RUTA. Dos scripts del
+    mismo repo con el mismo flag y dos significados distintos es una trampa que se cobra
+    el dia del torneo: o un torneo de 60 partidas que mide la estrategia equivocada, o un
+    despliegue que sube la que no era. Aqui valen los dos, y el que no existe muere
+    diciendo cuales hay.
+    """
+    if not valor:
+        return RAIZ / "snake/config/default.json"
+    ruta = Path(valor)
+    if ruta.suffix != ".json" and not ruta.exists():
+        ruta = RAIZ / "snake/config" / f"{valor}.json"
+    if not ruta.exists():
+        muere(f"no existe el config {valor!r}; hay: {', '.join(configs_disponibles())}")
+    return ruta
+
+
 def muere(mensaje):
     print(f"ERROR {mensaje}", file=sys.stderr)
     raise SystemExit(2)
@@ -463,9 +486,7 @@ def cmd_match(args):
 
     db = abre_db(salida / "torneo.sqlite")
     nuestro_commit = commit_actual()
-    ruta_config = Path(args.config) if args.config else RAIZ / "snake/config/default.json"
-    if not ruta_config.exists():
-        muere(f"no existe el config {ruta_config}")
+    ruta_config = resuelve_config(args.config)
     nuestro_hash = hash_config(ruta_config)
     nuestro_slug = slug_del_config(ruta_config)
     print(f"config:        {ruta_config} (hash {nuestro_hash})")
@@ -707,7 +728,8 @@ def main():
     m.add_argument("--paralelo", type=int, default=1,
                    help="partidas simultaneas. >1 mide FUERZA, no latencia: el reporte lo declara")
     m.add_argument("--config", default=None,
-                   help="config de estrategia a meter en la imagen; por defecto el del repo")
+                   help="estrategia a meter en la imagen: nombre (cuellos) o ruta "
+                        "(snake/config/cuellos.json). Por defecto, el default del repo")
     m.add_argument("--dry-run", action="store_true")
     m.set_defaults(func=cmd_match)
     r = sub.add_parser("reanaliza", help="recalcula lo derivado de una corrida ya jugada")

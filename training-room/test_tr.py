@@ -329,6 +329,26 @@ comprueba("AVISO" in rep.md(datos_d),
 comprueba("De nuestras 9 muertes, 7 estan determinadas" in texto_c,
           "modelo_discrepa y final_no_exportado son muertes, pero NO determinadas")
 
+# --- resolucion del --config ------------------------------------------------------
+# `deploy/cloud-run.sh --config` toma un nombre y `tr.py --config` tomaba una ruta. Un
+# torneo de 60 partidas midiendo la estrategia equivocada cuesta una hora que no hay.
+por_nombre = tr.resuelve_config("cuellos")
+por_ruta = tr.resuelve_config("snake/config/cuellos.json")
+comprueba(por_nombre.resolve() == por_ruta.resolve(),
+          "--config acepta el nombre y la ruta, y los dos dan el mismo fichero")
+comprueba(tr.hash_config(por_nombre) == tr.hash_config(por_ruta),
+          "y por tanto el mismo hash, que es lo que identifica la estrategia en la base")
+comprueba(tr.resuelve_config(None).stem == "default",
+          "sin --config se juega el default del repo")
+try:
+    tr.resuelve_config("no-existe-jamas")
+    comprueba(False, "un config inexistente aborta")
+except SystemExit:
+    comprueba(True, "un config inexistente aborta")
+faltan = set(tr.configs_disponibles()) - {p.stem for p in
+                                          (tr.RAIZ / "snake/config").glob("*.json")}
+comprueba(not faltan, "la lista que se le ofrece al usuario sale del disco, no de una constante")
+
 d_vacio = rep.recoge(vacio2, None)
 comprueba(d_vacio["partidas_ok"] == 0, "un torneo sin partidas buenas se detecta antes de escribir")
 
