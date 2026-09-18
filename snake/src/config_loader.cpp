@@ -147,6 +147,11 @@ Params parse_params(const json& doc) {
     params.space.weight = read_double(space, "weight", params.space.weight);
     params.space.tail_escape = read_bool(space, "tail_escape", params.space.tail_escape);
 
+    params.space.worst_case_weight =
+        read_double(space, "worst_case_weight", params.space.worst_case_weight);
+    params.space.worst_case_max_cuellos =
+        read_plain_int(space, "worst_case_max_cuellos", params.space.worst_case_max_cuellos);
+
     const json& head = child(doc, "head");
     params.head.avoid_equal_or_longer =
         read_double(head, "avoid_equal_or_longer", params.head.avoid_equal_or_longer);

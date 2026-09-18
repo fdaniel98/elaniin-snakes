@@ -114,6 +114,8 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     REQUIRE(from_json.space.min_space_ratio == defaults.space.min_space_ratio);
     REQUIRE(from_json.space.weight == defaults.space.weight);
     REQUIRE(from_json.space.tail_escape == defaults.space.tail_escape);
+    REQUIRE(from_json.space.worst_case_weight == defaults.space.worst_case_weight);
+    REQUIRE(from_json.space.worst_case_max_cuellos == defaults.space.worst_case_max_cuellos);
     REQUIRE(from_json.head.avoid_equal_or_longer == defaults.head.avoid_equal_or_longer);
     REQUIRE(from_json.head.prefer_shorter == defaults.head.prefer_shorter);
     REQUIRE(from_json.hazard.weight == defaults.hazard.weight);
@@ -128,7 +130,8 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     const json expected_keys = json::parse(R"({
       "time": ["network_margin_ms", "safety_margin_ms", "max_compute_ms"],
       "food": ["seek_below", "seek_below_in_hazard", "free_food_distance", "weight"],
-      "space": ["min_space_ratio", "weight", "tail_escape"],
+      "space": ["min_space_ratio", "weight", "tail_escape", "worst_case_weight",
+                "worst_case_max_cuellos"],
       "head": ["avoid_equal_or_longer", "prefer_shorter"],
       "hazard": ["weight", "low_health_multiplier"],
       "territory": ["version", "weight", "contested_weight", "hazard_value_pct"]

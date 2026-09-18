@@ -14,7 +14,9 @@
   "space": {
     "min_space_ratio": 1.0,
     "weight": 100.0,
-    "tail_escape": true
+    "tail_escape": true,
+    "worst_case_weight": 0.0,
+    "worst_case_max_cuellos": 24
   },
   "head": {
     "avoid_equal_or_longer": 80.0,

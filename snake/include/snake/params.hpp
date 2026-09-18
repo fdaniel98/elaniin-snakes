@@ -41,6 +41,12 @@ struct SpaceParams {
     double weight = 100.0;
     /// La cola propia cuenta como alcanzable si se llega en al menos estos turnos.
     bool tail_escape = true;
+    /// Peso del espacio que quedaria si el rival tapase el peor cuello de la region.
+    /// 0 lo apaga. El flood fill ve el hueco de ahora; esto ve la sala con una sola
+    /// puerta. ver docs/strategy.md#s-v1
+    double worst_case_weight = 0.0;
+    /// Casillas candidatas a cuello que se prueban como maximo, por movimiento.
+    std::int32_t worst_case_max_cuellos = 24;
 };
 
 /// Zona de cabeza: casillas adyacentes a cabezas rivales.

@@ -1,5 +1,5 @@
 {
-  "_comment": "v1: territorio por Voronoi. Mismo binario que v0; solo cambia territory.version. ver docs/strategy.md#s-v1",
+  "_comment": "v2: territorio por Voronoi MAS penalizacion de salas con una sola puerta. ver docs/strategy.md#s-v1",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
@@ -15,7 +15,7 @@
     "min_space_ratio": 1.0,
     "weight": 100.0,
     "tail_escape": true,
-    "worst_case_weight": 0.0,
+    "worst_case_weight": 150.0,
     "worst_case_max_cuellos": 24
   },
   "head": {

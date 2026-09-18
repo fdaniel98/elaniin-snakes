@@ -138,3 +138,62 @@ TEST_CASE("una serpiente eliminada no reparte territorio", "[voronoi]") {
     REQUIRE(t.cells[1] == 0);
     REQUIRE(t.contested == 0);
 }
+
+// --------------------------------------------------------------------------- cuellos
+#include <snake/eval/floodfill.hpp>
+
+TEST_CASE("el peor caso de una sala abierta es casi toda la sala", "[cuellos]") {
+    Board libres;
+    for (int i = 0; i < State::cells; ++i) {
+        libres.set(i);
+    }
+    const int total = snake::eval::flood(libres, cell(5, 5)).cells;
+    const int peor = snake::eval::worst_case_space(libres, cell(5, 5));
+    REQUIRE(total == State::cells);
+    // Quitar una casilla de un tablero abierto no parte nada: se pierde esa y ya.
+    REQUIRE(peor >= total - 1);
+}
+
+TEST_CASE("una region con una sola puerta devuelve el lado en el que uno se queda", "[cuellos]") {
+    // Sala de 3x3 en la esquina inferior izquierda, unida al resto por (3,1).
+    Board libres;
+    for (int x = 0; x < 3; ++x) {
+        for (int y = 0; y < 3; ++y) {
+            libres.set(cell(x, y));
+        }
+    }
+    libres.set(cell(3, 1));
+    for (int x = 4; x < 11; ++x) {
+        for (int y = 0; y < 11; ++y) {
+            libres.set(cell(x, y));
+        }
+    }
+
+    const int total = snake::eval::flood(libres, cell(1, 1)).cells;
+    const int peor = snake::eval::worst_case_space(libres, cell(1, 1));
+
+    REQUIRE(total == 9 + 1 + 77);
+    // Si se cierra la puerta, quedan las 9 de la sala. Eso es lo que el flood fill no ve.
+    REQUIRE(peor == 9);
+}
+
+TEST_CASE("el peor caso nunca supera al flood fill", "[cuellos]") {
+    // Propiedad, no ejemplo: cerrar una casilla no puede aumentar el espacio.
+    for (int semilla = 0; semilla < 60; ++semilla) {
+        Board libres;
+        unsigned x = static_cast<unsigned>(semilla) * 2654435761u + 1u;
+        for (int i = 0; i < State::cells; ++i) {
+            x ^= x << 13;
+            x ^= x >> 17;
+            x ^= x << 5;
+            if ((x & 3u) != 0u) {
+                libres.set(i);
+            }
+        }
+        libres.set(cell(5, 5));
+        const int total = snake::eval::flood(libres, cell(5, 5)).cells;
+        const int peor = snake::eval::worst_case_space(libres, cell(5, 5));
+        REQUIRE(peor <= total);
+        REQUIRE(peor >= 1);
+    }
+}

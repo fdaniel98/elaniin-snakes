@@ -103,6 +103,8 @@ struct Candidate {
     int territory{0};
     /// Casillas que nadie gana porque dos llegan a la vez con la misma longitud (v1).
     int contested{0};
+    /// Espacio que quedaria si se cerrase el peor cuello de la region alcanzable.
+    int worst_space{0};
 };
 
 /// Puntuacion de un movimiento ya filtrado. Todos los pesos salen del config:
@@ -153,6 +155,17 @@ double score_candidate(const State& state,
             score -= params.head.avoid_equal_or_longer;
         } else {
             score += params.head.prefer_shorter;
+        }
+    }
+
+    // Salas con una sola puerta. La penalizacion es proporcional a lo que se PIERDE en el
+    // peor caso, asi que un hueco abierto no paga nada y un callejon paga todo.
+    if (params.space.worst_case_weight > 0.0 && !degraded) {
+        const double perdido = static_cast<double>(candidate.space - candidate.worst_space);
+        score -= params.space.worst_case_weight * perdido / static_cast<double>(State::cells);
+        // Y si el peor caso no da ni para el propio cuerpo, es una tumba con puerta.
+        if (candidate.worst_space < my_length) {
+            score -= params.space.worst_case_weight;
         }
     }
 
@@ -252,6 +265,16 @@ Move decide_impl(const State& state,
         Board reachable = free_cells;
         reachable.set(candidate.cell);
         candidate.space = eval::flood(reachable, candidate.cell).cells;
+
+        // El espacio que quedaria si el rival tapase el peor cuello de la region. Lo
+        // paga solo quien lo enciende: en un tablero abierto no hay cuellos de grado 2 o
+        // 3 y el bucle no llega a hacer ningun flood extra.
+        if (params.space.worst_case_weight > 0.0 && !degraded) {
+            candidate.worst_space = eval::worst_case_space(
+                reachable, candidate.cell, params.space.worst_case_max_cuellos);
+        } else {
+            candidate.worst_space = candidate.space;
+        }
 
         // v1: ademas del espacio que existe, el que se alcanza antes que los rivales. Se
         // calcula desde la casilla candidata, sin copiar el estado ni inventar los
