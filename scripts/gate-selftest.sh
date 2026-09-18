@@ -419,6 +419,14 @@ p.write_text(s)
 EOF
 }
 
+poison_0c() {
+    # Un artefacto de build entra al indice. Paso de verdad en la fase 3 con un
+    # __pycache__, y el gate estaba en verde.
+    mkdir -p training-room/__pycache__
+    echo basura > training-room/__pycache__/tr.cpython-311.pyc
+    git add -f training-room/__pycache__/tr.cpython-311.pyc
+}
+
 # veneno | check esperado | descripcion | [mensaje exacto que debe aparecer]
 #
 # El cuarto campo es opcional y existe para los venenos del check 9: ese check puede
@@ -427,6 +435,7 @@ EOF
 POISONS=(
     "poison_0|0|un .sh con CR"
     "poison_0b|0|un script sin bit de ejecucion en el indice de git|en el indice como 100644"
+    "poison_0c|0|artefacto de build en el indice de git|artefactos de build en el indice"
     "poison_1|1|error de sintaxis en el motor"
     "poison_2|2|codigo que solo rompe el build debug"
     "poison_3|3|un test que falla"

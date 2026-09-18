@@ -13,3 +13,5 @@ docs/results/*.db
 tmp/
 .venv/
 zoo/.estado-local.json
+__pycache__/
+*.pyc

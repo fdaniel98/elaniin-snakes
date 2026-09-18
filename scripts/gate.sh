@@ -97,7 +97,19 @@ check_scripts_hygiene() {
         fi
     done < <(git ls-files -s 'scripts/*.sh' 'scripts/*.py' 2>/dev/null)
 
-    [[ $bad -eq 0 ]] && echo "OK scripts sin CR y ejecutables, en disco y en el indice"
+    # Artefactos de build en la historia. Se colo un __pycache__ en un commit de la fase
+    # 3 y el gate no lo vio: no habia nada que mirase el indice buscando basura generada.
+    # Un .pyc commiteado no rompe nada hoy y envenena cualquier clon manana, porque
+    # Python prefiere el .pyc si su marca de tiempo cuadra.
+    local basura
+    basura="$(git ls-files | grep -E '(^|/)__pycache__/|\.pyc$|(^|/)\.pytest_cache/|(^|/)build/' || true)"
+    if [[ -n "$basura" ]]; then
+        echo "FAIL artefactos de build en el indice de git:"
+        printf '  %s\n' $basura
+        bad=1
+    fi
+
+    [[ $bad -eq 0 ]] && echo "OK scripts sin CR y ejecutables, y sin artefactos de build en el indice"
     return $bad
 }
 
