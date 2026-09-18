@@ -23,13 +23,24 @@ import os
 import re
 import shutil
 import sqlite3
+import threading
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-NUESTRO_SLUG = "v0-baseline"
+# El nombre con el que jugamos sale del CONFIG, no de una constante. Con "v0-baseline"
+# fijo, un torneo de v1 salia etiquetado como v0 en el JSONL y en el reporte: la base los
+# distinguia por el hash del config, pero la etiqueta mentia, y de ahi a desplegar la
+# version equivocada hay un paso.
+NUESTRO_SLUG_POR_DEFECTO = "v0-baseline"
+
+
+def slug_del_config(ruta):
+    """`snake/config/v1.json` -> `v1`; `default.json` -> `v0-baseline`."""
+    nombre = Path(ruta).stem
+    return NUESTRO_SLUG_POR_DEFECTO if nombre == "default" else nombre
 
 
 def muere(mensaje):
@@ -60,7 +71,7 @@ def hash_config(ruta):
 
 
 # --------------------------------------------------------------- recursos justos
-def reparte_nucleos(n_snakes, cpus_por_snake, fatal=True):
+def reparte_nucleos(n_snakes, cpus_por_snake, fatal=True, reserva=2):
     """Devuelve (cpusets, motivo_del_no). Con fatal, un torneo que no cabe aborta.
 
     La regla es de §10.2 y no es negociable desde la linea de comandos: si el torneo no
@@ -68,7 +79,7 @@ def reparte_nucleos(n_snakes, cpus_por_snake, fatal=True):
     --dry-run se informa y se sigue, porque el plan se revisa en cualquier maquina y la
     que manda es donde se corra de verdad."""
     fisicos = os.cpu_count() or 0
-    presupuesto = fisicos - 2
+    presupuesto = fisicos - reserva
     total = n_snakes * cpus_por_snake
     motivo = None
     if cpus_por_snake != int(cpus_por_snake):
@@ -76,8 +87,9 @@ def reparte_nucleos(n_snakes, cpus_por_snake, fatal=True):
     elif total > presupuesto:
         motivo = (
             f"no cabe: {n_snakes} snakes x {cpus_por_snake} CPU = {total} > {presupuesto} "
-            f"(nucleos {fisicos} menos dos para el arbitro y el sistema). Baja --cpus del "
-            "gauntlet o corre en una maquina mayor; no se mide asi."
+            f"(nucleos {fisicos}" + (f" menos {reserva} para el arbitro y el sistema" if reserva else "") +
+            "). Baja --cpus del gauntlet, baja --paralelo, o corre en una maquina mayor; "
+            "no se mide asi."
         )
     if motivo and fatal:
         muere(motivo)
@@ -176,14 +188,14 @@ BANDERAS_AISLAMIENTO = [
 ]
 
 
-def arranca_la_nuestra(docker, img, puerto, cpus, cpuset, memoria, seco):
-    cmd = [docker, "run", "-d", "--name", "tr-ours", *BANDERAS_AISLAMIENTO,
+def arranca_la_nuestra(docker, img, puerto, cpus, cpuset, memoria, seco, sufijo=""):
+    cmd = [docker, "run", "-d", "--name", f"tr-ours{sufijo}", *BANDERAS_AISLAMIENTO,
            "--cpus", str(cpus), "--cpuset-cpus", cpuset, "--memory", memoria,
            "-p", f"127.0.0.1:{puerto}:8080", "-e", "PORT=8080", img]
     if seco:
         print("DRY " + " ".join(cmd))
         return f"http://127.0.0.1:{puerto}"
-    corre([docker, "rm", "-f", "tr-ours"])
+    corre([docker, "rm", "-f", f"tr-ours{sufijo}"])
     if corre(cmd).returncode != 0:
         muere("no arranco el contenedor de nuestra snake")
     return f"http://127.0.0.1:{puerto}"
@@ -385,7 +397,9 @@ CREATE TABLE IF NOT EXISTS latencias (
 
 
 def abre_db(ruta):
-    db = sqlite3.connect(ruta)
+    # `check_same_thread=False` porque con --paralelo escriben varios hilos; TODAS las
+    # escrituras pasan por un candado en el llamante, que es lo que lo hace seguro.
+    db = sqlite3.connect(ruta, check_same_thread=False)
     db.executescript(ESQUEMA)
     return db
 
@@ -400,8 +414,20 @@ def cmd_match(args):
     cpus = recursos["cpus"]
 
     jugadores = 1 + len(composiciones[0])
-    cpusets, motivo_no_cabe = reparte_nucleos(jugadores, cpus, fatal=not args.dry_run)
+    paralelo = max(1, args.paralelo)
+    # En serie se reservan dos nucleos para el arbitro y el sistema, que es lo que hace
+    # comparables las latencias. En paralelo esa reserva no cabe, y por eso la corrida
+    # DEJA DE MEDIR LATENCIA: se declara en la base y el reporte lo dice en su encabezado.
+    # Los puestos siguen valiendo: nuestra snake responde en 1 ms y los rivales gastan 400,
+    # asi que quien gana no lo decide el reparto de CPU. ver docs/strategy.md#s-v1
+    reserva = 2 if paralelo == 1 else 0
+    cpusets, motivo_no_cabe = reparte_nucleos(jugadores * paralelo, cpus,
+                                              fatal=not args.dry_run, reserva=reserva)
+    if paralelo > 1:
+        print(f"PARALELO {paralelo}: esta corrida mide FUERZA, no latencia.")
     topo = topologia()
+    topo["paralelo"] = paralelo
+    topo["latencia_valida"] = paralelo == 1
 
     salida = Path(args.out)
     salida.mkdir(parents=True, exist_ok=True)
@@ -441,7 +467,9 @@ def cmd_match(args):
     if not ruta_config.exists():
         muere(f"no existe el config {ruta_config}")
     nuestro_hash = hash_config(ruta_config)
+    nuestro_slug = slug_del_config(ruta_config)
     print(f"config:        {ruta_config} (hash {nuestro_hash})")
+    print(f"jugamos como: {nuestro_slug}")
 
     plan = []
     for g in range(args.games):
@@ -472,70 +500,99 @@ def cmd_match(args):
     # servidor de Battlesnake es apatrida entre partidas -recibe /start cada vez- y
     # reiniciar cuatro contenedores 200 veces mediria el arranque de docker, no las
     # snakes. El arranque en frio se mide aparte, en el soak (ver docs/performance.md#p-07).
-    puerto_base = 9700
-    urls = {}
+    #
+    # Con --paralelo N se levantan N juegos completos, cada uno con su sufijo, sus puertos
+    # y sus nucleos: dos partidas compartiendo contenedor se robarian el cerebro.
     slugs = composiciones[0]
+    suites = []
     try:
-        urls[NUESTRO_SLUG] = arranca_la_nuestra(
-            docker, img_nuestra, puerto_base, cpus, cpusets[0], recursos["memoria"], seco=False)
-        for i, slug in enumerate(slugs):
-            r = corre([str(RAIZ / "scripts/zoo.sh"), "up", slug,
-                       "--port", str(puerto_base + 1 + i), "--cpus", str(cpus),
-                       "--cpuset", cpusets[i + 1], "--memory", recursos["memoria"]],
-                      cwd=RAIZ)
-            if r.returncode != 0:
-                muere(f"no arranco {slug}: {r.stderr.strip()[:300]}")
-            urls[slug] = r.stdout.strip()
-        for slug, url in urls.items():
-            if not espera(url):
-                muere(f"{slug} no respondio en {url}")
-        print("OK   las cuatro snakes responden")
+        for w in range(paralelo):
+            sufijo = f"-w{w}" if paralelo > 1 else ""
+            puerto_base = 9700 + w * 10
+            urls = {}
+            corre([docker, "rm", "-f", f"tr-ours{sufijo}"])
+            urls[nuestro_slug] = arranca_la_nuestra(
+                docker, img_nuestra, puerto_base, cpus,
+                cpusets[w * jugadores], recursos["memoria"], seco=False, sufijo=sufijo)
+            for i, slug in enumerate(slugs):
+                r = corre([str(RAIZ / "scripts/zoo.sh"), "up", slug,
+                           "--port", str(puerto_base + 1 + i), "--cpus", str(cpus),
+                           "--cpuset", cpusets[w * jugadores + i + 1],
+                           "--memory", recursos["memoria"], "--sufijo", sufijo],
+                          cwd=RAIZ)
+                if r.returncode != 0:
+                    muere(f"no arranco {slug}{sufijo}: {r.stderr.strip()[:300]}")
+                urls[slug] = r.stdout.strip()
+            for slug, url in urls.items():
+                if not espera(url):
+                    muere(f"{slug}{sufijo} no respondio en {url}")
+            suites.append({"sufijo": sufijo, "urls": urls})
+        print(f"OK   {paralelo * jugadores} snakes responden en {paralelo} juego(s)")
 
         cli = arbitro()
-        # Nada de borrar lo anterior: una corrida de cinco horas que empieza tirando el
-        # resultado de la anterior es una forma cara de perder datos. Las partidas ya
-        # jugadas con el arbitro en 0 se saltan, asi que una corrida interrumpida se
-        # reanuda sola con el mismo --out.
         ya_jugadas = {fila[0] for fila in db.execute(
             "SELECT id FROM partidas WHERE arbitro_rc = 0")}
         if ya_jugadas:
             print(f"OK   {len(ya_jugadas)} partidas ya estaban jugadas; se reanuda")
+        pendientes = [p for p in plan if p["id"] not in ya_jugadas]
+        print(f"{len(pendientes)} partidas por jugar")
+
         fallos = 0
         empezado = time.time()
-        for p in plan:
-            if p["id"] in ya_jugadas:
-                print("=", end="", flush=True)
-                continue
-            # La rotacion se implementa reordenando los argumentos del arbitro: el orden
-            # de --name/--url ES el asiento. No hace falta reiniciar nada.
-            orden = [NUESTRO_SLUG] + list(p["comp"])
-            orden = orden[-p["asiento"]:] + orden[:-p["asiento"]] if p["asiento"] else orden
-            argumentos = []
-            for slug in orden:
-                argumentos += ["--name", slug, "--url", urls[slug]]
-            jsonl = salida / f"{p['id']}.jsonl"
-            reflog = salida / f"{p['id']}.ref.log"
-            with open(reflog, "w") as errores:
-                rc = subprocess.run(
-                    [cli, "play", "-W", str(partida["ancho"]), "-H", str(partida["alto"]),
-                     "-g", partida["ruleset"], "-m", partida["mapa"],
-                     "-t", str(partida["timeout_ms"]), "-r", str(p["semilla"]),
-                     *argumentos, "-o", str(jsonl)],
-                    cwd=RAIZ, stdout=subprocess.DEVNULL, stderr=errores).returncode
-            if rc != 0:
-                fallos += 1
-            guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit,
-                   nuestro_hash, img_nuestra, gauntlet["imagenes"])
-            # Commit por partida, no al final: lo que ya se jugo no se pierde porque la
-            # 190 falle, y `sqlite3` desde otra terminal puede mirar el avance.
-            db.commit()
-            print(".", end="", flush=True)
-            if (plan.index(p) + 1) % 50 == 0:
-                print(f" {plan.index(p) + 1}", flush=True)
+        candado = threading.Lock()
+        cola = list(pendientes)
+        hechas = 0
+
+        def trabaja(suite):
+            nonlocal fallos, hechas
+            while True:
+                with candado:
+                    if not cola:
+                        return
+                    p = cola.pop(0)
+                urls_w = suite["urls"]
+                # La rotacion se implementa reordenando los argumentos del arbitro. NO
+                # decide donde sale cada serpiente -el arbitro recorre un mapa de Go-,
+                # pero si varia con quien empieza cada partida. ver reporte T-03.
+                orden = [nuestro_slug] + list(p["comp"])
+                orden = orden[-p["asiento"]:] + orden[:-p["asiento"]] if p["asiento"] else orden
+                argumentos = []
+                for slug in orden:
+                    argumentos += ["--name", slug, "--url", urls_w[slug]]
+                jsonl = salida / f"{p['id']}.jsonl"
+                reflog = salida / f"{p['id']}.ref.log"
+                with open(reflog, "w") as errores:
+                    rc = subprocess.run(
+                        [cli, "play", "-W", str(partida["ancho"]), "-H", str(partida["alto"]),
+                         "-g", partida["ruleset"], "-m", partida["mapa"],
+                         "-t", str(partida["timeout_ms"]), "-r", str(p["semilla"]),
+                         *argumentos, "-o", str(jsonl)],
+                        cwd=RAIZ, stdout=subprocess.DEVNULL, stderr=errores).returncode
+                with candado:
+                    if rc != 0:
+                        fallos += 1
+                    guarda(db, gauntlet, p, jsonl, reflog, rc, urls_w, orden, topo, commit,
+                           nuestro_hash, img_nuestra, gauntlet["imagenes"], nuestro_slug)
+                    # Commit por partida, no al final: lo que ya se jugo no se pierde
+                    # porque la 190 falle.
+                    db.commit()
+                    hechas += 1
+                    print(".", end="", flush=True)
+                    if hechas % 50 == 0:
+                        print(f" {hechas}", flush=True)
+
+        hilos = [threading.Thread(target=trabaja, args=(s,), daemon=True) for s in suites]
+        for h in hilos:
+            h.start()
+        for h in hilos:
+            h.join()
         print()
     finally:
-        corre([docker, "rm", "-f", "tr-ours"])
-        corre([str(RAIZ / "scripts/zoo.sh"), "down", "--all"], cwd=RAIZ)
+        for w in range(paralelo):
+            sufijo = f"-w{w}" if paralelo > 1 else ""
+            corre([docker, "rm", "-f", f"tr-ours{sufijo}"])
+            corre([str(RAIZ / "scripts/zoo.sh"), "down", "--all", "--sufijo", sufijo],
+                  cwd=RAIZ)
 
     minutos = (time.time() - empezado) / 60
     print(f"jugadas {len(plan)} partidas en {minutos:.1f} min "
@@ -548,7 +605,7 @@ def cmd_match(args):
 
 
 def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit, hash_cfg,
-           img_nuestra, imagenes):
+           img_nuestra, imagenes, nuestro_slug):
     """`orden` es la lista de slugs en el orden en que se le pasaron al arbitro, que ES el
     asiento. Se guarda para todas las snakes, no solo la nuestra: si un asiento favorece,
     se ve en los rivales igual que en nosotros, y eso es lo que la rotacion anula."""
@@ -572,7 +629,7 @@ def guarda(db, gauntlet, p, jsonl, reflog, rc, urls, orden, topo, commit, hash_c
     for slug, sid in id_por_slug.items():
         if sid is None:
             continue
-        nuestra = slug == NUESTRO_SLUG
+        nuestra = slug == nuestro_slug
         db.execute("INSERT OR REPLACE INTO participantes VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                    (p["id"], slug, datos["nombres"].get(sid, slug),
                     "v0" if nuestra else "zoo", commit if nuestra else None,
@@ -647,6 +704,8 @@ def main():
     m.add_argument("--games", type=int, required=True)
     m.add_argument("--out", required=True)
     m.add_argument("--seed-base", type=int, default=1)
+    m.add_argument("--paralelo", type=int, default=1,
+                   help="partidas simultaneas. >1 mide FUERZA, no latencia: el reporte lo declara")
     m.add_argument("--config", default=None,
                    help="config de estrategia a meter en la imagen; por defecto el del repo")
     m.add_argument("--dry-run", action="store_true")

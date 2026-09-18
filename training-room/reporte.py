@@ -45,6 +45,10 @@ def recoge(salida, binario_causas):
     d["hash_config"] = (consulta(db, "SELECT hash_config FROM participantes WHERE hash_config IS NOT NULL LIMIT 1")
                         or [[None]])[0][0]
     d["semillas"] = consulta(db, "SELECT COUNT(DISTINCT semilla) FROM partidas WHERE arbitro_rc=0")[0][0]
+    # Nuestra snake es la unica fila con commit: asi el reporte no depende de un nombre
+    # escrito a mano en dos sitios.
+    fila_nuestra = consulta(db, "SELECT slug FROM participantes WHERE commit_snake IS NOT NULL LIMIT 1")
+    d["nuestro_slug"] = fila_nuestra[0][0] if fila_nuestra else "v0-baseline"
     d["turnos"] = consulta(db, "SELECT AVG(turnos), MIN(turnos), MAX(turnos) FROM partidas WHERE arbitro_rc=0")[0]
 
     d["clasificacion"] = consulta(db, """
@@ -100,7 +104,8 @@ def recoge(salida, binario_causas):
         for jsonl in sorted(salida.glob("g*.jsonl")):
             if jsonl.stat().st_size == 0:
                 continue
-            r = subprocess.run([binario_causas, str(jsonl), "--nuestra", "v0-baseline"],
+            r = subprocess.run([binario_causas, str(jsonl), "--nuestra",
+                                d.get("nuestro_slug", "v0-baseline")],
                                capture_output=True, text=True)
             if r.returncode != 0:
                 continue
@@ -134,7 +139,18 @@ def md(d):
     a(f"| turnos por partida (media / min / max) | {d['turnos'][0]:.1f} / {d['turnos'][1]} / {d['turnos'][2]} |")
     a(f"| nucleos / hilos por nucleo / governor | {t.get('nucleos','?')} / "
       f"{t.get('hilos_por_nucleo','?')} / {t.get('gobernador','?')} |")
+    a(f"| partidas simultaneas | {t.get('paralelo', 1)} |")
     a("")
+    if not t.get("latencia_valida", True):
+        # No es una nota al pie: es la diferencia entre un numero valido y uno que no lo
+        # es, y va donde se lee primero.
+        a("> **Esta corrida NO mide latencia.** Se jugaron varias partidas a la vez, asi")
+        a("> que los nucleos estan repartidos sin la reserva para el arbitro y el sistema")
+        a("> y el p99 lo domina el throttling de la cuota CFS, no el algoritmo. Los")
+        a("> PUESTOS si valen: nuestra snake responde en 1 ms y los rivales gastan 400, de")
+        a("> modo que quien gana no lo decide el reparto de CPU. Para latencias validas,")
+        a("> una corrida en serie.")
+        a("")
     a("Dos corridas con nucleos, hilos por nucleo o governor distintos **no se comparan**.")
     a("El governor sale `desconocido` en WSL2 porque no expone `cpufreq`: la frecuencia la")
     a("gobierna el anfitrion y no se puede ni leer ni fijar desde aqui.")
@@ -171,13 +187,18 @@ def md(d):
     for pos in sorted(d.get("salidas", {})):
         filas = d["salidas"][pos]
         todos = [pu for _slug, pu in filas]
-        nuestras = [pu for slug, pu in filas if slug == "v0-baseline"]
+        nuestras = [pu for slug, pu in filas if slug == d.get("nuestro_slug", "v0-baseline")]
         media_n = f"{sum(nuestras) / len(nuestras):.3f}" if nuestras else "-"
         a(f"| ({pos[0]}, {pos[1]}) | {sum(todos) / len(todos):.3f} | {len(todos)} | "
           f"{media_n} | {len(nuestras)} |")
     a("")
     a("## T-04 Latencia y timeouts {#t-04}")
     a("")
+    if not d["topologia"].get("latencia_valida", True):
+        a("**Numeros no validos en esta corrida** (varias partidas a la vez). Se dejan por")
+        a("completitud y para ver los timeouts, que si son reales: un timeout es un")
+        a("timeout aunque la maquina estuviera cargada.")
+        a("")
     a("| snake | p50 | p95 | p99 | maximo | timeouts | movimientos | tasa |")
     a("|---|---|---|---|---|---|---|---|")
     for slug, p50, p95, p99, mx, to, movs in d["latencias"]:
@@ -220,7 +241,7 @@ def md(d):
             a(f"**AVISO** estas filas no suman las {d['partidas_ok']} partidas: " +
               ", ".join(f"{n} ({t})" for n, t in descuadre) + ".")
             a("")
-        nuestras = d["causas"].get("v0-baseline", Counter())
+        nuestras = d["causas"].get(d.get("nuestro_slug", "v0-baseline"), Counter())
         muertes = sum(v for k, v in nuestras.items() if k != "sobrevivio")
         sin_determinar = sum(nuestras.get(k, 0) for k in
                              ("ambigua", "modelo_discrepa", "sin_candidato", "final_no_exportado"))

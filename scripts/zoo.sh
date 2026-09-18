@@ -205,13 +205,16 @@ cmd_up() {
     local slug="${1:-}"
     shift || true
     [[ -n "$slug" ]] || die "uso: zoo.sh up <slug> --port N [--cpus C --cpuset S --memory M]"
-    local puerto="" cpus="" cpuset="" memoria=""
+    local puerto="" cpus="" cpuset="" memoria="" sufijo=""
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --port) puerto="${2:-}"; shift 2 ;;
             --cpus) cpus="${2:-}"; shift 2 ;;
             --cpuset) cpuset="${2:-}"; shift 2 ;;
             --memory) memoria="${2:-}"; shift 2 ;;
+            # Para correr varias partidas a la vez hacen falta varios juegos de
+            # contenedores, y dos con el mismo nombre no pueden coexistir.
+            --sufijo) sufijo="${2:-}"; shift 2 ;;
             *) die "opcion desconocida de up: $1" ;;
         esac
     done
@@ -232,7 +235,7 @@ cmd_up() {
     [[ -n "$cpuset" ]] && recursos+=(--cpuset-cpus "$cpuset")
     [[ -n "$memoria" ]] && recursos+=(--memory "$memoria")
 
-    docker_run run -d --name "zoo-$slug" \
+    docker_run run -d --name "zoo-$slug$sufijo" \
         --user 65534:65534 \
         --read-only \
         --tmpfs /tmp \
@@ -260,8 +263,8 @@ cmd_up() {
         sleep 0.5
     done
     if [[ $listo -eq 0 ]]; then
-        "$DOCKER" logs "zoo-$slug" 2>&1 | tail -20 >&2
-        cmd_down "$slug"
+        "$DOCKER" logs "zoo-$slug$sufijo" 2>&1 | tail -20 >&2
+        cmd_down "$slug" --sufijo "$sufijo"
         die "$slug no respondio a GET $url en 60 s"
     fi
     printf '%s\n' "$url"
@@ -270,11 +273,30 @@ cmd_up() {
 # ------------------------------------------------------------------ down
 cmd_down() {
     local objetivo="${1:-}"
-    [[ -n "$objetivo" ]] || die "uso: zoo.sh down <slug>|--all"
+    shift || true
+    [[ -n "$objetivo" ]] || die "uso: zoo.sh down <slug>|--all [--sufijo S]"
+    local sufijo=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --sufijo) sufijo="${2:-}"; shift 2 ;;
+            *) die "opcion desconocida de down: $1" ;;
+        esac
+    done
     local lista slug
     if [[ "$objetivo" == --all ]]; then lista="$(slugs_todos)"; else lista="$objetivo"; fi
     for slug in $lista; do
-        docker_run rm -f "zoo-$slug" >/dev/null
+        if [[ -n "$sufijo" ]]; then
+            docker_run rm -f "zoo-$slug$sufijo" >/dev/null
+        else
+            # Sin sufijo se barren tambien los de las corridas en paralelo: un contenedor
+            # huerfano ocupa el puerto de la corrida siguiente.
+            docker_run rm -f "zoo-$slug" >/dev/null
+            if [[ $DRY -eq 0 ]] && buscar_docker 2>/dev/null; then
+                local viejos
+                viejos="$("$DOCKER" ps -aq --filter "name=^zoo-$slug-w" 2>/dev/null)"
+                [[ -n "$viejos" ]] && "$DOCKER" rm -f $viejos >/dev/null 2>&1
+            fi
+        fi
     done
     return 0
 }

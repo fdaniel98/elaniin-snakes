@@ -111,7 +111,8 @@ orden = ["b", "c", "v0-baseline", "a"]          # asiento 2 para la nuestra
 plan = {"id": "g00000", "semilla": 7, "asiento": 2, "comp": ["a", "b", "c"]}
 gauntlet = {"nombre": "test", "imagenes": {"zoo/x:1": "sha256:0"}}
 tr.guarda(db, gauntlet, plan, jsonl, reflog, 0, urls, orden,
-          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"])
+          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"],
+          "v0-baseline")
 
 filas = db.execute("SELECT slug, asiento, puesto FROM participantes ORDER BY asiento").fetchall()
 comprueba(len(filas) == 4, "se persisten las cuatro snakes, no solo la nuestra")
@@ -128,7 +129,8 @@ comprueba(fila == (7, 2, 0), "la partida guarda semilla, asiento nuestro y codig
 ruta_db = Path(tempfile.mkdtemp()) / "torneo.sqlite"
 db1 = tr.abre_db(ruta_db)
 tr.guarda(db1, gauntlet, plan, jsonl, reflog, 0, urls, orden,
-          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"])
+          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"],
+          "v0-baseline")
 db1.commit()
 db1.close()
 
@@ -140,7 +142,8 @@ comprueba(ya == {"g00000"}, "una segunda pasada reconoce la partida ya jugada")
 
 plan_malo = dict(plan, id="g00001")
 tr.guarda(db2, gauntlet, plan_malo, jsonl, reflog, 1, urls, orden,
-          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"])
+          {"nucleos": 8}, "abc123", "hash", "battlesnake/ours:abc123", gauntlet["imagenes"],
+          "v0-baseline")
 db2.commit()
 ya = {f[0] for f in db2.execute("SELECT id FROM partidas WHERE arbitro_rc = 0")}
 comprueba("g00001" not in ya, "una partida con el arbitro en error NO cuenta como jugada")
@@ -214,6 +217,12 @@ rc = tr.cmd_reanaliza(types.SimpleNamespace(out=str(dir_run)))
 db3 = tr.abre_db(dir_run / "torneo.sqlite")
 valores = dict(db3.execute("SELECT slug, timeouts FROM latencias").fetchall())
 comprueba(rc == 0, "reanaliza sale con 0 cuando modifica filas")
+# El nombre con el que jugamos sale del config, no de una constante: un torneo de v1 salia
+# etiquetado como v0 en el JSONL y en el reporte.
+comprueba(tr.slug_del_config("snake/config/v1.json") == "v1",
+          "el config v1 hace que juguemos como 'v1'")
+comprueba(tr.slug_del_config("snake/config/default.json") == "v0-baseline",
+          "el config por defecto sigue siendo v0-baseline")
 comprueba(valores.get("v0-baseline") == 1, "el timeout de /move llega a la fila correcta")
 comprueba(valores.get("a") == 0, "una snake sin quejas queda en 0, no en NULL")
 
@@ -275,6 +284,14 @@ comprueba(datos["partidas_ok"] == 1 and datos["causas"] is None,
 texto = rep.md(datos)
 comprueba("## T-02" in texto and "v0-baseline" in texto, "el markdown lleva la clasificacion")
 comprueba("p-valores" in texto, "el reporte declara que no da veredicto ni p-valores")
+# Una corrida en paralelo no mide latencia, y eso tiene que estar donde se lee primero.
+datos_par = dict(datos)
+datos_par["topologia"] = {"nucleos": 8, "paralelo": 2, "latencia_valida": False}
+texto_par = rep.md(datos_par)
+comprueba("NO mide latencia" in texto_par,
+          "una corrida en paralelo declara que no mide latencia, arriba del todo")
+comprueba(texto_par.index("NO mide latencia") < texto_par.index("T-02"),
+          "esa advertencia va ANTES de la clasificacion, no en una nota al pie")
 comprueba("2.500" in texto, "el puesto compartido llega al reporte sin redondearse a entero")
 # T-03 agrupa por punto de salida, no por el orden de los argumentos: ese orden no decide
 # donde sale nadie (el arbitro recorre un mapa de Go). Y si no hay JSONL, lo dice.
