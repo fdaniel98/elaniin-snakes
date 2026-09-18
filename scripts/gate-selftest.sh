@@ -270,6 +270,69 @@ p.write_text(s.replace(marca, fila + marca, 1), encoding="utf-8")
 EOF
 }
 
+poison_9e() {
+    # Ledger sin bloque de auditorias. El criterio 14 las hace obligatorias y hasta
+    # ADR-0013 el check 9 ni las miraba.
+    # ver docs/decisions/ADR-0013-auditorias-fuera-del-loop.md#d-0121
+    local ledger
+    ledger="$(ledger_en_ambito)" || return 1
+    python3 - "$ledger" <<'EOF'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    doc = json.load(fh)
+doc.pop("auditorias", None)
+with open(path, "w", encoding="utf-8", newline="\n") as fh:
+    json.dump(doc, fh, indent=2)
+    fh.write("\n")
+EOF
+}
+
+poison_9f() {
+    # Hallazgo de auditoria que se queda abierto. Registrar la auditoria y no cerrar lo
+    # que encontro es peor que no auditar: parece hecho.
+    local ledger
+    ledger="$(ledger_en_ambito)" || return 1
+    python3 - "$ledger" <<'EOF'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    doc = json.load(fh)
+for auditoria in doc.get("auditorias", []):
+    for hallazgo in auditoria.get("findings", []):
+        hallazgo["estado"] = "ABIERTO"
+        hallazgo.pop("fixed_in", None)
+        break
+    break
+with open(path, "w", encoding="utf-8", newline="\n") as fh:
+    json.dump(doc, fh, indent=2)
+    fh.write("\n")
+EOF
+}
+
+poison_9g() {
+    # Hallazgo de auditoria que dice arreglarse en un commit que no toca el archivo que
+    # el propio hallazgo cita. Es el antifraude de las iteraciones, aplicado al bloque
+    # nuevo; se estreno cazando una traza falsa de verdad.
+    local ledger
+    ledger="$(ledger_en_ambito)" || return 1
+    python3 - "$ledger" <<'EOF'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    doc = json.load(fh)
+for auditoria in doc.get("auditorias", []):
+    for hallazgo in auditoria.get("findings", []):
+        if hallazgo.get("estado") == "REPARADO":
+            hallazgo["cite"] = "deploy/Dockerfile"
+            with open(path, "w", encoding="utf-8", newline="\n") as out:
+                json.dump(doc, out, indent=2)
+                out.write("\n")
+            sys.exit(0)
+sys.exit(1)
+EOF
+}
+
 poison_10() {
     sed -i 's|^FROM gcr.io/distroless/cc-debian12:nonroot|FROM gcr.io/distroless/static-debian12:nonroot|' \
         deploy/Dockerfile
@@ -302,6 +365,9 @@ POISONS=(
     "poison_9b|9|ledger con el encadenamiento de commits roto|commit_after(i) != commit_before(i+1)"
     "poison_9c|9|ultima iteracion de una clase fuera de umbral|umbral incumplido"
     "poison_9d|9|entregable declarado fuera del ambito del loop|fuera de closing.deliverable_scope"
+    "poison_9e|9|ledger sin bloque de auditorias|sin bloque auditorias"
+    "poison_9f|9|hallazgo de auditoria abierto|hallazgos de auditoria abiertos"
+    "poison_9g|9|arreglo de auditoria que no toca el archivo citado|que no toca ese archivo"
     "poison_10|10|runtime distroless sin libstdc++"
 )
 

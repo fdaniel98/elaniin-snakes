@@ -82,5 +82,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 ## Siguiente accion concreta
 
 Correr `./scripts/gate.sh` y `./scripts/gate-selftest.sh` en la maquina de referencia: es
-lo unico que separa la fase 1 de COMPLETA. La autoprueba necesita venenos nuevos para el
-check 9, que ahora comprueba las auditorias.
+lo unico que separa la fase 1 de COMPLETA. La autoprueba lleva 25 venenos, tres de ellos
+nuevos para lo que el check 9 comprueba desde el ADR-0013.
