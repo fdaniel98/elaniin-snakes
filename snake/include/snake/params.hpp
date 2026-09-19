@@ -87,6 +87,24 @@ struct TerritoryParams {
 };
 
 /// Config completo del cerebro.
+/// [v5] Control de longitud. ver docs/decisions/ADR-0026-control-de-longitud.md
+struct LengthParams {
+    /// 0 = la politica de v0 (comer solo con hambre, longitud con peso simbolico).
+    /// 1 = ventaja de longitud como termino de primera clase.
+    std::int32_t version = 0;
+    /// Peso de la VENTAJA de longitud sobre el rival mas largo. Lo que decide un cabezazo
+    /// no es ser largo, es ser mas largo: en 47 de 60 partidas medidas moriamos siendo
+    /// iguales o mas cortos que todos los vivos.
+    /// ver docs/experimentos.md#s-longitud
+    double advantage_weight = 60.0;
+    /// Ventaja a partir de la cual crecer deja de valer. Un cuerpo enorme tambien encierra,
+    /// asi que el termino satura en vez de crecer sin fin.
+    std::int32_t target_lead = 3;
+    /// Cuanto pesa la cercania a la comida cuando se va por detras en longitud. Es lo que
+    /// convierte "no comer por comer" en "comer cuando el arbol dice que sale a cuenta".
+    double hunt_weight = 10.0;
+};
+
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md
 struct SearchParams {
     /// 0 = decision de un turno (v0). 1 = busqueda con profundizacion iterativa.
@@ -143,6 +161,7 @@ struct Params {
     HazardParams hazard{};
     TerritoryParams territory{};
     SearchParams search{};
+    LengthParams length{};
 };
 
 } // namespace snake

@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 6129
+size_bytes: 7306
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -24,6 +24,34 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | busqueda prof. 12 | el doble de profundidad | **-0.283** | NO CONCLUYENTE |
 | prof. 6 -> prof. 12 | solo la profundidad | -0.017 | **la profundidad no es el techo** |
 | v4 hojas | territorio en las HOJAS | **-0.367** | **MEJORA** |
+| v5 longitud | ventaja de longitud + comida | — | sin medir |
+
+### S-LONGITUD Por que v4 sigue quedando tercera {#s-longitud}
+
+Analisis de los 60 JSONL de `torneo-v4-hojas`, que es la primera vez que se mira POR QUE
+pierde la version que gano:
+
+- morimos en el turno **180** de media;
+- en **47 de 60 partidas** todos los rivales vivos eran iguales o mas largos que nosotros;
+- solo en 15 eramos los mas largos.
+
+| puesto | partidas | ventaja de longitud media |
+|---|---|---|
+| 1o | 8 | **-0.42** |
+| 2o | 21 | -1.17 |
+| 3o | 30 | **-1.61** |
+
+11 partidas siendo mas largos de media dan puesto 2.00; 49 siendo mas cortos dan 2.49. Esa
+brecha de 0.49 es mayor que toda la mejora de v4 sobre v0.
+
+**Somos una snake corta, y eso es causal en nuestro propio codigo:** perdemos todos los
+cabezazos, y `evaluate()` penaliza quedar adyacente a cualquier cabeza igual o mas larga,
+asi que ser corto encoge el espacio que consideramos seguro. Nos encerramos solos.
+
+La hipotesis y el diseño, en ver docs/decisions/ADR-0026-control-de-longitud.md. El matiz
+que va con ella: esto es correlacion, y si el A/B sale NO CONCLUYENTE la lectura es que la
+longitud era sintoma y no causa.
+
 
 ### S-HOJAS-R Resultado: MEJORA, y cierra el cuadro {#s-hojas-r}
 

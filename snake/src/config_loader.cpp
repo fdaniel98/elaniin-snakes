@@ -180,6 +180,13 @@ Params parse_params(const json& doc) {
         read_double(search, "survival_bonus", params.search.survival_bonus);
     params.search.reserve_us = read_plain_int(search, "reserve_us", params.search.reserve_us);
 
+    const json& length = child(doc, "length");
+    params.length.version = read_plain_int(length, "version", params.length.version);
+    params.length.advantage_weight =
+        read_double(length, "advantage_weight", params.length.advantage_weight);
+    params.length.target_lead = read_plain_int(length, "target_lead", params.length.target_lead);
+    params.length.hunt_weight = read_double(length, "hunt_weight", params.length.hunt_weight);
+
     return params;
 }
 

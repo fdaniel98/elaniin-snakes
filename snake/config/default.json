@@ -40,5 +40,11 @@
     "win_value": 100000.0,
     "survival_bonus": 30.0,
     "reserve_us": 2000
+  },
+  "length": {
+    "version": 0,
+    "advantage_weight": 60.0,
+    "target_lead": 3,
+    "hunt_weight": 10.0
   }
 }

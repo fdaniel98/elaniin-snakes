@@ -307,6 +307,7 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     //    puesto es lo unico que puntua el torneo.
     int vivos = 0;
     int mas_largos = 0;
+    int largo_rival_max = 0;
     for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
         if (i == static_cast<int>(us)) {
             continue;
@@ -316,6 +317,7 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
             continue;
         }
         ++vivos;
+        largo_rival_max = std::max(largo_rival_max, static_cast<int>(otro.length));
         if (static_cast<int>(otro.length) >= mi_largo) {
             ++mas_largos;
         }
@@ -332,7 +334,26 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     //    que aqui basta con que la salud valga algo y que valga mas cuanto mas escasa.
     const auto salud = static_cast<double>(yo.health);
     score += p.food.weight * salud / 100.0;
-    if (yo.health <= p.food.seek_below) {
+    // [v5] La ventaja de longitud, y la comida como medio para conseguirla.
+    //
+    // v0 solo buscaba comida con hambre -"no comer por comer"-, politica razonable para
+    // una snake que decide un turno y ciega para una que ve diez: el arbol ya calcula si
+    // ir a por esa comida te mete en un callejon, asi que crecer deja de ser un riesgo a
+    // ojo y pasa a ser algo evaluable. Medido sobre las 60 partidas de v4: moriamos siendo
+    // iguales o mas cortos que TODOS los vivos en 47, y el puesto medio caia monotonamente
+    // con la desventaja de longitud. ver docs/experimentos.md#s-longitud
+    const int ventaja = vivos > 0 ? mi_largo - largo_rival_max : p.length.target_lead;
+    const bool corto = p.length.version >= 1 && ventaja < p.length.target_lead;
+    if (p.length.version >= 1) {
+        // Satura en `target_lead`: lo que decide un cabezazo es ir por delante, y a partir
+        // de cierta ventaja el cuerpo de mas estorba mas de lo que aporta.
+        const double v = std::clamp(static_cast<double>(ventaja),
+                                    -static_cast<double>(p.length.target_lead) * 2.0,
+                                    static_cast<double>(p.length.target_lead));
+        score += p.length.advantage_weight * v / static_cast<double>(p.length.target_lead);
+    }
+
+    if (yo.health <= p.food.seek_below || corto) {
         const int d = eval::flood(libres, yo.head()).cells > 0 ? [&] {
             Board frente;
             frente.set(yo.head());
@@ -351,9 +372,12 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
             return -1;
         }()
                                                                : -1;
-        score += d >= 0 ? p.food.weight * 2.0 *
-                              (1.0 - static_cast<double>(d) / static_cast<double>(State::cells))
-                        : -p.food.weight * 2.0;
+        // Con hambre manda la salud; yendo cortos manda la ventaja. El peso de cada
+        // motivo es distinto y se declara por separado.
+        const double peso =
+            yo.health <= p.food.seek_below ? p.food.weight * 2.0 : p.length.hunt_weight;
+        score += d >= 0 ? peso * (1.0 - static_cast<double>(d) / static_cast<double>(State::cells))
+                        : (yo.health <= p.food.seek_below ? -p.food.weight * 2.0 : 0.0);
     }
 
     // 4. Hazards. ver docs/rules.md#r-06
@@ -363,7 +387,12 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
         score -= p.hazard.weight * (turnos <= 2 ? p.hazard.low_health_multiplier : 1.0);
     }
 
-    score += static_cast<double>(mi_largo) * 2.0;
+    // La longitud ABSOLUTA con peso simbolico es la de v0. Con `length.version >= 1` lo
+    // que puntua es la ventaja, de arriba: en un juego de cuatro, ser largo no sirve de
+    // nada si el de al lado es mas largo.
+    if (p.length.version == 0) {
+        score += static_cast<double>(mi_largo) * 2.0;
+    }
     return score;
 }
 

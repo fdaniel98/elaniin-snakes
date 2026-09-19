@@ -1,5 +1,5 @@
 {
-  "_comment": "v4 = busqueda CON territorio en las hojas. Es la celda que faltaba del cuadro: evaluacion mejor sin busqueda no ayuda (v1, cuellos), busqueda con evaluacion v0 si (-0.28), y mas profundidad sola no (-0.017 al pasar de 6 a 12 niveles). Cuesta 1.2 niveles, que es justo la profundidad que se midio que no vale nada. ver docs/strategy.md#s-hojas",
+  "_comment": "v5 = v4 mas control de longitud. Medido sobre las 60 partidas de v4: en 47 moriamos siendo iguales o mas cortos que TODOS los rivales vivos, y el puesto medio caia monotonamente con la desventaja de longitud. ver docs/experimentos.md#s-longitud",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
@@ -42,7 +42,7 @@
     "reserve_us": 2000
   },
   "length": {
-    "version": 0,
+    "version": 1,
     "advantage_weight": 60.0,
     "target_lead": 3,
     "hunt_weight": 10.0

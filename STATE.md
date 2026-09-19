@@ -90,6 +90,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v4. Es lo unico que queda y no depende de ninguna medicion mas: la version esta
-elegida por su A/B, el riesgo de timeout esta acotado y `deploy/cloud-run.sh` esta escrito
-y probado por el check 10. Falta el ID del proyecto GCP.
+Desplegar v4, que es lo unico que no depende de ninguna medicion mas: falta el ID del
+proyecto GCP y nada mas. En paralelo, medir `v5-longitud` CONTRA v4: en 47 de 60 partidas
+v4 murio siendo igual o mas corta que todos los vivos
+(ver docs/experimentos.md#s-longitud).
