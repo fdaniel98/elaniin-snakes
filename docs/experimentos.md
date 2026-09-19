@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 9796
+size_bytes: 11650
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -25,7 +25,7 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | prof. 6 -> prof. 12 | solo la profundidad | -0.017 | **la profundidad no es el techo** |
 | v4 hojas | territorio en las HOJAS | **-0.367** | **MEJORA** |
 | v5 longitud | ventaja de longitud + comida | **-0.692** vs v4 | **MEJORA** |
-| v6 turnos | salud medida en turnos de vida | — | sin medir |
+| v6 turnos | salud medida en turnos de vida | +0.058 | NO ENTRA |
 
 ### S-SUPERVIVENCIA Por que v5 pierde las que pierde {#s-supervivencia}
 
@@ -231,3 +231,43 @@ ganaron 3 victorias y 3 ultimos puestos. Una snake mas arriesgada, no mejor.
 **El techo no es la profundidad: es la evaluacion de las hojas.** Una busqueda mas honda de
 una evaluacion mediocre encuentra lineas mediocres con mas conviccion.
 
+
+### S-SUPERVIVENCIA-R Resultado: NO ENTRA, y el error estaba en el diagnostico {#s-supervivencia-r}
+
+60 partidas, 15 bloques pareados **contra v5**:
+
+| | v5 | v6 |
+|---|---|---|
+| puesto medio | **1.708** | 1.767 |
+| turnos vividos | **199.0** | 193.7 |
+| 1o / 2o / 3o / 4o | 26 / 24 / 10 / 0 | 28 / 18 / 14 / 0 |
+
+Diferencia pareada **+0.0583**, IC95 **[-0.1970, +0.3136]**, delta util 0.1:
+**NO CONCLUYENTE**, y del lado malo. v6 **no entra**; `default.json` se queda en v5.
+
+**El mecanismo funciono y el resultado no se movio.** Las causas del final, mismas 60
+partidas, `./build/release/bin/causas --nuestra <slug>`:
+
+| causa | v5 | v6 |
+|---|---|---|
+| sobrevivio (gano) | 26 | **28** |
+| hazard con poca salud | 15 | **9** |
+| hambre | 12 | **10** |
+| sin salida (encerrada) | 3 | 5 |
+| otra / eleccion | 3 | 7 |
+| zona de cabeza mas larga | 1 | 1 |
+
+Medir la salud en turnos de vida hizo exactamente lo que ADR-0028 predijo: las muertes por
+falta de vida bajaron de 27 a 19. Pero las otras subieron de 6 a 12, y el puesto medio
+empeoro. Lo que se gano saliendo antes del hazard se perdio en el sitio al que se salio.
+
+**La leccion, y es la que hay que recordar antes de proponer la siguiente heuristica:** en
+un juego de cuatro, la causa de muerte es un **sintoma de la posicion, no una palanca
+independiente**. Atacar la causa mas frecuente redistribuye las muertes sin mover el
+puesto, porque la snake no muere de hambre: muere de estar en el sitio donde solo quedaba
+comer mal. El riesgo estaba escrito antes de medir, en
+ver docs/decisions/ADR-0028-turnos-de-supervivencia.md#adr-0028-riesgo, asi que esto es el
+experimento saliendo negativo, no una explicacion inventada despues.
+
+El codigo de v6 se queda en el arbol tras `survival.version`, en 0 por defecto: cuesta cero
+y la hipotesis puede volver a probarse cuando el campo sea otro.

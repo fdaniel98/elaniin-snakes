@@ -8,7 +8,8 @@ El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
 Snake activa: **v5** (busqueda + territorio en hojas + control de longitud). Gano su A/B
 contra v4 por -0.6917 y contra v0 por -1.0583: 26 primeros de 60 y ningun cuarto
-(ver docs/experimentos.md#s-longitud-r). v0 sigue entero en `v0-baseline.json`
+(ver docs/experimentos.md#s-longitud-r). v0 sigue entero en `v0-baseline.json`. v6 se
+midio y no entra (ver docs/experimentos.md#s-supervivencia-r): apagada en `survival.version`.
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -76,9 +77,8 @@ Cada una con su ADR en `docs/decisions/`, que es donde vive el contenido.
       verificada; la arena no reproducira una partida oficial casilla por casilla.
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
-- [ ] Las causas de muerte de los RIVALES son ambiguas en su mayoria (349 de 600 en el
-      torneo) y seguiran siendolo: no tenemos su cerebro. Las nuestras si estan
-      determinadas, 193 de 194, preguntandole al nuestro.
+- [ ] Las causas de muerte de los RIVALES son ambiguas en su mayoria (349 de 600) y
+      seguiran siendolo: no tenemos su cerebro. Las nuestras si, 193 de 194.
 - [ ] El repositorio sigue sin remoto: toda la historia vive en un solo disco.
 - [ ] `royale_hazards()` no tiene llamante todavia y su precondicion -cadencia >= 1- no
       la comprueba nadie: la arena de la fase 4 tendra que validarla antes de llamar.
@@ -89,6 +89,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v5: falta el ID del proyecto GCP y nada mas. En paralelo, medir `v6-turnos`
-CONTRA v5: 27 de las 34 muertes de v5 fueron hambre o hazard con poca vida
-(ver docs/experimentos.md#s-supervivencia).
+Desplegar v5: falta el ID del proyecto GCP y nada mas. v6 ya se midio y NO entra
+(ver docs/experimentos.md#s-supervivencia-r): la snake que se despliega es v5.

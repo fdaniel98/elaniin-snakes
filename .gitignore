@@ -10,6 +10,14 @@ compile_commands.json
 _deps/
 docs/results/*.html
 docs/results/*.db
+# Los torneos dejan 335 MB de replays y SQLite en docs/results/<torneo>/. Nunca se
+# commitearon, pero sin estas lineas un `git add -A` los mete enteros en la historia.
+# Los .md de reporte SI se versionan.
+docs/results/*/*.jsonl
+docs/results/*/*.sqlite
+docs/results/*/*.sqlite-journal
+docs/results/*/*.ref.log
+docs/results/*/entorno.txt
 tmp/
 .venv/
 zoo/.estado-local.json

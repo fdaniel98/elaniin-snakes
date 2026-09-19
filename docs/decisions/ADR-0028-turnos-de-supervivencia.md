@@ -4,7 +4,7 @@ read_when: "antes de tocar los umbrales de salud, comida o hazard"
 authority: derived
 source: docs/results/torneo-v5-longitud (60 partidas, causas del final)
 last_verified: 2026-09-19
-size_bytes: 3398
+size_bytes: 3833
 ---
 
 # ADR-0028 — La salud se mide en turnos de vida {#adr-0028}
@@ -78,4 +78,11 @@ sitio donde mirar seria el medio juego y no el final.
 
 ## Estado {#adr-0028-estado}
 
-**SIN MEDIR.** Se enciende con `snake/config/v6-turnos.json` y se mide CONTRA v5.
+**MEDIDO, NO ENTRA.** 60 partidas contra v5, 15 bloques pareados: diferencia pareada
+**+0.0583**, IC95 [-0.1970, +0.3136] -> **NO CONCLUYENTE**, y del lado malo
+(ver docs/experimentos.md#s-supervivencia-r).
+
+Paso lo que esta escrito arriba: las muertes por falta de vida bajaron de 27 a 19 y las
+demas subieron de 6 a 12. La causa de muerte no determina el puesto. `survival.version`
+queda en **0** por defecto; el codigo se queda en el arbol porque cuesta cero y la
+hipotesis puede volver a probarse con otro campo.
