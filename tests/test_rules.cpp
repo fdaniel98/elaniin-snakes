@@ -696,3 +696,133 @@ TEST_CASE("el motor no se sale del array aunque snake_count mienta", "[rules][in
         engine::apply(s, std::span<const engine::Direction>(moves.data(), moves.size())));
     REQUIRE(engine::placements(s).count <= engine::State11::max_snakes);
 }
+
+// ---------------------------------------------------------------------------------------
+// spawn_food: el hook del mapa que `apply()` deja fuera a proposito. ver docs/rules.md#r-10
+// ---------------------------------------------------------------------------------------
+
+namespace {
+
+/// Tablero con una serpiente de 3 en una esquina y el turno ya avanzado, que es como
+/// llega el estado al hook: `apply()` incrementa el contador antes de devolver.
+State tablero_para_comida(int turno, int comida_en_tablero) {
+    State s;
+    const std::array<Coord, 3> body{Coord{0, 0}, Coord{1, 0}, Coord{2, 0}};
+    put_snake(s, 0, body, 100);
+    const std::array<Coord, 3> otra{Coord{10, 10}, Coord{9, 10}, Coord{8, 10}};
+    put_snake(s, 1, otra, 100);
+    s.turn = turno;
+    for (int i = 0; i < comida_en_tablero; ++i) {
+        s.food.set(cell(5, i));
+    }
+    return s;
+}
+
+int turnos_con_comida(int chance, int turnos) {
+    int veces = 0;
+    for (int t = 1; t <= turnos; ++t) {
+        State s = tablero_para_comida(t, 1);
+        s.rules.minimum_food = 1;
+        s.rules.food_spawn_chance = chance;
+        if (engine::spawn_food(s, 987654321ULL).count() > 0) {
+            ++veces;
+        }
+    }
+    return veces;
+}
+
+} // namespace
+
+TEST_CASE("spawn_food: la rama de minimo repone exactamente lo que falta", "[rules][r-10]") {
+    // `maps/standard.go:80-82`: si hay menos comida que el minimo se colocan las que
+    // faltan, sin mirar `foodSpawnChance` siquiera.
+    for (int minimo : {1, 2, 5}) {
+        for (int hay = 0; hay < minimo; ++hay) {
+            State s = tablero_para_comida(7, hay);
+            s.rules.minimum_food = minimo;
+            s.rules.food_spawn_chance = 0; // aunque la probabilidad sea cero
+            INFO("minimo " << minimo << " hay " << hay);
+            REQUIRE(engine::spawn_food(s, 42).count() == minimo - hay);
+        }
+    }
+}
+
+TEST_CASE("spawn_food: la probabilidad real es (chance-1)/100, no chance/100", "[rules][r-10]") {
+    // La comparacion del Go es `(100 - rand.Intn(100)) < foodSpawnChance`
+    // (`maps/standard.go:83-85`). Con `Intn(100)` en [0,99] eso deja fuera un caso: con
+    // chance 1 no se coloca NUNCA y con 100 se coloca 99 de cada 100. No es un redondeo
+    // nuestro, es la regla; se reproduce tal cual.
+    REQUIRE(turnos_con_comida(0, 2000) == 0);
+    REQUIRE(turnos_con_comida(1, 2000) == 0);
+
+    const int con_100 = turnos_con_comida(100, 2000);
+    REQUIRE(con_100 > 1940);
+    REQUIRE(con_100 < 2000);
+
+    // Y el default de royale, 15, cae alrededor de 14 de cada 100.
+    const int con_15 = turnos_con_comida(15, 4000);
+    REQUIRE(con_15 > 4000 * 10 / 100);
+    REQUIRE(con_15 < 4000 * 18 / 100);
+}
+
+TEST_CASE("spawn_food: nunca cae sobre cuerpo ni sobre comida ya puesta", "[rules][r-10]") {
+    for (int t = 1; t <= 300; ++t) {
+        State s = tablero_para_comida(t, 3);
+        s.rules.minimum_food = 8; // fuerza la rama de minimo, 5 casillas nuevas
+        const auto nueva = engine::spawn_food(s, 5150);
+        REQUIRE(nueva.count() == 5);
+        REQUIRE((nueva & s.bodies).none());
+        REQUIRE((nueva & s.food).none());
+    }
+}
+
+TEST_CASE("spawn_food: los hazards no excluyen casilla", "[rules][r-10]") {
+    // `GetUnoccupiedPoints(b, false, false)` (`board.go:522`) no mira hazards: la comida
+    // puede caer dentro de la zona, y por eso `food.seek_below_in_hazard` existe.
+    State s = tablero_para_comida(9, 0);
+    s.rules.minimum_food = 1;
+    for (int c = 0; c < State::cells; ++c) {
+        s.hazards.set(c);
+    }
+    REQUIRE(engine::spawn_food(s, 77).count() == 1);
+}
+
+TEST_CASE("spawn_food: el sorteo depende del turno, no de la historia", "[rules][r-10]") {
+    // Es la propiedad que hace pareable un A/B: dos ramas que divergieron antes siguen
+    // sacando el mismo sorteo en el mismo turno. Si alguien cambia la siembra por turno
+    // por un `Rng` que se conserva entre llamadas, este caso lo caza.
+    // ver docs/decisions/ADR-0029-schedule-por-turno.md#d-0291
+    State a = tablero_para_comida(50, 1);
+    a.rules.minimum_food = 1;
+    a.rules.food_spawn_chance = 50;
+
+    const auto esperado = engine::spawn_food(a, 31337);
+
+    // Mil sorteos de otros turnos por delante no cambian el del turno 50.
+    for (int t = 1; t <= 1000; ++t) {
+        State otro = tablero_para_comida(t, 1);
+        otro.rules.minimum_food = 1;
+        otro.rules.food_spawn_chance = 50;
+        (void)engine::spawn_food(otro, 31337);
+    }
+    State b = tablero_para_comida(50, 1);
+    b.rules.minimum_food = 1;
+    b.rules.food_spawn_chance = 50;
+    REQUIRE((engine::spawn_food(b, 31337) ^ esperado).none());
+}
+
+TEST_CASE("spawn_food: turno 0 y tablero lleno no colocan nada", "[rules][r-10]") {
+    // El turno 0 no pasa por el hook: la comida inicial la pone la colocacion
+    // (ver docs/rules.md#r-11), y `apply()` todavia no ha incrementado nada.
+    State cero = tablero_para_comida(0, 0);
+    cero.rules.minimum_food = 3;
+    REQUIRE(engine::spawn_food(cero, 1).count() == 0);
+
+    // Sin casillas libres el Go tampoco coloca (`maps/standard.go:91-93`).
+    State lleno = tablero_para_comida(4, 0);
+    lleno.rules.minimum_food = 3;
+    for (int c = 0; c < State::cells; ++c) {
+        lleno.food.set(c);
+    }
+    REQUIRE(engine::spawn_food(lleno, 1).count() == 0);
+}

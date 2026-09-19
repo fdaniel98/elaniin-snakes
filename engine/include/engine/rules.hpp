@@ -95,6 +95,37 @@ template <int W, int H>
 [[nodiscard]] Bitboard<W, H>
 royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_turns) noexcept;
 
+/// Comida que el hook del mapa añade al tablero DESPUES de un `apply()`.
+///
+/// Devuelve solo las casillas NUEVAS; el llamante hace `s.food |= spawn_food(s, seed)`.
+/// Devolver el delta en vez de mutar deja la funcion pura y comprobable por si sola.
+///
+/// La regla es la de `maps/standard.go:64-106`, con sus dos ramas y en ese orden:
+/// si hay menos comida que `minimum_food` se reponen las que faltan y **no se consume
+/// azar**; si no, se saca un numero y se coloca UNA cuando
+/// `(100 - rand.Intn(100)) < food_spawn_chance`. Esa comparacion literal deja la
+/// probabilidad real en `(chance-1)/100`, no en `chance/100`: con el default de 15 son
+/// 14 de cada 100. Se reproduce tal cual. ver docs/rules.md#r-10
+///
+/// Las candidatas son las casillas sin cuerpo vivo y sin comida. Los hazards **no**
+/// excluyen (`board.go:522`), asi que la comida puede caer dentro de la zona.
+///
+/// El generador se siembra por TURNO -`settings.GetRand(lastBoardState.Turn)`,
+/// `maps/standard.go:65`-, a diferencia del shrink, que siempre usa el 0. Como
+/// `apply()` ya incremento el contador, el turno del Go es `s.turn - 1`; la funcion
+/// hace esa resta y el llamante no tiene que saberlo.
+///
+/// Esa siembra por turno es lo que da a la arena los numeros aleatorios comunes que
+/// pide el protocolo pareado: dos ramas que divergieron en el turno 30 siguen sacando
+/// el mismo sorteo en el 31, porque el sorteo depende del turno y no de cuanto azar se
+/// haya consumido antes. ver docs/decisions/ADR-0029-schedule-por-turno.md#d-0291
+///
+/// La secuencia es la del `Rng` del repo, no la del `math/rand` de Go: coincide la
+/// forma de la regla, no que casilla toca. ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091
+template <int W, int H, int MaxSnakes>
+[[nodiscard]] Bitboard<W, H> spawn_food(const GameState<W, H, MaxSnakes>& s,
+                                        std::uint64_t seed) noexcept;
+
 extern template Direction default_move<7, 7, 4>(const GameState<7, 7, 4>&, SnakeId) noexcept;
 extern template Direction default_move<11, 11, 4>(const GameState<11, 11, 4>&, SnakeId) noexcept;
 extern template Direction default_move<19, 19, 4>(const GameState<19, 19, 4>&, SnakeId) noexcept;
@@ -118,5 +149,12 @@ extern template PlacementsT<4> placements<19, 19, 4>(const GameState<19, 19, 4>&
 extern template Bitboard<7, 7> royale_hazards<7, 7>(std::uint64_t, int, int) noexcept;
 extern template Bitboard<11, 11> royale_hazards<11, 11>(std::uint64_t, int, int) noexcept;
 extern template Bitboard<19, 19> royale_hazards<19, 19>(std::uint64_t, int, int) noexcept;
+
+extern template Bitboard<7, 7> spawn_food<7, 7, 4>(const GameState<7, 7, 4>&,
+                                                   std::uint64_t) noexcept;
+extern template Bitboard<11, 11> spawn_food<11, 11, 4>(const GameState<11, 11, 4>&,
+                                                       std::uint64_t) noexcept;
+extern template Bitboard<19, 19> spawn_food<19, 19, 4>(const GameState<19, 19, 4>&,
+                                                       std::uint64_t) noexcept;
 
 } // namespace engine

@@ -6,11 +6,14 @@
 /// (`maps/royale.go`). Aqui ademas mantiene a `rules.cpp` dentro del presupuesto por
 /// tarea del pack de reglas (ver docs/INDEX.md#i-02).
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 
 #include <engine/bitboard.hpp>
 #include <engine/rng.hpp>
 #include <engine/rules.hpp>
+#include <engine/state.hpp>
 
 namespace engine {
 
@@ -79,8 +82,70 @@ Bitboard<W, H> royale_hazards(std::uint64_t seed, int turn, int shrink_every_n_t
     return hazards;
 }
 
+template <int W, int H, int MaxSnakes>
+Bitboard<W, H> spawn_food(const GameState<W, H, MaxSnakes>& s, std::uint64_t seed) noexcept {
+    using Board = Bitboard<W, H>;
+    Board nueva;
+
+    // `apply()` ya incremento el contador, y el Go siembra con el turno del estado
+    // ANTERIOR al hook (`maps/standard.go:65`). El turno 0 no pasa por aqui: la comida
+    // inicial la coloca la colocacion, no el hook. ver docs/rules.md#r-11
+    const int turno_go = s.turn - 1;
+    if (turno_go < 0) {
+        return nueva;
+    }
+
+    // Siembra por turno, igual que `settings.GetRand(turn)`. Sumar el turno a la semilla
+    // es la forma del Go; lo que evita que semillas contiguas produzcan sorteos parecidos
+    // es el splitmix64 del constructor, no la suma. ver docs/rules.md#r-10
+    Rng rng(seed + static_cast<std::uint64_t>(turno_go));
+
+    const int actual = s.food.count();
+    int faltan = 0;
+    if (actual < s.rules.minimum_food) {
+        // Rama de minimo: el Go vuelve ANTES de tocar el generador
+        // (`maps/standard.go:80-82`). Consumir un numero aqui desalinearia el stream
+        // respecto del motor oficial y, peor, entre dos ramas de un A/B que hayan
+        // repuesto comida distinto numero de veces.
+        faltan = s.rules.minimum_food - actual;
+    } else if (s.rules.food_spawn_chance > 0 &&
+               (100 - static_cast<int>(rng.bounded(100))) < s.rules.food_spawn_chance) {
+        faltan = 1;
+    }
+    if (faltan <= 0) {
+        return nueva;
+    }
+
+    // Casillas desocupadas: sin cuerpo vivo y sin comida. Los hazards NO excluyen
+    // (`board.go:522`). ver docs/rules.md#r-10
+    std::array<std::uint16_t, static_cast<std::size_t>(W * H)> libres{};
+    int n = 0;
+    for (int c = 0; c < W * H; ++c) {
+        if (!s.bodies.test(c) && !s.food.test(c)) {
+            libres[static_cast<std::size_t>(n++)] = static_cast<std::uint16_t>(c);
+        }
+    }
+    if (n == 0) {
+        // Tablero lleno: el Go tampoco coloca nada (`maps/standard.go:91-93`).
+        return nueva;
+    }
+
+    rng.shuffle(libres.data(), static_cast<std::size_t>(n));
+    const int cuantas = faltan < n ? faltan : n;
+    for (int i = 0; i < cuantas; ++i) {
+        nueva.set(static_cast<int>(libres[static_cast<std::size_t>(i)]));
+    }
+    return nueva;
+}
+
 template Bitboard<7, 7> royale_hazards<7, 7>(std::uint64_t, int, int) noexcept;
 template Bitboard<11, 11> royale_hazards<11, 11>(std::uint64_t, int, int) noexcept;
 template Bitboard<19, 19> royale_hazards<19, 19>(std::uint64_t, int, int) noexcept;
+
+template Bitboard<7, 7> spawn_food<7, 7, 4>(const GameState<7, 7, 4>&, std::uint64_t) noexcept;
+template Bitboard<11, 11> spawn_food<11, 11, 4>(const GameState<11, 11, 4>&,
+                                                std::uint64_t) noexcept;
+template Bitboard<19, 19> spawn_food<19, 19, 4>(const GameState<19, 19, 4>&,
+                                                std::uint64_t) noexcept;
 
 } // namespace engine

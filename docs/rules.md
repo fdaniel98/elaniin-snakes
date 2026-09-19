@@ -4,7 +4,7 @@ read_when: "antes de tocar engine/src/rules.cpp, de escribir un fixture o de dis
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-17
-size_bytes: 14149
+size_bytes: 14379
 ---
 
 Toda afirmacion de este archivo cita `archivo.go:linea` del SHA del front-matter. Lo no verificable
@@ -191,6 +191,9 @@ Lo hace el hook del mapa, no el pipeline (`maps/standard.go:64-73`):
 - Si hay menos comida que `minimumFood`, se colocan las que faltan (`maps/standard.go:80-82`).
 - Si no, con probabilidad `foodSpawnChance` sobre 100 se coloca **una**
   (`maps/standard.go:83-85`). La comparacion literal es `(100 - rand.Intn(100)) < foodSpawnChance`.
+  Como `Intn(100)` da [0,99], esa comparacion deja la probabilidad efectiva en
+  **`(chance-1)/100`**: con el default 15 son 14 de cada 100, y con `chance` 1 no se coloca
+  nunca. No es un redondeo nuestro; se reproduce tal cual.
 - Se coloca en casillas desocupadas barajadas (`maps/standard.go:90-106`), usando
   `GetUnoccupiedPoints(b, false, false)` (`board.go:522`), que **no** excluye hazards.
 - El RNG del spawn de comida se siembra por turno: `settings.GetRand(lastBoardState.Turn)`
