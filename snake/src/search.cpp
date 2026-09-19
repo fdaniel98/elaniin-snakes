@@ -332,10 +332,38 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     score -= p.head.avoid_equal_or_longer * 0.25 * mas_largos;
     score -= 40.0 * vivos;
 
-    // 3. Salud y comida. La busqueda ve el hambre venir muchos turnos antes que v0, asi
-    //    que aqui basta con que la salud valga algo y que valga mas cuanto mas escasa.
+    // 3. Salud, medida en TURNOS DE VIDA y no en puntos.
+    //
+    // En Royale el hazard cuesta `hazardDamagePerTurn` MAS el -1 de cada turno: con 14 de
+    // daño son 15 de vida por turno, o sea que dentro del hazard se muere en ~7 turnos
+    // desde salud llena. Un umbral en salud absoluta -"busca comida por debajo de 50"-
+    // vale en tablero limpio y miente dentro del hazard, donde 50 son tres turnos y pico.
+    //
+    // Medido sobre las 60 partidas de v5: 27 de 34 muertes fueron hambre o hazard con poca
+    // vida, y de los 21 segundos puestos, 11 hazard y 10 hambre. Casi todo lo que perdemos
+    // por poco lo perdemos por quedarnos sin vida.
+    // ver docs/experimentos.md#s-supervivencia
     const auto salud = static_cast<double>(yo.health);
-    score += p.food.weight * salud / 100.0;
+    const int coste_turno =
+        1 + (s.hazards.test(yo.head()) ? std::max(1, s.rules.hazard_damage_per_turn) : 0);
+    const double turnos_vida = salud / static_cast<double>(coste_turno);
+
+    if (p.survival.version >= 1) {
+        // Valor del margen, saturado: por encima de `safe_turns` tener mas vida no cambia
+        // ninguna decision. Dentro del hazard el coste por turno hunde este numero solo,
+        // sin necesidad de un termino aparte.
+        const double margen = std::min(turnos_vida, static_cast<double>(p.survival.safe_turns));
+        score += p.survival.weight * margen / static_cast<double>(p.survival.safe_turns);
+        // Y el castigo por estar al borde, CONTINUO. El de v5 era un escalon que solo se
+        // activaba con dos turnos de vida, cuando ya no da tiempo ni a salir del hazard.
+        if (turnos_vida < static_cast<double>(p.survival.critical_turns)) {
+            score -= p.survival.panic_weight *
+                     (static_cast<double>(p.survival.critical_turns) - turnos_vida) /
+                     static_cast<double>(p.survival.critical_turns);
+        }
+    } else {
+        score += p.food.weight * salud / 100.0;
+    }
     // [v5] La ventaja de longitud, y la comida como medio para conseguirla.
     //
     // v0 solo buscaba comida con hambre -"no comer por comer"-, politica razonable para
@@ -355,7 +383,11 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
         score += p.length.advantage_weight * v / static_cast<double>(p.length.target_lead);
     }
 
-    if (yo.health <= p.food.seek_below || corto) {
+    // El disparador de la comida: turnos de vida si v6 esta encendida, salud cruda si no.
+    const bool con_prisa = p.survival.version >= 1
+                               ? turnos_vida <= static_cast<double>(p.survival.seek_below_turns)
+                               : yo.health <= p.food.seek_below;
+    if (con_prisa || corto) {
         const int d = eval::flood(libres, yo.head()).cells > 0 ? [&] {
             Board frente;
             frente.set(yo.head());
@@ -384,9 +416,15 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
 
     // 4. Hazards. ver docs/rules.md#r-06
     if (s.hazards.test(yo.head())) {
-        const int dano = std::max(1, s.rules.hazard_damage_per_turn);
-        const int turnos = static_cast<int>(yo.health) / dano;
-        score -= p.hazard.weight * (turnos <= 2 ? p.hazard.low_health_multiplier : 1.0);
+        if (p.survival.version >= 1) {
+            // Penalizacion BASE por estar dentro. Lo urgente ya lo dice `turnos_vida`, que
+            // se calcula con el coste del hazard: aqui solo queda el "estar ahi es peor".
+            score -= p.hazard.weight;
+        } else {
+            const int dano = std::max(1, s.rules.hazard_damage_per_turn);
+            const int turnos = static_cast<int>(yo.health) / dano;
+            score -= p.hazard.weight * (turnos <= 2 ? p.hazard.low_health_multiplier : 1.0);
+        }
     }
 
     // La longitud ABSOLUTA con peso simbolico es la de v0. Con `length.version >= 1` lo

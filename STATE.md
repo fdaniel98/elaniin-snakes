@@ -89,6 +89,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v5: falta el ID del proyecto GCP y nada mas. Despues, la evaluacion en las hojas
--donde seguimos quedando terceros seguimos siendo cortos, ventaja -1.29- y la tabla de
-transposicion, que son 1-2 niveles gratis.
+Desplegar v5: falta el ID del proyecto GCP y nada mas. En paralelo, medir `v6-turnos`
+CONTRA v5: 27 de las 34 muertes de v5 fueron hambre o hazard con poca vida
+(ver docs/experimentos.md#s-supervivencia).

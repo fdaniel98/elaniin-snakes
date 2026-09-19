@@ -3,7 +3,7 @@ title: "Pack: añadir o cambiar una heuristica"
 read_when: "antes de tocar la evaluacion del cerebro o de lanzar un A/B"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 2016
+size_bytes: 2335
 ---
 
 
@@ -14,12 +14,16 @@ size_bytes: 2016
 |---|---|---|
 | 1 | `docs/strategy.md` | la hipotesis falsable de la version que tocas |
 | 1b | `docs/experimentos.md` | **lee esto antes de proponer nada**: que se probo ya y que dio |
-| 2 | `snake/include/snake/params.hpp` | los pesos existentes; no inventes constantes |
+| 2 | `snake/include/snake/params.hpp` | los pesos existentes **y `evaluate()` documentada en sus doc-comments**; no inventes constantes |
 | 3 | `snake/config/default.json` | el JSON 1:1 con el struct |
-| 4 | `snake/src/search.cpp` | **`evaluate()`**: como se puntua una posicion en las hojas |
 <!-- END:pack-load -->
 
 Fuera de la lista a proposito, y por que:
+
+- `snake/src/search.cpp` (creciendo con cada version): lo que se lee para añadir una
+  heuristica es **`evaluate()`**, no el motor de busqueda que ocupa el resto del fichero.
+  Abrelo por esa funcion. Cada parametro nuevo se declara en `params.hpp` con el doc-comment
+  que explica por que existe y que numero lo justifica, asi que ese fichero es el indice.
 
 - `snake/src/brain_v0.cpp` (20 KB): v0 esta CONGELADO y es la referencia fija. Una
   heuristica nueva no se toca ahi, se toca en `evaluate()`. Abrelo solo si necesitas ver

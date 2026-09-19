@@ -187,6 +187,17 @@ Params parse_params(const json& doc) {
     params.length.target_lead = read_plain_int(length, "target_lead", params.length.target_lead);
     params.length.hunt_weight = read_double(length, "hunt_weight", params.length.hunt_weight);
 
+    const json& survival = child(doc, "survival");
+    params.survival.version = read_plain_int(survival, "version", params.survival.version);
+    params.survival.safe_turns = read_plain_int(survival, "safe_turns", params.survival.safe_turns);
+    params.survival.weight = read_double(survival, "weight", params.survival.weight);
+    params.survival.seek_below_turns =
+        read_plain_int(survival, "seek_below_turns", params.survival.seek_below_turns);
+    params.survival.critical_turns =
+        read_plain_int(survival, "critical_turns", params.survival.critical_turns);
+    params.survival.panic_weight =
+        read_double(survival, "panic_weight", params.survival.panic_weight);
+
     return params;
 }
 

@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 8819
+size_bytes: 9796
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -25,6 +25,32 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | prof. 6 -> prof. 12 | solo la profundidad | -0.017 | **la profundidad no es el techo** |
 | v4 hojas | territorio en las HOJAS | **-0.367** | **MEJORA** |
 | v5 longitud | ventaja de longitud + comida | **-0.692** vs v4 | **MEJORA** |
+| v6 turnos | salud medida en turnos de vida | — | sin medir |
+
+### S-SUPERVIVENCIA Por que v5 pierde las que pierde {#s-supervivencia}
+
+Causas del final en las 60 partidas de `torneo-v5-longitud`:
+
+| causa | partidas |
+|---|---|
+| sobrevivio (gano) | 26 |
+| **hazard con poca salud** | **15** |
+| **hambre** | **12** |
+| otra / eleccion | 3 |
+| sin salida (encerrada) | 3 |
+| zona de cabeza mas larga | 1 |
+
+**El diagnostico se ha invertido.** En v0 moriamos 132 de 178 veces sin ninguna salida; en
+v5, 3 de 34. Ese problema esta resuelto. Ahora mata la salud: **27 de 34**. Y de los 21
+segundos puestos, 11 son hazard y 10 hambre.
+
+La causa es una unidad equivocada, y esta explicada en
+ver docs/decisions/ADR-0028-turnos-de-supervivencia.md: en Royale el hazard cuesta 15 de
+vida por turno, asi que los umbrales en salud absoluta -comer por debajo de 50, castigar el
+hazard por debajo de 2 turnos- valen en tablero limpio y mienten donde de verdad se decide
+la partida.
+
+
 
 ### S-LONGITUD-R Resultado: MEJORA, la mayor medida, y el mecanismo confirmado {#s-longitud-r}
 

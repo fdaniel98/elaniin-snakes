@@ -46,5 +46,13 @@
     "advantage_weight": 60.0,
     "target_lead": 3,
     "hunt_weight": 10.0
+  },
+  "survival": {
+    "version": 0,
+    "safe_turns": 25,
+    "weight": 25.0,
+    "seek_below_turns": 15,
+    "critical_turns": 5,
+    "panic_weight": 120.0
   }
 }

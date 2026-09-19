@@ -87,6 +87,29 @@ struct TerritoryParams {
 };
 
 /// Config completo del cerebro.
+/// [v6] La salud medida en TURNOS DE VIDA, no en puntos.
+/// ver docs/decisions/ADR-0028-turnos-de-supervivencia.md
+struct SurvivalParams {
+    /// 0 = salud absoluta (la unidad de v0..v5). 1 = turnos de vida restantes.
+    std::int32_t version = 0;
+    /// Margen de vida a partir del cual tener mas deja de aportar. Con 1 de coste por
+    /// turno esto son 25 de salud; dentro de un hazard de 14, son 375, o sea que dentro
+    /// del hazard NUNCA se esta comodo, que es exactamente lo correcto.
+    std::int32_t safe_turns = 25;
+    /// Peso del margen de vida.
+    double weight = 25.0;
+    /// Por debajo de estos turnos se busca comida, venga o no de la ventaja de longitud.
+    /// En tablero limpio son 15 de salud; dentro de un hazard de 14, salud 100 da 6.7
+    /// turnos, asi que ahi se busca SIEMPRE. Es el reloj real de Royale.
+    std::int32_t seek_below_turns = 15;
+    /// Por debajo de estos turnos la posicion es critica y el castigo crece.
+    std::int32_t critical_turns = 5;
+    /// Cuanto castiga estar al borde. Es continuo en los turnos restantes, no un escalon:
+    /// el escalon de v5 solo se activaba con <= 2 turnos de vida, cuando ya no daba tiempo
+    /// ni a salir del hazard.
+    double panic_weight = 120.0;
+};
+
 /// [v5] Control de longitud. ver docs/decisions/ADR-0026-control-de-longitud.md
 struct LengthParams {
     /// 0 = la politica de v0 (comer solo con hambre, longitud con peso simbolico).
@@ -168,6 +191,7 @@ struct Params {
     TerritoryParams territory{};
     SearchParams search{};
     LengthParams length{};
+    SurvivalParams survival{};
 };
 
 } // namespace snake

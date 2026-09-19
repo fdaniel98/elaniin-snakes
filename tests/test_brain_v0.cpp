@@ -745,6 +745,122 @@ TEST_CASE("v5: mismas garantias de legalidad y deadline", "[brain][search][longi
     }
 }
 
+namespace {
+snake::Params params_v6() {
+    snake::Params p = params_v5();
+    p.survival.version = 1;
+    return p;
+}
+
+/// Un estado de una sola serpiente con la salud y el hazard que se pidan, para aislar el
+/// termino de supervivencia.
+engine::State11 con_salud(int salud, bool en_hazard, int dano = 14) {
+    using Board = engine::State11::Board;
+    engine::State11 s{};
+    s.snake_count = 1;
+    s.you = 0;
+    auto& yo = s.snakes[0];
+    yo.head_slot = 0;
+    yo.length = 5;
+    yo.health = static_cast<std::uint8_t>(salud);
+    yo.status = engine::Elimination::alive;
+    yo.eliminated_on_turn = -1;
+    for (int seg = 0; seg < 5; ++seg) {
+        yo.cells[static_cast<unsigned>(seg)] =
+            static_cast<std::uint16_t>(Board::index_of({5, static_cast<std::int8_t>(5 - seg)}));
+    }
+    s.rules.hazard_damage_per_turn = dano;
+    if (en_hazard) {
+        s.hazards.set(Board::index_of({5, 5}));
+    }
+    s.refresh_occupancy();
+    return s;
+}
+} // namespace
+
+TEST_CASE("v6: la misma salud vale MENOS dentro del hazard", "[search][supervivencia]") {
+    // Es el cambio de unidad en una linea. Con 60 de salud y 14 de daño, fuera del hazard
+    // quedan 60 turnos y dentro 4. v5 puntuaba las dos igual salvo por una penalizacion
+    // plana; v6 las distingue por lo unico que importa, cuanto queda de vida.
+    const snake::Params v6 = params_v6();
+    const double limpio = snake::evaluate(con_salud(60, false), 0, v6);
+    const double hazard = snake::evaluate(con_salud(60, true), 0, v6);
+    INFO("limpio " << limpio << ", hazard " << hazard);
+    REQUIRE(hazard < limpio);
+
+    // Y la diferencia tiene que ser MAYOR que la que daba v5, que es el punto del cambio.
+    const snake::Params v5 = params_v5();
+    const double brecha_v6 = limpio - hazard;
+    const double brecha_v5 =
+        snake::evaluate(con_salud(60, false), 0, v5) - snake::evaluate(con_salud(60, true), 0, v5);
+    INFO("brecha v5 " << brecha_v5 << ", v6 " << brecha_v6);
+    REQUIRE(brecha_v6 > brecha_v5);
+}
+
+TEST_CASE("v6: el castigo por estar al borde es continuo, no un escalon",
+          "[search][supervivencia]") {
+    // El de v5 solo se activaba con <= 2 turnos de vida, cuando ya no da tiempo ni a salir
+    // del hazard. Aqui se recorre la salud a la baja DENTRO del hazard y se exige que la
+    // puntuacion baje en cada paso, sin mesetas.
+    const snake::Params v6 = params_v6();
+    double anterior = snake::evaluate(con_salud(100, true), 0, v6);
+    for (const int salud : {90, 75, 60, 45, 30, 20, 10, 5}) {
+        const double actual = snake::evaluate(con_salud(salud, true), 0, v6);
+        INFO("salud " << salud << ": " << actual << " (anterior " << anterior << ")");
+        REQUIRE(actual < anterior);
+        anterior = actual;
+    }
+}
+
+TEST_CASE("v6: mas margen del necesario no cambia nada", "[search][supervivencia]") {
+    // El termino satura en `safe_turns`. Sin eso, la snake perseguiria comida con 90 de
+    // salud en tablero limpio, que es el error contrario al que esto arregla.
+    snake::Params v6 = params_v6();
+    v6.survival.safe_turns = 25;
+    const double t40 = snake::evaluate(con_salud(40, false), 0, v6);
+    const double t90 = snake::evaluate(con_salud(90, false), 0, v6);
+    INFO("salud 40 -> " << t40 << ", salud 90 -> " << t90);
+    REQUIRE(t90 == Catch::Approx(t40));
+}
+
+TEST_CASE("v6: dentro del hazard el reloj corre aunque la salud parezca alta",
+          "[search][supervivencia]") {
+    // El caso que motivo el cambio: 50 de salud es "comodo" en salud absoluta -el umbral
+    // de v5 era 50- y son 3.3 turnos dentro de un hazard de 14. Con v6 esa posicion tiene
+    // que estar YA por debajo del umbral de busqueda de comida.
+    const snake::Params v6 = params_v6();
+    const engine::State11 s = con_salud(50, true);
+    const double turnos = 50.0 / (1.0 + 14.0);
+    INFO("turnos de vida reales: " << turnos);
+    REQUIRE(turnos < static_cast<double>(v6.survival.seek_below_turns));
+    // Y la posicion tiene que puntuar peor que la misma salud en tablero limpio, donde son
+    // 50 turnos de sobra.
+    REQUIRE(snake::evaluate(s, 0, v6) < snake::evaluate(con_salud(50, false), 0, v6));
+}
+
+TEST_CASE("v6: mismas garantias de legalidad y deadline",
+          "[brain][search][supervivencia][inv-11]") {
+    const snake::Params v6 = params_v6();
+    snake::warmup(v6);
+    for (const int presupuesto_ms : {1, 5, 200}) {
+        for (const auto& fixture : load_fixtures()) {
+            INFO("fixture: " << fixture.name << " presupuesto=" << presupuesto_ms);
+            engine::State11 state;
+            REQUIRE(snake::parse_state(fixture.doc, state));
+            const auto t0 = snake::Deadline::Clock::now();
+            const snake::Move move = snake::decide(
+                state, snake::Deadline(t0 + std::chrono::milliseconds(presupuesto_ms)), v6);
+            REQUIRE(std::chrono::duration_cast<std::chrono::milliseconds>(
+                        snake::Deadline::Clock::now() - t0)
+                        .count() <= presupuesto_ms + k_holgura_reloj_ms);
+            const engine::MoveMask legal = engine::legal_moves(state, state.you);
+            if (legal != engine::move_mask_none) {
+                REQUIRE(engine::mask_has(legal, move.direction));
+            }
+        }
+    }
+}
+
 TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {
     const snake::Params params;
     const auto& fixtures = load_fixtures();
