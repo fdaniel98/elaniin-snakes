@@ -507,6 +507,68 @@ TEST_CASE("busqueda: un final de dos usa el presupuesto, no se planta en el tope
     REQUIRE(r.depth <= p.search.max_depth);
 }
 
+TEST_CASE("busqueda con territorio en las hojas: mismas garantias",
+          "[brain][search][hojas][inv-10][inv-11]") {
+    // La evaluacion de las hojas pasa a usar Voronoi. Lo que se fija aqui no es que juegue
+    // mejor -eso lo dice el A/B- sino que meter una evaluacion mas cara en el sitio mas
+    // caliente no rompe la legalidad ni el deadline. ver docs/strategy.md#s-hojas
+    snake::Params p;
+    p.search.version = 1;
+    p.territory.version = 1;
+    snake::warmup(p);
+
+    for (const int presupuesto_ms : {1, 5, 50, 200}) {
+        for (const auto& fixture : load_fixtures()) {
+            INFO("fixture: " << fixture.name << " presupuesto=" << presupuesto_ms);
+            engine::State11 state;
+            REQUIRE(snake::parse_state(fixture.doc, state));
+            const auto t0 = snake::Deadline::Clock::now();
+            const snake::Deadline d(t0 + std::chrono::milliseconds(presupuesto_ms));
+            const snake::Move move = snake::decide(state, d, p);
+            REQUIRE(std::chrono::duration_cast<std::chrono::milliseconds>(
+                        snake::Deadline::Clock::now() - t0)
+                        .count() <= presupuesto_ms);
+            const engine::MoveMask legal = engine::legal_moves(state, state.you);
+            if (legal != engine::move_mask_none) {
+                REQUIRE(engine::mask_has(legal, move.direction));
+            }
+        }
+    }
+}
+
+TEST_CASE("la guarda de 'no cabe ni mi cuerpo' no depende del territorio", "[search][hojas]") {
+    // El espacio CRUDO se conserva siempre aunque el territorio sustituya al termino de
+    // espacio en la puntuacion: "no cabe ni mi cuerpo" es una condicion sobre casillas
+    // fisicas, no sobre quien llega antes. Si se derivara del territorio, una region
+    // amplia pero disputada dejaria de contar como amplia.
+    engine::State11 s{};
+    s.snake_count = 1;
+    s.you = 0;
+    auto& yo = s.snakes[0];
+    yo.head_slot = 0;
+    yo.length = 10;
+    yo.health = 90;
+    yo.status = engine::Elimination::alive;
+    yo.eliminated_on_turn = -1;
+    // Encerrada en una franja de 3x3 en la esquina: 9 casillas para un cuerpo de 10.
+    for (int i = 0; i < 10; ++i) {
+        yo.cells[static_cast<unsigned>(i)] =
+            static_cast<std::uint16_t>(engine::State11::Board::index_of(
+                {static_cast<std::int8_t>(i % 3), static_cast<std::int8_t>(i / 3)}));
+    }
+    s.refresh_occupancy();
+
+    snake::Params con_terr;
+    con_terr.territory.version = 1;
+    snake::Params sin_terr;
+    // Las dos tienen que ver el mismo problema: la posicion es mala en las dos escalas.
+    const double a = snake::evaluate(s, s.you, con_terr);
+    const double b = snake::evaluate(s, s.you, sin_terr);
+    INFO("con territorio " << a << ", sin territorio " << b);
+    REQUIRE(a < 0.0);
+    REQUIRE(b < 0.0);
+}
+
 TEST_CASE("fail-safe: los cuatro escalones", "[brain][failsafe]") {
     const snake::Params params;
     const auto& fixtures = load_fixtures();

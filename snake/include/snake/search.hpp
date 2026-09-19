@@ -7,7 +7,7 @@
 /// Por que existe, con el numero delante: `brain_v0` decide en **~100 us** sobre un
 /// presupuesto de **350 ms**. Gasta el 0.03% del tiempo que tiene. Mientras tanto Hobbs y
 /// Devin simulan, y las dos evaluaciones estaticas que hemos medido -Voronoi
-/// (ver docs/strategy.md#s-v1r) y cuellos (ver docs/strategy.md#s-cuellos-r)- dieron NO
+/// (ver docs/experimentos.md#s-v1r) y cuellos (ver docs/experimentos.md#s-cuellos-r)- dieron NO
 /// CONCLUYENTE contra ellos. Dos veces el mismo diagnostico: contra un rival que busca,
 /// una heuristica mejor no basta. Lo que falta no es evaluacion, es profundidad.
 ///

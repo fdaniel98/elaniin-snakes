@@ -1,5 +1,5 @@
 {
-  "_comment": "v0 + cuellos, y NADA MAS. Es v0 con la penalizacion de salas de una sola puerta encendida: territory.version sigue en 0. Existe separado de v2.json porque v2 mezcla los cuellos con el territorio de v1, que ya se midio y se rechazo (ver docs/experimentos.md#s-v1r), y un experimento con dos variables a la vez no dice cual de las dos hizo que. ver docs/strategy.md#s-cuellos",
+  "_comment": "v4 = busqueda CON territorio en las hojas. Es la celda que faltaba del cuadro: evaluacion mejor sin busqueda no ayuda (v1, cuellos), busqueda con evaluacion v0 si (-0.28), y mas profundidad sola no (-0.017 al pasar de 6 a 12 niveles). Cuesta 1.2 niveles, que es justo la profundidad que se midio que no vale nada. ver docs/strategy.md#s-hojas",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
@@ -15,7 +15,7 @@
     "min_space_ratio": 1.0,
     "weight": 100.0,
     "tail_escape": true,
-    "worst_case_weight": 150.0,
+    "worst_case_weight": 0.0,
     "worst_case_max_cuellos": 24
   },
   "head": {
@@ -27,13 +27,13 @@
     "low_health_multiplier": 4.0
   },
   "territory": {
-    "version": 0,
+    "version": 1,
     "weight": 120.0,
     "contested_weight": 0.0,
     "hazard_value_pct": 50
   },
   "search": {
-    "version": 0,
+    "version": 1,
     "max_depth": 64,
     "max_rivals": 2,
     "death_value": -100000.0,

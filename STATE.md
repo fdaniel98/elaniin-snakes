@@ -6,9 +6,10 @@ Fase: 3 (Training Room MVP) — COMPLETA
 Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
 El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
-Snake activa: v0-baseline. Dos heuristicas estaticas RECHAZADAS (ver
-docs/strategy.md#s-v1r y #s-cuellos-r). v3 (busqueda) medida: -0.267 de puesto, IC95
-[-0.562, +0.029], NO CONCLUYENTE por 0.029 (ver docs/strategy.md#s-busq-r)
+Snake activa: v0-baseline. Busqueda medida dos veces: -0.267 y -0.283 de puesto, IC95
+hasta +0.006, 5x las victorias; NO CONCLUYENTE por seis milesimas. Duplicar la profundidad
+no aporto nada (-0.017), asi que el techo es la evaluacion de las hojas
+(ver docs/experimentos.md#s-busq-r)
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -87,7 +88,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Medir v3 con el tope de profundidad en 64 (ver docs/decisions/ADR-0024-el-tope-de-profundidad.md):
-son de 6.03 a 12.08 niveles al mismo coste, asi que el A/B anterior midio una snake mas
-floja que la de ahora. 60 partidas, mismo protocolo. En paralelo, desplegar: falta el ID
-del proyecto GCP.
+Medir `v4-hojas` CONTRA `v3-busqueda` -no contra v0-, porque lo que se prueba es la
+evaluacion de las hojas y no la busqueda (ver docs/strategy.md#s-hojas). En paralelo,
+desplegar: falta el ID del proyecto GCP, y el riesgo de timeout ya esta cerrado (0 en
+9 975 movimientos, maximo 291 ms de 500).

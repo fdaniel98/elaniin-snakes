@@ -4,7 +4,7 @@ read_when: "antes de tocar time.max_compute_ms, los margenes de red o seguridad,
 authority: derived
 source: tools/sonda_busqueda.cpp + docs/results/torneo-v3 (60 partidas, 10 221 movimientos)
 last_verified: 2026-09-18
-size_bytes: 4357
+size_bytes: 4361
 ---
 
 # ADR-0023 — El presupuesto de computo baja a 200 ms {#adr-0023}
@@ -88,7 +88,7 @@ ser mucho mas raro, pero eso esta por medir.
 
 ## Consecuencia sobre lo medido {#adr-0023-consecuencia}
 
-El torneo de v3 (ver docs/strategy.md#s-busq-r) se jugo a 350 ms. Lo que se despliegue a 200
+El torneo de v3 (ver docs/experimentos.md#s-busq-r) se jugo a 350 ms. Lo que se despliegue a 200
 es un 3 % menos profundo que lo medido. Queda **declarado**, no escondido: si se quiere
 rigor completo, el A/B se repite a 200 ms; la diferencia esta por debajo del ruido del
 propio A/B, que sobre 15 bloques tiene un IC de +-0.3 de puesto.

@@ -2,9 +2,9 @@
 title: La busqueda mira hacia delante, y supone lo peor de los rivales
 read_when: "antes de tocar snake/src/search.cpp, los parametros de search, o de discutir por que la snake no busca mas hondo"
 authority: derived
-source: medicion propia (tools/sonda_busqueda.cpp) + docs/strategy.md#s-v1r y #s-cuellos-r
+source: medicion propia (tools/sonda_busqueda.cpp) + docs/experimentos.md#s-v1r y #s-cuellos-r
 last_verified: 2026-09-18
-size_bytes: 4469
+size_bytes: 4485
 ---
 
 # ADR-0022 — La busqueda mira hacia delante, y supone lo peor de los rivales {#adr-0022}
@@ -17,8 +17,8 @@ mismo resultado contra el mismo campo:
 
 | version | que cambiaba | veredicto |
 |---|---|---|
-| v1 | territorio por Voronoi | NO CONCLUYENTE (ver docs/strategy.md#s-v1r) |
-| cuellos | salas de una sola puerta | NO CONCLUYENTE (ver docs/strategy.md#s-cuellos-r) |
+| v1 | territorio por Voronoi | NO CONCLUYENTE (ver docs/experimentos.md#s-v1r) |
+| cuellos | salas de una sola puerta | NO CONCLUYENTE (ver docs/experimentos.md#s-cuellos-r) |
 
 Dos heuristicas estaticas distintas, atacando el sintoma medido -132 de 178 muertes sin
 ninguna salida ese turno- y ninguna mueve el puesto medio contra rivales que simulan. Lo
@@ -75,7 +75,7 @@ la practica son buenas.
 ## Lo que queda por comprobar {#adr-0022-abierto}
 
 **Esto no esta medido en partida.** El A/B contra `gauntlet-v1` con el protocolo de
-ver docs/strategy.md#s-cuellos-r es lo unico que decide si entra, y hasta entonces
+ver docs/experimentos.md#s-cuellos-r es lo unico que decide si entra, y hasta entonces
 `search.version` sigue en 0 en `default.json`. La hipotesis falsable es: **la busqueda
 sube el puesto medio contra el campo congelado por encima del delta de 0.10.** Si tambien
 sale NO CONCLUYENTE, lo que falla no es la profundidad sino la evaluacion en las hojas, y

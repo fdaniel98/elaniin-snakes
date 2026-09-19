@@ -43,10 +43,10 @@ static engine::State11 gen(engine::Rng& rng, int vivas) {
 int main() {
     for (const int vivas : {2, 3, 4}) {
         std::printf("\n=== %d serpientes vivas ===\n", vivas);
-        for (const int tope : {8, 24, 32, 48, 64}) {
+        for (const int terr : {0, 1}) {
             snake::Params p;
             p.search.version = 1;
-            p.search.max_depth = tope;
+            p.territory.version = terr;
             snake::warmup(p);
             engine::Rng rng(20260918);
             long long prof = 0, us_acum = 0, tope_us = 0;
@@ -66,14 +66,14 @@ int main() {
                 prof += r.depth;
                 us_acum += us;
                 tope_us = std::max(tope_us, us);
-                if (r.depth >= tope) {
+                if (r.depth >= p.search.max_depth) {
                     ++tocan_tope;
                 }
                 ++n;
             }
-            std::printf("  max_depth=%2d -> profundidad %.2f | %6lld us medios (de 200000) | "
+            std::printf("  territorio=%d -> profundidad %.2f | %6lld us medios (de 200000) | "
                         "%d de %d tocan el tope\n",
-                        tope,
+                        terr,
                         double(prof) / n,
                         us_acum / n,
                         tocan_tope,

@@ -6,7 +6,7 @@
 /// heuristica no se activo nunca, o se activa siempre y no discrimina. Publicar la
 /// primera cuando era la segunda habria sido escribir una leccion falsa.
 ///
-/// Respuesta: se dispara en el 92.9% de los estados. ver docs/strategy.md#s-cuellos-r
+/// Respuesta: se dispara en el 92.9% de los estados. ver docs/experimentos.md#s-cuellos-r
 #include <cstdio>
 
 #include <engine/rng.hpp>

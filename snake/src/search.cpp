@@ -10,6 +10,7 @@
 #include <engine/rules.hpp>
 
 #include <snake/eval/floodfill.hpp>
+#include <snake/eval/voronoi.hpp>
 #include <snake/search.hpp>
 
 namespace snake {
@@ -258,10 +259,28 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
 
     double score = 0.0;
 
-    // 1. Espacio alcanzable, normalizado. Es el termino que mas pesa en v0 y aqui sigue
-    //    siendo el suelo: una posicion sin sitio esta perdida aunque todo lo demas cuadre.
+    // 1. Espacio. Es el termino que mas pesa y el suelo de todo: una posicion sin sitio
+    //    esta perdida aunque lo demas cuadre.
+    //
+    //    Con `territory.version >= 1` se mide como TERRITORIO -casillas que alcanzamos
+    //    antes que los rivales, por BFS simultaneo- en vez de como espacio alcanzable a
+    //    secas. Es exactamente la evaluacion que se midio y se rechazo como decision de un
+    //    turno (ver docs/experimentos.md#s-v1r); aqui se prueba donde el propio rechazo dijo
+    //    que deberia servir: en las HOJAS de una busqueda.
+    //
+    //    El espacio crudo se conserva SIEMPRE para la guarda de "no cabe ni mi cuerpo":
+    //    esa condicion es sobre casillas fisicas, no sobre quien llega antes.
     const int espacio = eval::flood(libres, yo.head()).cells;
-    score += p.space.weight * static_cast<double>(espacio) / static_cast<double>(State::cells);
+    if (p.territory.version >= 1) {
+        const auto t = eval::voronoi(s, blocked, p.territory.hazard_value_pct);
+        score += p.territory.weight *
+                 static_cast<double>(t.weighted[static_cast<std::size_t>(us)]) /
+                 static_cast<double>(State::cells * 100);
+        score -= p.territory.contested_weight * static_cast<double>(t.contested) /
+                 static_cast<double>(State::cells);
+    } else {
+        score += p.space.weight * static_cast<double>(espacio) / static_cast<double>(State::cells);
+    }
     if (espacio < mi_largo) {
         score -= p.space.weight;
     }

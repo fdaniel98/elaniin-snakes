@@ -3,7 +3,7 @@ title: "Pack: añadir o cambiar una heuristica"
 read_when: "antes de tocar la evaluacion del cerebro o de lanzar un A/B"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 1437
+size_bytes: 2016
 ---
 
 
@@ -13,11 +13,19 @@ size_bytes: 1437
 | Orden | Archivo | Para que |
 |---|---|---|
 | 1 | `docs/strategy.md` | la hipotesis falsable de la version que tocas |
+| 1b | `docs/experimentos.md` | **lee esto antes de proponer nada**: que se probo ya y que dio |
 | 2 | `snake/include/snake/params.hpp` | los pesos existentes; no inventes constantes |
 | 3 | `snake/config/default.json` | el JSON 1:1 con el struct |
-| 4 | `snake/src/brain_v0.cpp` | como se puntua hoy un candidato |
-| 5 | `docs/rules.md` | solo el anchor de la mecanica que vas a explotar |
+| 4 | `snake/src/search.cpp` | **`evaluate()`**: como se puntua una posicion en las hojas |
 <!-- END:pack-load -->
+
+Fuera de la lista a proposito, y por que:
+
+- `snake/src/brain_v0.cpp` (20 KB): v0 esta CONGELADO y es la referencia fija. Una
+  heuristica nueva no se toca ahi, se toca en `evaluate()`. Abrelo solo si necesitas ver
+  como puntuaba el baseline.
+- `docs/rules.md` (14 KB): no se lee entero para añadir una heuristica, se abre por el
+  anchor de la mecanica concreta que se va a explotar.
 
 ## CP-21 Como se hace {#cp-21}
 
@@ -26,6 +34,8 @@ size_bytes: 1437
 2. Todo peso nuevo va a `Params` y a `default.json` a la vez, o el test de 1:1 falla.
 3. v0 no se modifica: es la referencia fija. Una heuristica nueva es una version nueva.
 4. El veredicto lo da el A/B, no la intuicion (ver docs/strategy.md#s-ab).
+5. Comprueba en ver docs/experimentos.md#exp-resumen que tu idea no se ha medido ya.
+   Dos de las cuatro que hay ahi se propusieron dos veces.
 
 ## CP-22 Criterio de salida {#cp-22}
 
