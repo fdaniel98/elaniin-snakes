@@ -826,3 +826,176 @@ TEST_CASE("spawn_food: turno 0 y tablero lleno no colocan nada", "[rules][r-10]"
     }
     REQUIRE(engine::spawn_food(lleno, 1).count() == 0);
 }
+
+// ---------------------------------------------------------------------------------------
+// start_board: el tablero del turno 0. ver docs/rules.md#r-11
+// ---------------------------------------------------------------------------------------
+
+TEST_CASE("start_board: tres segmentos apilados, salud llena y puntos fijos", "[rules][r-11]") {
+    const engine::Ruleset reglas{};
+    for (std::uint64_t semilla = 1; semilla <= 200; ++semilla) {
+        const State s = engine::start_board<11, 11, 4>(4, reglas, semilla);
+        REQUIRE(s.count() == 4);
+        REQUIRE(s.turn == 0);
+        REQUIRE_FALSE(engine::is_terminal(s));
+
+        std::vector<int> cabezas;
+        for (int i = 0; i < s.count(); ++i) {
+            const auto& snake = s.snake(static_cast<engine::SnakeId>(i));
+            INFO("semilla " << semilla << " serpiente " << i);
+            REQUIRE(snake.length == engine::start_length);
+            REQUIRE(snake.health == engine::max_health);
+            REQUIRE(snake.status == Elimination::alive);
+            // Apilados: los tres segmentos en la misma casilla. Por eso la cola no se
+            // libera en los primeros turnos. ver docs/rules.md#r-04
+            REQUIRE(snake.segment(0) == snake.segment(1));
+            REQUIRE(snake.segment(1) == snake.segment(2));
+            REQUIRE(snake.tail_is_stacked());
+            cabezas.push_back(snake.head());
+        }
+
+        // Cada cabeza en uno de los ocho puntos fijos, y ninguna repetida.
+        const std::array<int, 8> puntos{cell(1, 1),
+                                        cell(1, 5),
+                                        cell(1, 9),
+                                        cell(5, 1),
+                                        cell(5, 9),
+                                        cell(9, 1),
+                                        cell(9, 5),
+                                        cell(9, 9)};
+        for (const int c : cabezas) {
+            REQUIRE(std::find(puntos.begin(), puntos.end(), c) != puntos.end());
+        }
+        std::sort(cabezas.begin(), cabezas.end());
+        REQUIRE(std::unique(cabezas.begin(), cabezas.end()) == cabezas.end());
+    }
+}
+
+TEST_CASE("start_board: una comida por cabeza mas la del centro", "[rules][r-11]") {
+    const engine::Ruleset reglas{};
+    for (std::uint64_t semilla = 1; semilla <= 200; ++semilla) {
+        const State s = engine::start_board<11, 11, 4>(4, reglas, semilla);
+        INFO("semilla " << semilla);
+        // En 11x11 los ocho puntos estan a distancia >= 4, asi que ninguna diagonal
+        // choca con otra: 4 en diagonal + 1 en el centro.
+        REQUIRE(s.food.count() == 5);
+        REQUIRE(s.food.test(cell(5, 5)));
+        REQUIRE((s.food & s.bodies).none());
+
+        // Ninguna comida en una esquina del tablero. ver docs/rules.md#r-11
+        REQUIRE_FALSE(s.food.test(cell(0, 0)));
+        REQUIRE_FALSE(s.food.test(cell(0, 10)));
+        REQUIRE_FALSE(s.food.test(cell(10, 0)));
+        REQUIRE_FALSE(s.food.test(cell(10, 10)));
+
+        // Cada comida que no sea la del centro esta en diagonal a alguna cabeza.
+        for (int c = 0; c < State::cells; ++c) {
+            if (!s.food.test(c) || c == cell(5, 5)) {
+                continue;
+            }
+            const Coord fc = Board::coord_of(c);
+            bool pegada = false;
+            for (int i = 0; i < s.count(); ++i) {
+                const Coord hc = Board::coord_of(s.snake(static_cast<engine::SnakeId>(i)).head());
+                pegada = pegada || (std::abs(fc.x - hc.x) == 1 && std::abs(fc.y - hc.y) == 1);
+            }
+            REQUIRE(pegada);
+        }
+    }
+}
+
+TEST_CASE("start_board: determinista y sensible a la semilla", "[rules][r-11]") {
+    const engine::Ruleset reglas{};
+    const State a = engine::start_board<11, 11, 4>(4, reglas, 12345);
+    const State b = engine::start_board<11, 11, 4>(4, reglas, 12345);
+    for (int i = 0; i < 4; ++i) {
+        REQUIRE(a.snake(static_cast<engine::SnakeId>(i)).head() ==
+                b.snake(static_cast<engine::SnakeId>(i)).head());
+    }
+    REQUIRE((a.food ^ b.food).none());
+
+    int distintas = 0;
+    for (std::uint64_t semilla = 1; semilla <= 50; ++semilla) {
+        const State s = engine::start_board<11, 11, 4>(4, reglas, semilla);
+        if (s.snake(0).head() != a.snake(0).head()) {
+            ++distintas;
+        }
+    }
+    REQUIRE(distintas > 20);
+}
+
+TEST_CASE("start_board: tamaños y numeros de serpientes distintos", "[rules][r-11]") {
+    const engine::Ruleset reglas{};
+    for (int cuantas = 1; cuantas <= 4; ++cuantas) {
+        const auto s = engine::start_board<7, 7, 4>(cuantas, reglas, 99);
+        REQUIRE(s.count() == cuantas);
+        REQUIRE(s.food.test(engine::Bitboard<7, 7>::index_of(3, 3)));
+        // En 7x7 los puntos fijos estan a distancia 2 y sus diagonales pueden coincidir,
+        // asi que la cota es un rango y no una igualdad.
+        REQUIRE(s.food.count() >= 2);
+        REQUIRE(s.food.count() <= cuantas + 1);
+    }
+    // `snake_count` por encima del maximo se acota en silencio: la arena, un fuzzer o un
+    // test pueden pedirlo y el motor no puede escribir fuera del array.
+    // ver docs/invariants.md#inv-01
+    REQUIRE(engine::start_board<11, 11, 4>(9, reglas, 1).count() == 4);
+    REQUIRE(engine::start_board<11, 11, 4>(-3, reglas, 1).count() == 0);
+}
+
+TEST_CASE("start_board: una partida entera se juega desde el turno 0", "[rules][r-11][r-10]") {
+    // El bucle de la arena en miniatura: colocar, mover, reponer comida, regenerar
+    // hazards. Si esto no termina o revienta, la fase 4 no tiene sobre que construirse.
+    engine::Ruleset reglas{};
+    reglas.map_is_royale = true;
+    reglas.shrink_every_n_turns = 25;
+
+    for (std::uint64_t semilla = 1; semilla <= 60; ++semilla) {
+        State s = engine::start_board<11, 11, 4>(4, reglas, semilla);
+        engine::Rng rng(semilla ^ 0xABCDEFULL);
+        int turnos = 0;
+        while (!engine::is_terminal(s) && turnos < 2000) {
+            std::array<Direction, 4> moves{};
+            for (int i = 0; i < s.count(); ++i) {
+                const auto id = static_cast<engine::SnakeId>(i);
+                const engine::MoveMask legales = engine::legal_moves(s, id);
+                moves[static_cast<std::size_t>(i)] = engine::default_move(s, id);
+                if (legales != engine::move_mask_none) {
+                    // Playout uniforme sobre las legales, que es la politica declarada
+                    // para los numeros de docs/performance.md.
+                    std::array<Direction, 4> opciones{};
+                    int n = 0;
+                    for (const Direction d :
+                         {Direction::up, Direction::down, Direction::left, Direction::right}) {
+                        if (engine::mask_has(legales, d)) {
+                            opciones[static_cast<std::size_t>(n++)] = d;
+                        }
+                    }
+                    moves[static_cast<std::size_t>(i)] = opciones[static_cast<std::size_t>(
+                        rng.bounded(static_cast<std::uint64_t>(n)))];
+                }
+            }
+            engine::apply(
+                s, std::span<const Direction>(moves.data(), static_cast<std::size_t>(s.count())));
+            s.food |= engine::spawn_food(s, semilla);
+            s.hazards =
+                engine::royale_hazards<11, 11>(semilla, s.turn, reglas.shrink_every_n_turns);
+            ++turnos;
+        }
+        INFO("semilla " << semilla << " turnos " << turnos);
+        REQUIRE(turnos < 2000);
+        REQUIRE(s.alive_count() <= 1);
+
+        const auto puestos = engine::placements(s);
+        REQUIRE(puestos.count == 4);
+        float suma = 0.0F;
+        for (int i = 0; i < puestos.count; ++i) {
+            const float r = puestos.rank[static_cast<std::size_t>(i)];
+            REQUIRE(r >= 1.0F);
+            REQUIRE(r <= 4.0F);
+            suma += r;
+        }
+        // Rango compartido promediado: la suma de los puestos es siempre 1+2+3+4.
+        // ver docs/rules.md#r-12
+        REQUIRE(suma == 10.0F);
+    }
+}

@@ -4,7 +4,7 @@ read_when: "antes de tocar engine/src/rules.cpp, de escribir un fixture o de dis
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
 last_verified: 2026-09-17
-size_bytes: 14379
+size_bytes: 14703
 ---
 
 Toda afirmacion de este archivo cita `archivo.go:linea` del SHA del front-matter. Lo no verificable
@@ -204,7 +204,11 @@ En busqueda, el spawn de comida se ignora (ver [invariants.md#inv-09](invariants
 ## R-11 Colocacion inicial {#r-11}
 
 - Hasta 8 serpientes en tablero cuadrado de lado 7 o mayor: posiciones **fijas**, 4 esquinas y 4
-  puntos cardinales a distancia 1 del borde, barajadas (`board.go:170-216`).
+  puntos cardinales a distancia 1 del borde, barajadas (`board.go:170-216`). En un tablero de
+  lado `N`, con `mn = 1`, `mx = N-2` y `md = (N-1)/2`, eso son los ocho puntos
+  `(mn,mn) (mn,md) (mn,mx) (md,mn) (md,mx) (mx,mn) (mx,md) (mx,mx)`: en 11x11, `mn=1`, `md=5`,
+  `mx=9`. Con mas de 8 serpientes o un tablero menor el motor usa colocacion aleatoria, que no
+  implementamos (`board.go:150-168`).
 - Los 3 segmentos iniciales se apilan en la misma casilla (`board.go:217-223`), con salud 100
   (`board.go:174-177`).
 - La comida inicial se coloca a distancia diagonal 1 de cada cabeza **solo si hay 4 serpientes o

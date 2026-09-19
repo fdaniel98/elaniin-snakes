@@ -150,11 +150,40 @@ extern template Bitboard<7, 7> royale_hazards<7, 7>(std::uint64_t, int, int) noe
 extern template Bitboard<11, 11> royale_hazards<11, 11>(std::uint64_t, int, int) noexcept;
 extern template Bitboard<19, 19> royale_hazards<19, 19>(std::uint64_t, int, int) noexcept;
 
+/// Tablero del turno 0, como lo monta el arbitro antes de que nadie se mueva.
+///
+/// En servidor no hace falta -el tablero llega en el request-; lo necesita la arena, que
+/// genera partidas nuevas en vez de releer viejas.
+///
+/// Las serpientes salen en los ocho puntos fijos barajados, con los tres segmentos
+/// APILADOS en la misma casilla y salud 100. Apilados significa que la cola no se libera
+/// en los primeros turnos aunque nadie haya comido, que es la trampa de
+/// ver docs/rules.md#r-04. La comida inicial va en diagonal a cada cabeza, mas una en el
+/// centro. ver docs/rules.md#r-11
+///
+/// PRECONDICION: tablero cuadrado de lado >= 7 y como mucho 8 serpientes, que es donde el
+/// motor oficial usa los puntos fijos (`board.go:170-216`). Fuera de ahi usa colocacion
+/// aleatoria, que no implementamos; `snake_count` se acota a `MaxSnakes` en silencio.
+///
+/// La baraja de asientos y el sorteo de la comida diagonal usan el `Rng` del repo, no el
+/// `math/rand` de Go: coincide la forma, no el reparto concreto.
+/// ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091
+template <int W, int H, int MaxSnakes>
+[[nodiscard]] GameState<W, H, MaxSnakes>
+start_board(int snake_count, const Ruleset& rules, std::uint64_t seed) noexcept;
+
 extern template Bitboard<7, 7> spawn_food<7, 7, 4>(const GameState<7, 7, 4>&,
                                                    std::uint64_t) noexcept;
 extern template Bitboard<11, 11> spawn_food<11, 11, 4>(const GameState<11, 11, 4>&,
                                                        std::uint64_t) noexcept;
 extern template Bitboard<19, 19> spawn_food<19, 19, 4>(const GameState<19, 19, 4>&,
                                                        std::uint64_t) noexcept;
+
+extern template GameState<7, 7, 4>
+start_board<7, 7, 4>(int, const Ruleset&, std::uint64_t) noexcept;
+extern template GameState<11, 11, 4>
+start_board<11, 11, 4>(int, const Ruleset&, std::uint64_t) noexcept;
+extern template GameState<19, 19, 4>
+start_board<19, 19, 4>(int, const Ruleset&, std::uint64_t) noexcept;
 
 } // namespace engine
