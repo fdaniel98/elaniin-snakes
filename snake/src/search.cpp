@@ -29,7 +29,7 @@ constexpr int k_max_snakes = 4;
 /// ver docs/rules.md#r-04
 Board blocked_cells(const State& s) noexcept {
     Board b;
-    for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
+    for (int i = 0; i < s.count(); ++i) {
         const auto& sn = s.snakes[static_cast<unsigned>(i)];
         if (!engine::is_alive(sn.status)) {
             continue;
@@ -166,7 +166,7 @@ double peor_respuesta(const State& s,
                       double beta,
                       Contexto& ctx) noexcept {
     std::array<Direction, k_max_snakes> moves{};
-    for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
+    for (int i = 0; i < s.count(); ++i) {
         // Los rivales que no se simulan repiten lo que el motor oficial les aplicaria si
         // no contestaran. No es que vayan a hacer eso: es la suposicion mas barata que no
         // los deja quietos, que no es un estado que el juego produzca.
@@ -207,7 +207,9 @@ double peor_respuesta(const State& s,
             resto /= k;
         }
         State siguiente = s;
-        engine::apply(siguiente, std::span<const Direction>(moves.data(), s.snake_count));
+        engine::apply(
+            siguiente,
+            std::span<const Direction>(moves.data(), static_cast<std::size_t>(s.count())));
         ++ctx.nodes;
         const double v = negamax(siguiente, depth - 1, alpha, beta, ctx);
         peor = std::min(peor, v);
@@ -308,7 +310,7 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     int vivos = 0;
     int mas_largos = 0;
     int largo_rival_max = 0;
-    for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
+    for (int i = 0; i < s.count(); ++i) {
         if (i == static_cast<int>(us)) {
             continue;
         }
@@ -414,7 +416,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
     // arbol, asi que este recorte es lo que compra profundidad.
     std::array<std::pair<int, SnakeId>, k_max_snakes> cercanos{};
     int n = 0;
-    for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {
+    for (int i = 0; i < state.count(); ++i) {
         if (i == static_cast<int>(state.you)) {
             continue;
         }

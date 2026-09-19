@@ -89,7 +89,13 @@ fi
 # No compila los tests a proposito: el Dockerfile tampoco, y el allocator instrumentado
 # dispara un falso positivo de -Wmismatched-new-delete que no tiene que bloquear nada.
 echo "== compila con GCC, que es lo que usa la imagen de deploy =="
-GXX="$(command -v g++-12 || command -v g++ || true)"
+# El `g++` del sistema primero, y las versiones concretas solo como respaldo. La imagen
+# usa debian:12 (GCC 12); un g++ local mas nuevo es MAS estricto, y eso es lo que se
+# quiere: la primera vez que esta comprobacion corrio con GCC 13 -en la maquina de
+# referencia- encontro una escritura fuera de array que GCC 12 no ve
+# (engine/src/rules.cpp, order_by_length). Preferir el viejo habria sido elegir no
+# enterarse.
+GXX="$(command -v g++ || command -v g++-12 || true)"
 if [[ -z "$GXX" ]]; then
     echo "AVISO sin g++ en este entorno: el build de la imagen no queda cubierto aqui"
     echo "      (el check 10 lo construye de verdad y sigue siendo el arbitro)"
@@ -102,6 +108,8 @@ else
        && cmake --build "$TMP_GCC" --target battlesnake-server \
              >"$TMP_GCC/build.log" 2>&1; then
         echo "OK   battlesnake-server compila con $("$GXX" --version | head -1)"
+        echo "     (la imagen usa debian:12/GCC 12; un g++ local mas nuevo es mas"
+        echo "      estricto, y eso es intencionado)"
     else
         tail -30 "$TMP_GCC/build.log" 2>/dev/null || tail -20 "$TMP_GCC/cmake.log"
         fail "battlesnake-server NO compila con $GXX (la imagen de deploy fallaria)"

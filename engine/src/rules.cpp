@@ -23,7 +23,9 @@ template <int MaxSnakes> struct ByLength {
 template <int W, int H, int MaxSnakes>
 ByLength<MaxSnakes> order_by_length(const GameState<W, H, MaxSnakes>& s) noexcept {
     ByLength<MaxSnakes> result;
-    result.count = static_cast<int>(s.snake_count);
+    // `count()` y no `snake_count`: el campo es publico y puede mentir.
+    // ver docs/invariants.md#inv-01
+    result.count = std::min(s.count(), MaxSnakes);
     for (int i = 0; i < result.count; ++i) {
         result.order[static_cast<unsigned>(i)] = static_cast<std::uint8_t>(i);
     }
@@ -82,7 +84,7 @@ MoveMask legal_moves(const GameState<W, H, MaxSnakes>& s, SnakeId id) noexcept {
     // Casillas que seguiran ocupadas el proximo turno: todos los cuerpos vivos menos
     // las colas que avanzan. Una cola apilada NO se libera. ver docs/rules.md#r-04
     Board blocked;
-    for (int i = 0; i < static_cast<int>(s.snake_count); ++i) {
+    for (int i = 0; i < s.count(); ++i) {
         const auto& other = s.snakes[static_cast<unsigned>(i)];
         if (!is_alive(other.status)) {
             continue;
@@ -128,7 +130,7 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
         return Status::game_over;
     }
 
-    const int n = static_cast<int>(s.snake_count);
+    const int n = s.count();
     std::array<bool, static_cast<std::size_t>(MaxSnakes)> out_of_bounds{};
 
     // Fase 2: movimiento simultaneo. ver docs/rules.md#r-03
@@ -307,7 +309,7 @@ Status apply(GameState<W, H, MaxSnakes>& s, std::span<const Direction> moves) no
 template <int W, int H, int MaxSnakes>
 PlacementsT<MaxSnakes> placements(const GameState<W, H, MaxSnakes>& s) noexcept {
     PlacementsT<MaxSnakes> result;
-    const int n = static_cast<int>(s.snake_count);
+    const int n = s.count();
     result.count = n;
 
     // Clave de orden: viva > muerta, y entre muertas gana la que murio mas tarde.

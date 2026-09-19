@@ -43,7 +43,7 @@ constexpr int direction_count = engine::direction_count;
 /// pero deja el codigo dependiendo de que el ring buffer duplique el ultimo segmento.
 Board blocked_cells(const State& state) noexcept {
     Board blocked;
-    for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {
+    for (int i = 0; i < state.count(); ++i) {
         const auto& other = state.snakes[static_cast<unsigned>(i)];
         if (!engine::is_alive(other.status)) {
             continue;
@@ -143,7 +143,7 @@ double score_candidate(const State& state,
 
     // 2. Zona de cabeza: se evitan las casillas adyacentes a cabezas iguales o mas
     //    largas y se prefieren las adyacentes a cabezas estrictamente mas cortas.
-    for (int i = 0; i < static_cast<int>(state.snake_count); ++i) {
+    for (int i = 0; i < state.count(); ++i) {
         if (i == static_cast<int>(state.you)) {
             continue;
         }
@@ -215,7 +215,7 @@ Move decide_impl(const State& state,
     // Escalon 3: estado imposible de razonar (serpiente propia ausente o de longitud
     // cero). Se devuelve el movimiento determinista documentado, nunca una excepcion.
     // ver docs/rules.md#r-03
-    if (state.you >= state.snake_count || state.snake(state.you).length == 0) {
+    if (static_cast<int>(state.you) >= state.count() || state.snake(state.you).length == 0) {
         return Move{Direction::up, 3, 0.0, 0};
     }
 
@@ -414,7 +414,7 @@ Move decide(const State& state, Deadline deadline, const Params& params) noexcep
         // ANTES que la busqueda por el mismo motivo: sobre un estado que el cerebro no
         // puede razonar, buscar es razonar igual.
         const bool estado_razonable =
-            state.you < state.snake_count && state.snake(state.you).length > 0;
+            static_cast<int>(state.you) < state.count() && state.snake(state.you).length > 0;
         const bool hay_donde_elegir =
             estado_razonable && engine::legal_moves(state, state.you) != engine::move_mask_none;
         if (params.search.version >= 1 && !degraded && hay_donde_elegir && !deadline.expired()) {

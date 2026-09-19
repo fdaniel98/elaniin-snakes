@@ -108,6 +108,21 @@ template <int W, int H, int MaxSnakes = 4> struct GameState {
 
     std::int32_t turn{};
     std::uint8_t snake_count{};
+
+    /// Numero de serpientes que de verdad se puede indexar.
+    ///
+    /// `snake_count` es un `uint8_t` de un struct publico y nada impide que un llamante lo
+    /// ponga por encima de `MaxSnakes`: el parser lo rechaza
+    /// (snake/src/config_loader.cpp), pero el motor es una libreria y la arena, un test o
+    /// un fuzzer no pasan por el parser. Todo bucle que recorra serpientes usa ESTO y no
+    /// el campo: lo pidio GCC 13 avisando de una escritura fuera del array, y ASan
+    /// confirmo que tambien se leia fuera en `refresh_occupancy`.
+    /// ver docs/invariants.md#inv-01
+    [[nodiscard]] constexpr int count() const noexcept {
+        return static_cast<int>(snake_count) < MaxSnakes ? static_cast<int>(snake_count)
+                                                         : MaxSnakes;
+    }
+
     /// Indice de nuestra serpiente dentro de `snakes`.
     SnakeId you{};
 
@@ -131,7 +146,7 @@ template <int W, int H, int MaxSnakes = 4> struct GameState {
 
     [[nodiscard]] constexpr int alive_count() const noexcept {
         int n = 0;
-        for (int i = 0; i < static_cast<int>(snake_count); ++i) {
+        for (int i = 0; i < count(); ++i) {
             if (is_alive(snakes[static_cast<unsigned>(i)].status)) {
                 ++n;
             }
@@ -142,7 +157,7 @@ template <int W, int H, int MaxSnakes = 4> struct GameState {
     /// Recalcula `bodies` desde los cuerpos de las serpientes vivas.
     constexpr void refresh_occupancy() noexcept {
         bodies.clear();
-        for (int i = 0; i < static_cast<int>(snake_count); ++i) {
+        for (int i = 0; i < count(); ++i) {
             const Snake& s = snakes[static_cast<unsigned>(i)];
             if (!is_alive(s.status)) {
                 continue;

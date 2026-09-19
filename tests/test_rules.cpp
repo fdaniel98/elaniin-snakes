@@ -663,3 +663,36 @@ TEST_CASE("fuzz: apply con direcciones arbitrarias mantiene los invariantes",
     // Si ninguna partida termina, el fuzz no esta llegando a los finales.
     REQUIRE(partidas_terminadas >= 2000);
 }
+
+TEST_CASE("el motor no se sale del array aunque snake_count mienta", "[rules][inv-01]") {
+    // `snake_count` es un uint8_t de un struct publico. El parser rechaza mas de
+    // `max_snakes` (snake/src/config_loader.cpp), pero `apply` es una funcion de libreria y
+    // acepta cualquier GameState: la arena, un test o un fuzzer pueden pasarle uno con el
+    // contador mas alto. Antes de acotarlo dentro del motor, GCC 13 avisaba de una
+    // escritura fuera del array en `order_by_length` -y tenia razon-.
+    engine::State11 s{};
+    s.you = 0;
+    for (int i = 0; i < engine::State11::max_snakes; ++i) {
+        auto& sn = s.snakes[static_cast<unsigned>(i)];
+        sn.head_slot = 0;
+        sn.length = static_cast<std::uint16_t>(3 + i);
+        sn.health = 80;
+        sn.status = engine::Elimination::alive;
+        sn.eliminated_on_turn = -1;
+        for (int seg = 0; seg < sn.length; ++seg) {
+            sn.cells[static_cast<unsigned>(seg)] =
+                static_cast<std::uint16_t>(engine::State11::Board::index_of(
+                    {static_cast<std::int8_t>(i * 2), static_cast<std::int8_t>(seg)}));
+        }
+    }
+    // La mentira: mas serpientes de las que caben.
+    s.snake_count = static_cast<std::uint8_t>(engine::State11::max_snakes + 3);
+    s.refresh_occupancy();
+
+    const std::array<engine::Direction, engine::State11::max_snakes> moves{
+        engine::Direction::up, engine::Direction::up, engine::Direction::up, engine::Direction::up};
+    // Bajo ASan, salirse del array aborta. Lo que se exige aqui es que NO aborte.
+    REQUIRE_NOTHROW(
+        engine::apply(s, std::span<const engine::Direction>(moves.data(), moves.size())));
+    REQUIRE(engine::placements(s).count <= engine::State11::max_snakes);
+}

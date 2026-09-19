@@ -78,7 +78,7 @@ template <int W, int H, int MaxSnakes>
     // desplazamientos de palabra, sin cola y sin asignaciones dinamicas.
     std::array<Board, static_cast<std::size_t>(MaxSnakes)> front{};
     int alive = 0;
-    for (int s = 0; s < static_cast<int>(state.snake_count); ++s) {
+    for (int s = 0; s < state.count(); ++s) {
         const auto& snake = state.snakes[static_cast<std::size_t>(s)];
         if (!engine::is_alive(snake.status)) {
             continue;
@@ -96,7 +96,7 @@ template <int W, int H, int MaxSnakes>
     for (int turn = 1; turn <= k_cells; ++turn) {
         bool any = false;
         std::array<Board, static_cast<std::size_t>(MaxSnakes)> next{};
-        for (int s = 0; s < static_cast<int>(state.snake_count); ++s) {
+        for (int s = 0; s < state.count(); ++s) {
             const auto& snake = state.snakes[static_cast<std::size_t>(s)];
             if (!engine::is_alive(snake.status)) {
                 continue;
@@ -117,7 +117,7 @@ template <int W, int H, int MaxSnakes>
             int ganador = -1;
             int mejor_longitud = -1;
             bool empate = false;
-            for (int s = 0; s < static_cast<int>(state.snake_count); ++s) {
+            for (int s = 0; s < state.count(); ++s) {
                 if (!next[static_cast<std::size_t>(s)].test(cell)) {
                     continue;
                 }
@@ -141,7 +141,7 @@ template <int W, int H, int MaxSnakes>
 
         // El frente siguiente es lo conquistado en este turno. Una casilla disputada no
         // da paso a nadie: las dos serpientes moririan ahi.
-        for (int s = 0; s < static_cast<int>(state.snake_count); ++s) {
+        for (int s = 0; s < state.count(); ++s) {
             Board conquistado;
             for (int cell = 0; cell < k_cells; ++cell) {
                 if (dist[static_cast<std::size_t>(cell)] == turn &&

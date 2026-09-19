@@ -3,7 +3,7 @@ title: Invariantes verificables del codigo
 read_when: "antes de cambiar engine/, snake/ o cualquier estructura de datos del estado"
 authority: canonical
 last_verified: 2026-09-17
-size_bytes: 5828
+size_bytes: 6601
 ---
 
 Un invariante sin verificacion mecanica es una nota, no un invariante. Cada fila dice
@@ -19,6 +19,18 @@ NOTA y no cuentan.
 las colisiones leen casillas fantasma.
 **Como se verifica:** `tests/test_rules.cpp` lo comprueba tras movimiento y crecimiento;
 el fuzz de 10000 estados recorre todos los segmentos de cada estado generado.
+
+**Y el contador de serpientes nunca indexa fuera del array.** `snake_count` es un
+`uint8_t` de un struct publico: el parser rechaza mas de `max_snakes`
+(`snake/src/config_loader.cpp`), pero el motor es una libreria y la arena, un test o un
+fuzzer no pasan por el parser. Por eso todo bucle que recorra serpientes usa
+`GameState::count()`, que acota, y **no** el campo directo.
+
+**Como se verifica:** lo pidio GCC 13 avisando de una escritura fuera del array en
+`order_by_length` -GCC 12, el de la imagen de deploy, no lo ve- y ASan confirmo que
+tambien se leia fuera en `refresh_occupancy`. El test
+`el motor no se sale del array aunque snake_count mienta` pone el contador por encima del
+maximo y exige que `apply` y `placements` no se salgan; bajo ASan, salirse aborta.
 
 ## INV-02 Ocupacion consistente {#inv-02}
 
