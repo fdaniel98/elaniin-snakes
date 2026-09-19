@@ -72,8 +72,16 @@ template <typename T> void benchmarkable(T&& value) {
     asm volatile("" : : "r,m"(value) : "memory");
 }
 
+/// Deadline "de sobra" para un test de comportamiento: 40 ms.
+///
+/// Eran 350, que es el presupuesto entero de un movimiento. Con v0 daba igual -decidia en
+/// 100 us y volvia- pero desde que el default busca, cada llamada se los gasta enteros: la
+/// bateria paso de 3 a 68 segundos y el selftest, que lanza un gate por veneno, dejo de
+/// caber en un rato razonable. Estos tests comprueban legalidad y fail-safe, no fuerza,
+/// y con 40 ms la busqueda llega a profundidad de sobra para eso. Los tests que SI miden
+/// el presupuesto se fijan el suyo explicitamente.
 snake::Deadline generous() {
-    return snake::Deadline(snake::Deadline::Clock::now() + std::chrono::milliseconds(350));
+    return snake::Deadline(snake::Deadline::Clock::now() + std::chrono::milliseconds(40));
 }
 
 } // namespace

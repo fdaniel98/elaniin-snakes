@@ -198,5 +198,13 @@
         }
       ]
     }
+  ],
+  "thresholds_amendments": [
+    {
+      "sha256": "25c07527d78359af0424a5595c291e047c7b0c76b785c206904ffc788a1d1a94",
+      "adr": "docs/decisions/ADR-0025-umbral-de-latencia-relativo.md",
+      "motivo": "Los umbrales de /move pasan de absolutos a sobrecoste sobre time.max_compute_ms. No afecta a lo medido en este loop -el orquestador no usa esos umbrales- pero cambia el sha del fichero.",
+      "fecha": "2026-09-19"
+    }
   ]
 }

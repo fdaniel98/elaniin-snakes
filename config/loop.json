@@ -65,8 +65,11 @@
       "agent": "perf-analyst",
       "min_duration_ms": 20000,
       "thresholds": {
-        "p99_move_ms_max": 50,
-        "max_move_ms_max": 150,
+        "_comment_latencia": "Los umbrales de /move son SOBRECOSTE sobre el presupuesto de computo que la snake declara en snake/config/default.json (time.max_compute_ms), no numeros absolutos. Los absolutos de antes (p99 50 ms, maximo 150) se escribieron para v0, que decidia en 100 us; una busqueda anytime gasta su presupuesto por diseño y los reventaba sin que hubiera ningun defecto. Lo que de verdad predice un timeout no es cuanto tarda la snake, es cuanto se pasa de lo que ella misma se concedio. ver docs/decisions/ADR-0025-umbral-de-latencia-relativo.md Los dos absolutos se CONSERVAN como techo duro: §4 declara que pasar de 350 ms es fallo duro, y es contra ellos que el check 9 valida las metricas del ledger. Quitarlos desactivaba esa comprobacion en silencio, cosa que caz el veneno 9c.",
+        "p99_move_ms_max": 350,
+        "max_move_ms_max": 350,
+        "p99_move_overhead_ms_max": 30,
+        "max_move_overhead_ms_max": 120,
         "cold_start_ms_max": 500,
         "timeouts_max": 0,
         "regression_pct": 5.0,

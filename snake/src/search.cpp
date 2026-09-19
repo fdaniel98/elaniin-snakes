@@ -175,6 +175,13 @@ double peor_respuesta(const State& s,
     }
     moves[static_cast<unsigned>(ctx.us)] = nuestro;
 
+    // El reloj se mira ANTES de ordenar los movimientos de los rivales. Ordenar hace un
+    // flood fill por direccion y por rival, y es trabajo que no estaba acotado por nada:
+    // con presupuestos muy cortos -el fuzz usa 5 ms- esa preparacion sola podia pasarse.
+    if (sin_tiempo(ctx)) {
+        return ctx.params->search.death_value;
+    }
+
     // Producto cartesiano de las direcciones de los rivales simulados, iterativo para no
     // recursar sobre el numero de rivales.
     std::array<std::array<Direction, engine::direction_count>, k_max_snakes> opciones{};
@@ -225,7 +232,17 @@ double negamax(State s, int depth, double alpha, double beta, Contexto& ctx) noe
     if (engine::is_terminal(s)) {
         return ctx.params->search.win_value + ctx.params->search.survival_bonus * depth;
     }
-    if (depth <= 0 || sin_tiempo(ctx)) {
+    // Sin tiempo NO se evalua. Esto parece un detalle y era el defecto que dominaba el
+    // tail: cuando el reloj se agota en el fondo del arbol, la recursion se desenrolla
+    // pasando por decenas de nodos, y cada uno llamaba a `evaluate()` -que con territorio
+    // hace un Voronoi- para producir un numero que nadie va a mirar, porque la iteracion
+    // incompleta se descarta entera. Medido con `tools/sonda_overshoot.cpp` sobre 10 000
+    // estados con presupuesto de 5 ms: el p50 clavaba el deadline (3005 us de 3000) y el
+    // maximo se iba a 10 984. El valor que se devuelve aqui da igual por ese mismo motivo.
+    if (sin_tiempo(ctx)) {
+        return 0.0;
+    }
+    if (depth <= 0) {
         return evaluate(s, ctx.us, *ctx.params);
     }
 

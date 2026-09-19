@@ -218,6 +218,9 @@ def main():
     parser.add_argument("--url", default="http://127.0.0.1:8080")
     parser.add_argument("--fixtures", default="tests/fixtures")
     parser.add_argument("--config", default="config/loop.json")
+    parser.add_argument("--snake-config", default="snake/config/default.json",
+                        help="de aqui sale time.max_compute_ms, el presupuesto que la "
+                             "snake se concede; los umbrales son sobrecoste sobre EL")
     parser.add_argument("--p99-ms", type=float, default=None)
     parser.add_argument("--max-ms", type=float, default=None)
     parser.add_argument("--repeats", type=int, default=20)
@@ -228,9 +231,30 @@ def main():
     # ningun umbral este hardcodeado (docs/harness.md#h-05).
     thresholds = json.loads(pathlib.Path(args.config).read_text(encoding="utf-8"))
     perf = thresholds["classes"]["perf"]["thresholds"]
-    p99_budget = args.p99_ms if args.p99_ms is not None else float(perf["p99_move_ms_max"])
-    max_budget = args.max_ms if args.max_ms is not None else float(perf["max_move_ms_max"])
+
+    # El umbral es SOBRECOSTE sobre lo que la snake se concede, no un numero absoluto. Un
+    # absoluto medía "cuanto tarda", que para una busqueda anytime es simplemente su
+    # presupuesto; esto mide "cuanto se pasa de lo que ella misma se concedio", que es lo
+    # que de verdad predice un timeout del arbitro.
+    # ver docs/decisions/ADR-0025-umbral-de-latencia-relativo.md
+    snake_cfg = json.loads(pathlib.Path(args.snake_config).read_text(encoding="utf-8"))
+    presupuesto = float(snake_cfg["time"]["max_compute_ms"])
+    p99_budget = (args.p99_ms if args.p99_ms is not None
+                  else presupuesto + float(perf["p99_move_overhead_ms_max"]))
+    max_budget = (args.max_ms if args.max_ms is not None
+                  else presupuesto + float(perf["max_move_overhead_ms_max"]))
     cold_budget = float(perf["cold_start_ms_max"])
+
+    # Y el techo absoluto que ninguna configuracion puede saltarse: el timeout del arbitro
+    # menos los margenes. Sin esto, subir `max_compute_ms` subiria tambien el umbral y el
+    # check dejaria de poder fallar. ver docs/rules-parametros.md
+    tope_duro = 500.0 - float(snake_cfg["time"]["network_margin_ms"]) \
+                      - float(snake_cfg["time"]["safety_margin_ms"])
+    if max_budget > tope_duro:
+        print(f"FAIL el umbral derivado ({max_budget:.0f}ms) supera el techo duro de "
+              f"{tope_duro:.0f}ms (500 - margen de red - margen de seguridad). "
+              f"time.max_compute_ms esta demasiado alto en {args.snake_config}.")
+        return 1
 
     fixtures = sorted(pathlib.Path(args.fixtures).glob("*.json"))
     if len(fixtures) < 10:
@@ -316,10 +340,14 @@ def main():
     if failures:
         return 1
     if p99 > p99_budget:
-        print(f"FAIL p99 {p99:.2f}ms > {p99_budget}ms")
+        print(f"FAIL p99 {p99:.2f}ms > {p99_budget:.0f}ms "
+              f"(presupuesto {presupuesto:.0f} + {perf['p99_move_overhead_ms_max']} de "
+              f"sobrecoste)")
         return 1
     if worst > max_budget:
-        print(f"FAIL maximo {worst:.2f}ms > {max_budget}ms")
+        print(f"FAIL maximo {worst:.2f}ms > {max_budget:.0f}ms "
+              f"(presupuesto {presupuesto:.0f} + {perf['max_move_overhead_ms_max']} de "
+              f"sobrecoste)")
         return 1
     if cold_start is None:
         print("FAIL no se midio el arranque en frio")

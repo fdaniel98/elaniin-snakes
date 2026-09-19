@@ -219,6 +219,54 @@ poison_8() {
         snake/src/server.cpp
 }
 
+poison_8c() {
+    # El servidor tarda 200 ms MAS de su presupuesto en cada movimiento. Con el umbral
+    # absoluto viejo esto lo cazaba cualquier cosa; con el umbral relativo hay que
+    # demostrar que sigue cazandolo, o el check se habria vuelto vacio al hacerlo relativo.
+    # El sleep va JUSTO ANTES DE RESPONDER, no al principio: puesto antes de calcular el
+    # deadline, el time manager se lo come -el cerebro se queda sin presupuesto y devuelve
+    # el fallback- y el total sale dentro del umbral. El veneno se anulaba solo.
+    sed -i 's|        res.set_content(reply.dump(), "application/json");|        std::this_thread::sleep_for(std::chrono::milliseconds(200));\n        res.set_content(reply.dump(), "application/json");|' \
+        snake/src/server.cpp
+    sed -i '0,/#include <chrono>/s//#include <chrono>\n#include <thread>/' snake/src/server.cpp
+    grep -q "#include <thread>" snake/src/server.cpp || sed -i '0,/^#include/s//#include <thread>\n&/' snake/src/server.cpp
+}
+
+poison_8d() {
+    # Subir `max_compute_ms` por encima del techo duro (timeout - margenes) NO puede servir
+    # para que el umbral relativo deje de morder. Es la forma obvia de defraudar un umbral
+    # que se deriva de la configuracion, asi que tiene su veneno.
+    python3 - <<'EOF'
+import json
+with open("snake/config/default.json", encoding="utf-8") as fh:
+    d = json.load(fh)
+d["time"]["max_compute_ms"] = 400
+with open("snake/config/default.json", "w", encoding="utf-8") as fh:
+    json.dump(d, fh, indent=2, ensure_ascii=False)
+    fh.write("\n")
+EOF
+}
+
+poison_8e() {
+    # Cambiar un umbral y declarar la enmienda citando un ADR QUE NO EXISTE. La enmienda
+    # existe para que un cambio aprobado no invalide ledgers ya cerrados; si bastara con
+    # escribir un nombre de fichero, seria una puerta trasera al antifraude.
+    python3 - <<'EOF'
+import hashlib, json, pathlib
+cfg = pathlib.Path("config/loop.json")
+d = json.loads(cfg.read_text(encoding="utf-8"))
+d["classes"]["perf"]["thresholds"]["timeouts_max"] = 99
+cfg.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+sha = hashlib.sha256(cfg.read_bytes()).hexdigest()
+for led in pathlib.Path(".loop").rglob("*.ledger.json"):
+    doc = json.loads(led.read_text(encoding="utf-8"))
+    doc.setdefault("thresholds_amendments", []).append(
+        {"sha256": sha, "adr": "docs/decisions/ADR-9999-que-no-existe.md",
+         "motivo": "puerta trasera"})
+    led.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+EOF
+}
+
 poison_9() {
     # Ledger con dos iteraciones: por debajo del minimo.
     local ledger
@@ -498,6 +546,9 @@ POISONS=(
     "poison_7b|7|codigo que clang acepta y GCC rechaza|NO compila con"
     "poison_8|8|el servidor devuelve un movimiento ilegal"
     "poison_8b|8|el servidor devuelve 5xx ante un payload que no entiende|HTTP 500"
+    "poison_8c|8|el servidor tarda 200 ms mas de su presupuesto|FAIL p99"
+    "poison_8d|8|subir max_compute_ms por encima del techo duro|techo duro"
+    "poison_8e|9|enmienda de umbrales citando un ADR que no existe|no existe"
     "poison_9|9|ledger con solo dos iteraciones|iteraciones validas (de 2), minimo 3"
     "poison_9b|9|ledger con el encadenamiento de commits roto|commit_after(i) != commit_before(i+1)"
     "poison_9c|9|ultima iteracion de una clase fuera de umbral|umbral incumplido"

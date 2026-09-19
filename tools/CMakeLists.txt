@@ -21,3 +21,6 @@ target_compile_definitions(sonda_busqueda PRIVATE
 # Cuanto tiempo deja sin usar el tope de profundidad segun cuantas serpientes viven.
 add_executable(sonda_tope sonda_tope.cpp)
 target_link_libraries(sonda_tope PRIVATE engine snake_brain bsr_warnings)
+
+add_executable(sonda_overshoot sonda_overshoot.cpp)
+target_link_libraries(sonda_overshoot PRIVATE engine snake_brain bsr_warnings)

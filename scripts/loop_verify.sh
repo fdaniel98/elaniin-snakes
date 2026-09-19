@@ -103,10 +103,38 @@ verify_ledger() {
     fi
 
     # 8. thresholds_sha256 == sha256 del config/loop.json del arbol.
-    local sha
+    #
+    # Lo que esta regla persigue es relajar un umbral DESPUES de cerrar un loop, en
+    # silencio, para que lo medido siga pareciendo valido. Un cambio de umbral aprobado y
+    # con ADR no es eso, pero invalida igual el sha de todos los ledgers ya cerrados, que
+    # no se pueden rejugar por algo que no les concierne.
+    #
+    # Por eso el ledger puede declarar enmiendas: cada una con el sha nuevo, el ADR que la
+    # justifica y el motivo. Se acepta el sha del arbol si es el original O el de una
+    # enmienda declarada CUYO ADR EXISTE en el arbol. Un cambio sin ADR sigue fallando, que
+    # es exactamente lo que la regla queria impedir.
+    local sha ok_sha
     sha="$(jq -r '.thresholds_sha256 // empty' "$ledger")"
-    [[ "$sha" == "$CONFIG_SHA" ]] ||
-        fail "$slug: thresholds_sha256 no coincide con config/loop.json ($sha vs $CONFIG_SHA)"
+    ok_sha=0
+    [[ "$sha" == "$CONFIG_SHA" ]] && ok_sha=1
+    if [[ $ok_sha -eq 0 ]]; then
+        local n_enm i enm_sha enm_adr
+        n_enm="$(jq -r '[.thresholds_amendments // []] | flatten | length' "$ledger")"
+        for ((i = 0; i < n_enm; i++)); do
+            enm_sha="$(jq -r ".thresholds_amendments[$i].sha256 // empty" "$ledger")"
+            enm_adr="$(jq -r ".thresholds_amendments[$i].adr // empty" "$ledger")"
+            [[ "$enm_sha" == "$CONFIG_SHA" ]] || continue
+            if [[ -z "$enm_adr" || ! -f "$enm_adr" ]]; then
+                fail "$slug: la enmienda de umbrales que casa cita el ADR '$enm_adr', que no existe"
+                break
+            fi
+            echo "OK   $slug: umbrales enmendados por $enm_adr"
+            ok_sha=1
+            break
+        done
+    fi
+    [[ $ok_sha -eq 1 ]] ||
+        fail "$slug: thresholds_sha256 no coincide con config/loop.json ($sha vs $CONFIG_SHA) y no hay enmienda declarada con ADR"
 
     # 2. >=3 iteraciones VALIDAS, numeradas 1..N sin huecos, con >=3 clases distintas.
     #
