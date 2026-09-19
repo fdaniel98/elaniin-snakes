@@ -6,10 +6,10 @@ Fase: 3 (Training Room MVP) — COMPLETA
 Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
 El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
-Snake activa: v0-baseline. Busqueda medida dos veces: -0.267 y -0.283 de puesto, IC95
-hasta +0.006, 5x las victorias; NO CONCLUYENTE por seis milesimas. Duplicar la profundidad
-no aporto nada (-0.017), asi que el techo es la evaluacion de las hojas
-(ver docs/experimentos.md#s-busq-r)
+Snake activa: **v4** (busqueda + territorio en las hojas), que es la unica version que ha
+GANADO su A/B: -0.3667 de puesto medio, IC95 [-0.659, -0.074], veredicto **MEJORA**
+(ver docs/experimentos.md#s-hojas-r). v0 se conserva entero en `v0-baseline.json` como
+referencia fija
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -40,14 +40,16 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Bloqueado / pendiente de decision humana
 
-- [ ] **Cuarta snake del campo:** `TheApX/battlesnake-hungry` (MIT, Dockerfile propio,
-      C++). Aprobar un repositorio es confirmacion humana por repositorio
-      (ver zoo/README.md); sin ella el `gauntlet-v1` se queda con tres snakes del mismo
-      motor, `coreyja/battlesnake-rs`, y eso mide menos de lo que parece.
+- [ ] **El fixture `02-spawn-turno2-cola-apilada.json` afirma algo falso:** prohibe `down`
+      diciendo que bajar es mortal, y no lo es -el rival apunta hacia abajo y no puede
+      subir por la columna 5-. La busqueda lo ve y baja. Decidir si se corrige.
 
+- [ ] **Cuarta snake del campo:** `TheApX/battlesnake-hungry` (MIT, C++). Aprobar un
+      repositorio es confirmacion humana (ver zoo/README.md); sin ella `gauntlet-v1` se
+      queda con tres snakes del mismo motor y mide menos de lo que parece.
 
 - [ ] **Linea base de la fase 1 en la maquina de referencia:** `./scripts/bench.sh` en
-      WSL2. Lo medido hasta ahora, en ver docs/performance.md#p-06, es de otra maquina.
+      WSL2; lo de ver docs/performance.md#p-06 es de otra maquina.
 
 ## Decisiones humanas
 
@@ -88,7 +90,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Medir `v4-hojas` CONTRA `v3-busqueda` -no contra v0-, porque lo que se prueba es la
-evaluacion de las hojas y no la busqueda (ver docs/strategy.md#s-hojas). En paralelo,
-desplegar: falta el ID del proyecto GCP, y el riesgo de timeout ya esta cerrado (0 en
-9 975 movimientos, maximo 291 ms de 500).
+Desplegar v4. Es lo unico que queda y no depende de ninguna medicion mas: la version esta
+elegida por su A/B, el riesgo de timeout esta acotado y `deploy/cloud-run.sh` esta escrito
+y probado por el check 10. Falta el ID del proyecto GCP.

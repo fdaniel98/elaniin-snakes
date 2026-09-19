@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 4288
+size_bytes: 6129
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -23,6 +23,47 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | busqueda prof. 6 | mirar hacia delante | **-0.267** | NO CONCLUYENTE |
 | busqueda prof. 12 | el doble de profundidad | **-0.283** | NO CONCLUYENTE |
 | prof. 6 -> prof. 12 | solo la profundidad | -0.017 | **la profundidad no es el techo** |
+| v4 hojas | territorio en las HOJAS | **-0.367** | **MEJORA** |
+
+### S-HOJAS-R Resultado: MEJORA, y cierra el cuadro {#s-hojas-r}
+
+60 partidas, 15 bloques pareados. **Primer veredicto concluyente del proyecto.**
+
+| | v0 | v4 (hojas) |
+|---|---|---|
+| puesto medio | 2.767 | **2.400** |
+| turnos vividos | 119.2 | **179.8** |
+
+Diferencia pareada **-0.3667**, IC95 **[-0.6594, -0.0739]**. El intervalo **no cruza el
+cero** y el efecto supera el delta declarado de 0.10. Veredicto: **MEJORA**.
+
+El reparto de puestos dice donde se gana, y no es donde uno esperaria:
+
+    v0          1o= 2  2o=14  3o=40  4o= 4
+    v3 prof. 6  1o= 7  2o=18  3o=33  4o= 2
+    v3 prof. 12 1o=10  2o=15  3o=30  4o= 5
+    v4 hojas    1o= 8  2o=21  3o=30  4o= 1
+
+v4 no es la que mas gana -esa es la de profundidad 12, con 10 victorias- sino la que
+**menos pierde**: un solo cuarto puesto en 60 partidas, contra los 4 de v0 y los 5 de la
+version mas profunda. Convierte terceros en segundos. En un torneo que puntua por posicion
+eso vale mas que una victoria mas y tres hundimientos.
+
+Contra v3 sola, el cambio de evaluacion da **-0.0833** con IC [-0.429, +0.262]: NO
+CONCLUYENTE por si mismo. Es la suma -busqueda mas evaluacion en las hojas- la que cruza
+la frontera, que es exactamente lo que el cuadro de ver docs/strategy.md#s-hojas predecia:
+ninguna de las dos piezas basta sola.
+
+**El arco completo, en cinco mediciones y 300 partidas:**
+
+1. evaluacion mejor sin busqueda: no ayuda (v1, cuellos);
+2. busqueda con evaluacion pobre: ayuda pero no concluye (-0.27, -0.28);
+3. mas profundidad de la misma busqueda: no aporta nada (-0.017);
+4. **busqueda con evaluacion mejor EN LAS HOJAS: MEJORA (-0.367).**
+
+La leccion que queda escrita: la profundidad y la evaluacion no son alternativas que
+compiten por el presupuesto, son complementos que solo valen juntos.
+
 
 ### S-V1R Resultado: NO ENTRA {#s-v1r}
 

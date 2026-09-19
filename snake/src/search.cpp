@@ -130,19 +130,20 @@ struct Contexto {
     int n_rivales{0};
 };
 
-/// Nodos entre dos lecturas del reloj. `Clock::now()` no es gratis y mirarlo en cada nodo
-/// se lleva un pedazo del presupuesto; mirarlo cada 256 se paso 34 us del deadline en la
-/// posicion de spawn, porque entre dos lecturas caben muchos `apply`. 32 es el punto en
-/// que la sonda deja de pasarse y el coste sigue siendo ruido.
-/// ver docs/decisions/ADR-0022-busqueda-paranoica.md
-constexpr long long k_nodos_por_reloj = 32;
-
 /// `true` cuando toca abandonar.
+///
+/// El reloj se mira en CADA nodo, y esto empezo mirandolo cada 256 -luego 32, luego 8-
+/// para "no gastar tiempo mirando la hora". Medido: con la comprobacion en cada nodo la
+/// profundidad media sale identica hasta la centesima (11.97 y 10.89 en la sonda, los
+/// mismos numeros que con 32), y en cambio saltarse nodos costaba violaciones del deadline
+/// en cuanto la hoja se encarecio con el territorio: 12 de 10 000 con 32, 2 con 8, 0 con 1.
+/// `Clock::now()` son ~25 ns contra el microsegundo largo que cuesta un nodo. Era una
+/// optimizacion prematura que no compraba nada y pagaba en correccion.
 bool sin_tiempo(Contexto& ctx) noexcept {
     if (ctx.agotado) {
         return true;
     }
-    if ((ctx.nodes % k_nodos_por_reloj) == 0 && ctx.deadline.expired()) {
+    if (ctx.deadline.expired()) {
         ctx.agotado = true;
     }
     return ctx.agotado;

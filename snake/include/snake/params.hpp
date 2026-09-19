@@ -71,9 +71,13 @@ struct HazardParams {
 /// Control de territorio (v1): espacio que se alcanza ANTES que el rival, no espacio que
 /// existe. ver docs/strategy.md#s-v1
 struct TerritoryParams {
-    /// 0 = v0, el flood fill de siempre. 1 = v1, el reparto de Voronoi.
-    /// v0 nunca se borra: es la referencia fija contra la que se mide todo lo demas.
-    std::int32_t version = 0;
+    /// 0 = flood fill a secas. 1 = reparto de Voronoi.
+    ///
+    /// Por defecto 1 desde que v4 gano su A/B (-0.3667, IC95 [-0.659, -0.074], MEJORA).
+    /// Como decision de UN TURNO esto se midio y se rechazo; lo que funciona es en las
+    /// HOJAS de la busqueda. ver docs/experimentos.md#s-hojas-r
+    /// v0 se conserva entero y seleccionable en `snake/config/v0-baseline.json`.
+    std::int32_t version = 1;
     /// Peso del territorio propio, normalizado por el tamaño del tablero.
     double weight = 120.0;
     /// Penalizacion por casilla disputada adyacente: son las que matan a dos.
@@ -85,9 +89,11 @@ struct TerritoryParams {
 /// Config completo del cerebro.
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md
 struct SearchParams {
-    /// 0 = v0, decision de un turno. 1 = busqueda con profundizacion iterativa.
-    /// v0 nunca se borra: es la referencia fija contra la que se mide todo lo demas.
-    std::int32_t version = 0;
+    /// 0 = decision de un turno (v0). 1 = busqueda con profundizacion iterativa.
+    ///
+    /// Por defecto 1: la busqueda gana su A/B contra v0 en las tres mediciones que se le
+    /// han hecho. ver docs/experimentos.md#exp-resumen
+    std::int32_t version = 1;
     /// Techo de profundidad. Es un tope de SEGURIDAD, no un objetivo: quien manda es el
     /// deadline, y se devuelve la mejor jugada de la ultima profundidad COMPLETADA.
     ///

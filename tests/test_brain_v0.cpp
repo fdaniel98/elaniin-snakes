@@ -125,8 +125,32 @@ TEST_CASE("brain_v0: todo fixture produce un movimiento legal", "[brain][fixture
     }
 }
 
+/// Parametros de v0: sin busqueda y sin territorio. Las expectativas de los fixtures se
+/// escribieron contra el baseline, y desde que el default es v4 hay que pedirlo explicito.
+/// v0 sigue siendo la referencia fija (§9) y sigue teniendo que cumplirlas.
+namespace {
+snake::Params params_v0() {
+    snake::Params p;
+    p.search.version = 0;
+    p.territory.version = 0;
+    return p;
+}
+} // namespace
+
 TEST_CASE("brain_v0: se cumplen las expectativas de cada fixture", "[brain][fixtures]") {
-    const snake::Params params;
+    // v0 EXPLICITO, no el default: desde que el default es v4 la busqueda elige distinto
+    // en algun fixture, y las expectativas se escribieron contra el baseline. No se relaja
+    // nada: v0 sigue teniendo que cumplirlas todas, y v4 tiene sus propios tests de
+    // legalidad y deadline sobre los mismos fixtures.
+    //
+    // El caso concreto que lo destapo, y que vale la pena leer: en
+    // `02-spawn-turno2-cola-apilada.json` el fixture prohibe `down` y dice que bajar es
+    // mortal. No lo es. El rival apunta hacia ABAJO -su cuello es (5,6)-, asi que no puede
+    // subir por la columna 5; bajar a (5,8) es seguro. Lo cierto del fixture es que (5,7)
+    // no se libera, que es otra cosa. v0 evita `down` por su regla ciega de no acercarse a
+    // una serpiente mas larga; la busqueda ve que esa serpiente no puede venir.
+    // Pendiente de decision humana en STATE.md.
+    const snake::Params params = params_v0();
     for (const auto& fixture : load_fixtures()) {
         INFO("fixture: " << fixture.name);
         engine::State11 state;
@@ -493,6 +517,11 @@ TEST_CASE("busqueda: un final de dos usa el presupuesto, no se planta en el tope
 
     snake::Params p;
     p.search.version = 1;
+    // Territorio APAGADO: este test es sobre el tope de profundidad, no sobre la
+    // evaluacion. Con Voronoi en las hojas cada nodo cuesta mas y bajo sanitizers no daba
+    // tiempo a pasar de 8, con lo que el test volvia a medir velocidad en vez de
+    // comportamiento. Es la segunda vez que me pasa en este mismo test.
+    p.territory.version = 0;
     snake::warmup(p);
     // Deadline holgado A PROPOSITO. Lo que se fija aqui es que el TOPE ya no muerde, no
     // lo rapida que es la maquina: con 200 ms este test pasaba en release y fallaba en

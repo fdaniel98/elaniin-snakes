@@ -34,11 +34,14 @@ RAIZ = Path(__file__).resolve().parent.parent
 # fijo, un torneo de v1 salia etiquetado como v0 en el JSONL y en el reporte: la base los
 # distinguia por el hash del config, pero la etiqueta mentia, y de ahi a desplegar la
 # version equivocada hay un paso.
-NUESTRO_SLUG_POR_DEFECTO = "v0-baseline"
+# `default.json` ya NO es v0: desde que v4 gano su A/B, el default es v4 y v0 vive en
+# `v0-baseline.json` con nombre propio. La etiqueta tiene que seguir al contenido, o las
+# corridas viejas y las nuevas se llamarian igual midiendo snakes distintas.
+NUESTRO_SLUG_POR_DEFECTO = "v4-hojas"
 
 
 def slug_del_config(ruta):
-    """`snake/config/v1.json` -> `v1`; `default.json` -> `v0-baseline`."""
+    """`snake/config/v1.json` -> `v1`; `default.json` -> `v4-hojas` (lo que es hoy)."""
     nombre = Path(ruta).stem
     return NUESTRO_SLUG_POR_DEFECTO if nombre == "default" else nombre
 

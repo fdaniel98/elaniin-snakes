@@ -224,8 +224,14 @@ comprueba(rc == 0, "reanaliza sale con 0 cuando modifica filas")
 # etiquetado como v0 en el JSONL y en el reporte.
 comprueba(tr.slug_del_config("snake/config/v1.json") == "v1",
           "el config v1 hace que juguemos como 'v1'")
-comprueba(tr.slug_del_config("snake/config/default.json") == "v0-baseline",
-          "el config por defecto sigue siendo v0-baseline")
+# `default.json` fue v0 hasta que v4 gano su A/B; ahora ES v4, y la etiqueta lo sigue.
+# v0 no se pierde: vive en `v0-baseline.json` con nombre propio, como manda §9.
+comprueba(tr.slug_del_config("snake/config/default.json") == "v4-hojas",
+          "el config por defecto es v4, que es la version que gano su A/B")
+comprueba(tr.slug_del_config("snake/config/v0-baseline.json") == "v0-baseline",
+          "y v0 sigue existiendo con su nombre propio, que es la referencia fija")
+comprueba((tr.RAIZ / "snake/config/v0-baseline.json").exists(),
+          "el fichero de v0 existe de verdad: la referencia fija no se borra")
 comprueba(valores.get("v0-baseline") == 1, "el timeout de /move llega a la fila correcta")
 comprueba(valores.get("a") == 0, "una snake sin quejas queda en 0, no en NULL")
 

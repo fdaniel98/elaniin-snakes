@@ -404,13 +404,25 @@ Move decide(const State& state, Deadline deadline, const Params& params) noexcep
         // degradado NO: simular una variante cuyas reglas el motor no reproduce daria
         // un arbol de posiciones que no van a ocurrir, que es peor que no mirar.
         // ver docs/decisions/ADR-0022-busqueda-paranoica.md
-        if (params.search.version >= 1 && !degraded && !deadline.expired()) {
+        // Sin NINGUN movimiento seguro no hay nada que buscar: todas las ramas mueren, y
+        // lo que toca es la escalera del fail-safe, que esta documentada y probada escalon
+        // a escalon (ver docs/rules.md#r-03). Dejar que la busqueda conteste ahi devolvia
+        // `fallback_level = 0` en posiciones sin salida, o sea que el log decia "decision
+        // normal" cuando era una muerte. Lo caza el test de los cuatro escalones.
+        //
+        // La guarda de estado imposible (serpiente propia ausente o de longitud cero) va
+        // ANTES que la busqueda por el mismo motivo: sobre un estado que el cerebro no
+        // puede razonar, buscar es razonar igual.
+        const bool estado_razonable =
+            state.you < state.snake_count && state.snake(state.you).length > 0;
+        const bool hay_donde_elegir =
+            estado_razonable && engine::legal_moves(state, state.you) != engine::move_mask_none;
+        if (params.search.version >= 1 && !degraded && hay_donde_elegir && !deadline.expired()) {
             const SearchResult r = search(state, deadline, params);
             if (r.depth >= 1) {
                 // Cinturon: la busqueda no puede devolver algo que v0 rechazaria por
                 // mortal. Si lo hiciera -un bug ahi dentro- se cae a v0 en vez de morir.
-                const engine::MoveMask legal = engine::legal_moves(state, state.you);
-                if (legal == engine::move_mask_none || engine::mask_has(legal, r.best)) {
+                if (engine::mask_has(engine::legal_moves(state, state.you), r.best)) {
                     return Move{r.best, 0, r.score, r.depth};
                 }
             }
@@ -464,7 +476,13 @@ long long warmup(const Params& params) noexcept {
         state.refresh_occupancy();
 
         const auto started = Deadline::Clock::now();
-        const Deadline holgado(started + std::chrono::seconds(1));
+        // Deadline CORTO a proposito. Calentar es tocar el codigo para que quede
+        // residente, no jugar: con la busqueda encendida por defecto, un deadline de un
+        // segundo hace que `warmup()` se gaste el segundo entero -medido: 998 ms- y eso
+        // lo pagaria cada `/start` de cada partida. Con 20 ms se completan las primeras
+        // profundidades, que recorren exactamente las mismas funciones.
+        // ver docs/decisions/ADR-0021-arranque-en-frio.md
+        const Deadline holgado(started + std::chrono::milliseconds(20));
         // El resultado se descarta a proposito; lo que importa es el efecto secundario de
         // haber ejecutado el camino. El destino es `volatile` para que -O3 no se lleve la
         // llamada entera por no usarse el valor.
