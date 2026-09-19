@@ -47,6 +47,11 @@ struct SearchResult {
     /// las seis ultimas profundidades confirmaron lo que ya se sabia: ahi hay tiempo que
     /// se puede devolver. ver docs/decisions/ADR-0023-cuando-parar-de-buscar.md
     int last_change_depth{0};
+    /// Cierto si quien corto la busqueda fue el RELOJ y no el presupuesto de nodos.
+    /// Con `search.budget_nodes` puesto, esto en cierto significa que la medicion depende
+    /// de la carga de la maquina: la arena aborta.
+    /// ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0301
+    bool corto_el_reloj{false};
 };
 
 /// Evalua una posicion entera desde el punto de vista de `us`. Es la evaluacion de v0

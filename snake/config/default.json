@@ -39,7 +39,8 @@
     "death_value": -100000.0,
     "win_value": 100000.0,
     "survival_bonus": 30.0,
-    "reserve_us": 2000
+    "reserve_us": 2000,
+    "budget_nodes": 0
   },
   "length": {
     "version": 1,

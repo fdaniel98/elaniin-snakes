@@ -180,6 +180,19 @@ struct SearchParams {
     /// morir en el turno 3 y morir en el turno 8, y prefiere la primera por llegar antes
     /// a una hoja con mas espacio.
     double survival_bonus = 30.0;
+    /// Tope de nodos por movimiento. **0 = sin tope**, que es lo que corre en servidor:
+    /// ahi manda el reloj y el presupuesto real lo fija `time.max_compute_ms`.
+    ///
+    /// La arena lo pone distinto de 0 porque una busqueda anytime cortada por reloj
+    /// devuelve movimientos distintos segun la carga de la maquina, y entonces dos ramas
+    /// de un A/B dejan de ser comparables aunque jueguen las mismas semillas. Con tope de
+    /// nodos la busqueda es funcion del estado y nada mas.
+    ///
+    /// Se calibra contra el presupuesto de despliegue en la maquina de referencia y se
+    /// re-calibra despues de cada cambio de rendimiento; un numero de nodos no es
+    /// comparable entre commits que cambian el coste del nodo.
+    /// ver docs/decisions/ADR-0030-presupuesto-por-nodos.md
+    std::int32_t budget_nodes = 0;
 };
 
 struct Params {

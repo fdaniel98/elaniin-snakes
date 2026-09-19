@@ -131,6 +131,7 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     REQUIRE(from_json.search.win_value == defaults.search.win_value);
     REQUIRE(from_json.search.survival_bonus == defaults.search.survival_bonus);
     REQUIRE(from_json.search.reserve_us == defaults.search.reserve_us);
+    REQUIRE(from_json.search.budget_nodes == defaults.search.budget_nodes);
     REQUIRE(from_json.length.version == defaults.length.version);
     REQUIRE(from_json.length.advantage_weight == defaults.length.advantage_weight);
     REQUIRE(from_json.length.target_lead == defaults.length.target_lead);
@@ -153,7 +154,7 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
       "hazard": ["weight", "low_health_multiplier"],
       "territory": ["version", "weight", "contested_weight", "hazard_value_pct"],
       "search": ["version", "max_depth", "max_rivals", "death_value", "win_value",
-                 "survival_bonus", "reserve_us"],
+                 "survival_bonus", "reserve_us", "budget_nodes"],
       "length": ["version", "advantage_weight", "target_lead", "hunt_weight"],
       "survival": ["version", "safe_turns", "weight", "seek_below_turns",
                    "critical_turns", "panic_weight"]

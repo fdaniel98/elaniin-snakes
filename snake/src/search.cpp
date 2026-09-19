@@ -125,12 +125,20 @@ struct Contexto {
     Deadline deadline{Deadline::Clock::now()};
     SnakeId us{0};
     long long nodes{0};
+    /// Tope de nodos, 0 = sin tope. Con tope, la busqueda es una funcion pura del estado
+    /// y no de la maquina, que es lo que la arena necesita para que un A/B sea pareable.
+    long long budget_nodes{0};
     bool agotado{false};
+    /// Cierto si quien corto fue el RELOJ. La arena exige que sea falso: si el reloj corta
+    /// con presupuesto por nodos puesto, el resultado depende de la carga de la maquina y
+    /// deja de ser reproducible. Mejor un fallo ruidoso que una medicion silenciosamente
+    /// sucia. ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0301
+    bool corto_el_reloj{false};
     std::array<SnakeId, k_max_snakes> rivales{};
     int n_rivales{0};
 };
 
-/// `true` cuando toca abandonar.
+/// `true` cuando toca abandonar, por nodos o por reloj.
 ///
 /// El reloj se mira en CADA nodo, y esto empezo mirandolo cada 256 -luego 32, luego 8-
 /// para "no gastar tiempo mirando la hora". Medido: con la comprobacion en cada nodo la
@@ -139,12 +147,24 @@ struct Contexto {
 /// en cuanto la hoja se encarecio con el territorio: 12 de 10 000 con 32, 2 con 8, 0 con 1.
 /// `Clock::now()` son ~25 ns contra el microsegundo largo que cuesta un nodo. Era una
 /// optimizacion prematura que no compraba nada y pagaba en correccion.
-bool sin_tiempo(Contexto& ctx) noexcept {
+///
+/// Los nodos se miran ANTES que el reloj a proposito: con presupuesto por nodos puesto y
+/// un deadline que no se alcanza, el reloj no participa en la decision y la busqueda
+/// devuelve el mismo movimiento en una maquina cargada que en una vacia. El reloj no se
+/// quita -INV-11 dice que nunca se excede el deadline, y eso vale tambien aqui-, se
+/// MARCA: si es el quien corta, `corto_el_reloj` queda en cierto y el llamante decide si
+/// eso invalida su medicion.
+bool sin_presupuesto(Contexto& ctx) noexcept {
     if (ctx.agotado) {
+        return true;
+    }
+    if (ctx.budget_nodes > 0 && ctx.nodes >= ctx.budget_nodes) {
+        ctx.agotado = true;
         return true;
     }
     if (ctx.deadline.expired()) {
         ctx.agotado = true;
+        ctx.corto_el_reloj = true;
     }
     return ctx.agotado;
 }
@@ -178,7 +198,7 @@ double peor_respuesta(const State& s,
     // El reloj se mira ANTES de ordenar los movimientos de los rivales. Ordenar hace un
     // flood fill por direccion y por rival, y es trabajo que no estaba acotado por nada:
     // con presupuestos muy cortos -el fuzz usa 5 ms- esa preparacion sola podia pasarse.
-    if (sin_tiempo(ctx)) {
+    if (sin_presupuesto(ctx)) {
         return ctx.params->search.death_value;
     }
 
@@ -196,7 +216,7 @@ double peor_respuesta(const State& s,
 
     double peor = std::numeric_limits<double>::infinity();
     for (long long c = 0; c < combinaciones; ++c) {
-        if (sin_tiempo(ctx)) {
+        if (sin_presupuesto(ctx)) {
             break;
         }
         long long resto = c;
@@ -241,7 +261,7 @@ double negamax(State s, int depth, double alpha, double beta, Contexto& ctx) noe
     // incompleta se descarta entera. Medido con `tools/sonda_overshoot.cpp` sobre 10 000
     // estados con presupuesto de 5 ms: el p50 clavaba el deadline (3005 us de 3000) y el
     // maximo se iba a 10 984. El valor que se devuelve aqui da igual por ese mismo motivo.
-    if (sin_tiempo(ctx)) {
+    if (sin_presupuesto(ctx)) {
         return 0.0;
     }
     if (depth <= 0) {
@@ -255,7 +275,7 @@ double negamax(State s, int depth, double alpha, double beta, Contexto& ctx) noe
         const double v = peor_respuesta(s, mios[static_cast<unsigned>(i)], depth, alpha, beta, ctx);
         mejor = std::max(mejor, v);
         alpha = std::max(alpha, mejor);
-        if (alpha >= beta || sin_tiempo(ctx)) {
+        if (alpha >= beta || sin_presupuesto(ctx)) {
             break;
         }
     }
@@ -448,6 +468,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
     ctx.params = &params;
     ctx.deadline = interno;
     ctx.us = state.you;
+    ctx.budget_nodes = params.search.budget_nodes;
 
     // Los rivales se simulan por cercania: el que esta a dos casillas decide si vivimos,
     // el que esta al otro lado del tablero no. Cada uno simulado multiplica por ~3 el
@@ -481,7 +502,9 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
     out.best = mios[0]; // el mejor por ordenacion estatica, por si no da tiempo a nada
 
     for (int depth = 1; depth <= params.search.max_depth; ++depth) {
-        if (ctx.agotado || interno.expired()) {
+        // Se pregunta por la via unica y no a `interno.expired()` directamente: asi el
+        // corte del reloj queda marcado tambien cuando ocurre entre profundidades.
+        if (sin_presupuesto(ctx)) {
             break;
         }
         double alpha = -std::numeric_limits<double>::infinity();
@@ -520,6 +543,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
         }
     }
     out.nodes = ctx.nodes;
+    out.corto_el_reloj = ctx.corto_el_reloj;
     return out;
 }
 

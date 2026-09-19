@@ -179,6 +179,7 @@ Params parse_params(const json& doc) {
     params.search.survival_bonus =
         read_double(search, "survival_bonus", params.search.survival_bonus);
     params.search.reserve_us = read_plain_int(search, "reserve_us", params.search.reserve_us);
+    params.search.budget_nodes = read_plain_int(search, "budget_nodes", params.search.budget_nodes);
 
     const json& length = child(doc, "length");
     params.length.version = read_plain_int(length, "version", params.length.version);

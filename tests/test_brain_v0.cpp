@@ -1125,3 +1125,97 @@ TEST_CASE("hot path: cero asignaciones dinamicas en apply, legal_moves y decide"
     REQUIRE(allocations_legal == 0);
     REQUIRE(allocations_decide == 0);
 }
+
+// ---------------------------------------------------------------------------------------
+// Presupuesto por nodos. ver docs/decisions/ADR-0030-presupuesto-por-nodos.md
+// ---------------------------------------------------------------------------------------
+
+namespace {
+
+/// Un deadline que no se alcanza: con presupuesto por nodos el reloj no debe participar,
+/// y la unica forma de comprobarlo es darle tanto margen que, si corta, es un fallo.
+snake::Deadline inalcanzable() {
+    return snake::Deadline(snake::Deadline::Clock::now() + std::chrono::hours(1));
+}
+
+snake::Params params_con_nodos(int nodos) {
+    snake::Params p;
+    p.search.budget_nodes = nodos;
+    return p;
+}
+
+} // namespace
+
+TEST_CASE("nodos: la busqueda es funcion del estado, no de la maquina", "[search][nodos]") {
+    // La propiedad que hace posible el A/B de la arena: mismo estado y mismo presupuesto
+    // dan el mismo movimiento, el mismo numero de nodos y la misma profundidad, sin que
+    // el reloj intervenga. Se repite con la maquina en el estado en que este.
+    const snake::Params p = params_con_nodos(20000);
+    engine::Rng rng(20260919);
+
+    for (int caso = 0; caso < 40; ++caso) {
+        const engine::State11 s =
+            engine::start_board<11, 11, 4>(4, engine::Ruleset{}, 1000 + rng.next() % 500);
+        const snake::SearchResult a = snake::search(s, inalcanzable(), p);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), p);
+        INFO("caso " << caso);
+        REQUIRE_FALSE(a.corto_el_reloj);
+        REQUIRE_FALSE(b.corto_el_reloj);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.nodes == b.nodes);
+        REQUIRE(a.depth == b.depth);
+        REQUIRE(a.score == b.score);
+        // El tope se respeta: se mira en cada nodo, asi que el exceso es el nodo en curso.
+        REQUIRE(a.nodes <= p.search.budget_nodes);
+    }
+}
+
+TEST_CASE("nodos: mas presupuesto no da menos profundidad", "[search][nodos]") {
+    const engine::State11 s = engine::start_board<11, 11, 4>(4, engine::Ruleset{}, 7);
+    int anterior = 0;
+    for (const int nodos : {500, 2000, 8000, 32000}) {
+        const snake::SearchResult r = snake::search(s, inalcanzable(), params_con_nodos(nodos));
+        INFO("nodos " << nodos << " profundidad " << r.depth);
+        REQUIRE_FALSE(r.corto_el_reloj);
+        REQUIRE(r.depth >= anterior);
+        REQUIRE(r.nodes <= nodos);
+        anterior = r.depth;
+    }
+    REQUIRE(anterior > 1);
+}
+
+TEST_CASE("nodos: si corta el reloj se marca, y con tope 0 manda el reloj", "[search][nodos]") {
+    const engine::State11 s = engine::start_board<11, 11, 4>(4, engine::Ruleset{}, 11);
+
+    // Presupuesto de nodos enorme y deadline ridiculo: corta el reloj, y se dice.
+    const snake::Deadline corto(snake::Deadline::Clock::now() + std::chrono::milliseconds(1));
+    const snake::SearchResult r = snake::search(s, corto, params_con_nodos(100000000));
+    REQUIRE(r.corto_el_reloj);
+
+    // Sin tope de nodos el comportamiento es el de siempre: manda el reloj.
+    snake::Params sin_tope;
+    sin_tope.search.budget_nodes = 0;
+    const snake::Deadline normal(snake::Deadline::Clock::now() + std::chrono::milliseconds(30));
+    const snake::SearchResult v = snake::search(s, normal, sin_tope);
+    REQUIRE(v.depth >= 1);
+    REQUIRE(v.nodes > 0);
+}
+
+TEST_CASE("nodos: el tope no rompe la legalidad ni el fail-safe", "[search][nodos]") {
+    // Un presupuesto absurdamente corto no puede producir un movimiento ilegal: se
+    // devuelve el mejor por ordenacion estatica, que ya es legal.
+    // ver docs/invariants.md#inv-10
+    engine::Rng rng(4242);
+    for (int caso = 0; caso < 200; ++caso) {
+        const engine::State11 s =
+            engine::start_board<11, 11, 4>(4, engine::Ruleset{}, 3000 + rng.next() % 1000);
+        for (const int nodos : {1, 2, 7}) {
+            const snake::SearchResult r = snake::search(s, inalcanzable(), params_con_nodos(nodos));
+            const engine::MoveMask legales = engine::legal_moves(s, s.you);
+            INFO("caso " << caso << " nodos " << nodos);
+            if (legales != engine::move_mask_none) {
+                REQUIRE(engine::mask_has(legales, r.best));
+            }
+        }
+    }
+}
