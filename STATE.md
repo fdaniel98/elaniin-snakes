@@ -3,7 +3,7 @@
 ## Estado actual
 
 Fase: 3 (Training Room MVP) — COMPLETA
-Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
+Gate: PASS 14/14 en la maquina de referencia (2026-09-19, 2f06c27)
 El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
 Snake activa: **v5** (busqueda + territorio en hojas + control de longitud). Gano su A/B
