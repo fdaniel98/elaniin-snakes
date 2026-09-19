@@ -91,7 +91,13 @@ struct TerritoryParams {
 struct LengthParams {
     /// 0 = la politica de v0 (comer solo con hambre, longitud con peso simbolico).
     /// 1 = ventaja de longitud como termino de primera clase.
-    std::int32_t version = 0;
+    ///
+    /// Por defecto 1 desde que v5 gano su A/B: -0.6917 de puesto contra v4, IC95
+    /// [-1.012, -0.371], 26 primeros puestos de 60 y ningun cuarto. Y el mecanismo se
+    /// confirmo: la ventaja de longitud media paso de negativa en 49 de 60 partidas a
+    /// +0.36, y terminamos siendo los mas largos en 41 de 60 contra 15.
+    /// ver docs/experimentos.md#s-longitud-r
+    std::int32_t version = 1;
     /// Peso de la VENTAJA de longitud sobre el rival mas largo. Lo que decide un cabezazo
     /// no es ser largo, es ser mas largo: en 47 de 60 partidas medidas moriamos siendo
     /// iguales o mas cortos que todos los vivos.

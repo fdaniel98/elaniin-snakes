@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 7306
+size_bytes: 8819
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -24,9 +24,48 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | busqueda prof. 12 | el doble de profundidad | **-0.283** | NO CONCLUYENTE |
 | prof. 6 -> prof. 12 | solo la profundidad | -0.017 | **la profundidad no es el techo** |
 | v4 hojas | territorio en las HOJAS | **-0.367** | **MEJORA** |
-| v5 longitud | ventaja de longitud + comida | — | sin medir |
+| v5 longitud | ventaja de longitud + comida | **-0.692** vs v4 | **MEJORA** |
 
-### S-LONGITUD Por que v4 sigue quedando tercera {#s-longitud}
+### S-LONGITUD-R Resultado: MEJORA, la mayor medida, y el mecanismo confirmado {#s-longitud-r}
+
+60 partidas, 15 bloques pareados **contra v4** (lo que se prueba es la evaluacion, no la
+busqueda):
+
+| | v4 | v5 |
+|---|---|---|
+| puesto medio | 2.400 | **1.708** |
+| turnos vividos | 179.8 | **199.0** |
+
+Diferencia pareada **-0.6917**, IC95 **[-1.0121, -0.3713]**. Contra v0: **-1.0583**, IC95
+[-1.3370, -0.7796]. Las dos: **MEJORA**. Es el efecto mas grande medido, casi el doble del
+de v4 sobre v0.
+
+| version | 1o | 2o | 3o | 4o | medio |
+|---|---|---|---|---|---|
+| v0 | 2 | 14 | 40 | 4 | 2.767 |
+| v3 | 10 | 15 | 30 | 5 | 2.483 |
+| v4 | 8 | 21 | 30 | 1 | 2.400 |
+| **v5** | **26** | 24 | 10 | **0** | **1.708** |
+
+26 primeros puestos de 60, y **ningun cuarto**.
+
+**El mecanismo se confirmo, y eso resuelve el matiz de correlacion.** La hipotesis decia
+que la longitud podia ser sintoma y no causa. Al intervenir sobre la politica de comida se
+movieron las DOS cosas, que es evidencia causal y no observacional:
+
+| | v4 | v5 |
+|---|---|---|
+| ventaja de longitud media | negativa en 49 de 60 | **+0.36** |
+| partidas siendo mas largos de media | 11 de 60 | **34 de 60** |
+| terminamos siendo los mas largos | 15 de 60 | **41 de 60** |
+
+Y la relacion sigue viva DENTRO de v5: las 8 partidas en que quedamos terceros tienen una
+ventaja media de **-1.29**, y las 26 que ganamos, de +0.38. Donde seguimos siendo cortos,
+seguimos perdiendo.
+
+Latencia: 0 timeouts en 11 914 movimientos, maximo 399 ms de 500.
+
+### S-LONGITUD Por que v4 quedaba tercera {#s-longitud}
 
 Analisis de los 60 JSONL de `torneo-v4-hojas`, que es la primera vez que se mira POR QUE
 pierde la version que gano:

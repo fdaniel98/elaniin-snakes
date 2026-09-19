@@ -708,10 +708,13 @@ TEST_CASE("v5: con la salud llena pero cortos, la comida sigue atrayendo", "[sea
     lejos.food.set(Board::index_of({10, 10})); // en la otra punta
     lejos.refresh_occupancy();
 
+    // v4 EXPLICITO: desde que el default es v5, `Params{}` ya trae el control de longitud
+    // encendido, y sin apagarlo este test compararia v5 contra v5.
     const snake::Params v4 = [] {
         snake::Params p;
         p.search.version = 1;
         p.territory.version = 1;
+        p.length.version = 0;
         return p;
     }();
     REQUIRE(snake::evaluate(cerca, 0, v4) == Catch::Approx(snake::evaluate(lejos, 0, v4)));

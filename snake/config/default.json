@@ -1,5 +1,5 @@
 {
-  "_comment": "v4: busqueda con territorio en las hojas. Es la version que se despliega porque es la unica que gano su A/B contra el campo congelado: -0.3667 de puesto medio, IC95 [-0.659, -0.074], veredicto MEJORA. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-hojas-r",
+  "_comment": "v5: busqueda + territorio en las hojas + control de longitud. Es la que se despliega. Gano su A/B contra v4 por -0.6917 (IC95 [-1.012, -0.371]) y contra v0 por -1.0583: 26 primeros puestos de 60 y NINGUN cuarto. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-longitud-r",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
@@ -42,7 +42,7 @@
     "reserve_us": 2000
   },
   "length": {
-    "version": 0,
+    "version": 1,
     "advantage_weight": 60.0,
     "target_lead": 3,
     "hunt_weight": 10.0

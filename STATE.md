@@ -6,10 +6,9 @@ Fase: 3 (Training Room MVP) — COMPLETA
 Gate: PASS 14/14 en la maquina de referencia (2026-09-18, a3af0e9)
 El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
 Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
-Snake activa: **v4** (busqueda + territorio en las hojas), que es la unica version que ha
-GANADO su A/B: -0.3667 de puesto medio, IC95 [-0.659, -0.074], veredicto **MEJORA**
-(ver docs/experimentos.md#s-hojas-r). v0 se conserva entero en `v0-baseline.json` como
-referencia fija
+Snake activa: **v5** (busqueda + territorio en hojas + control de longitud). Gano su A/B
+contra v4 por -0.6917 y contra v0 por -1.0583: 26 primeros de 60 y ningun cuarto
+(ver docs/experimentos.md#s-longitud-r). v0 sigue entero en `v0-baseline.json`
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -90,7 +89,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v4, que es lo unico que no depende de ninguna medicion mas: falta el ID del
-proyecto GCP y nada mas. En paralelo, medir `v5-longitud` CONTRA v4: en 47 de 60 partidas
-v4 murio siendo igual o mas corta que todos los vivos
-(ver docs/experimentos.md#s-longitud).
+Desplegar v5: falta el ID del proyecto GCP y nada mas. Despues, la evaluacion en las hojas
+-donde seguimos quedando terceros seguimos siendo cortos, ventaja -1.29- y la tabla de
+transposicion, que son 1-2 niveles gratis.

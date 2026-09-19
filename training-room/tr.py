@@ -37,11 +37,11 @@ RAIZ = Path(__file__).resolve().parent.parent
 # `default.json` ya NO es v0: desde que v4 gano su A/B, el default es v4 y v0 vive en
 # `v0-baseline.json` con nombre propio. La etiqueta tiene que seguir al contenido, o las
 # corridas viejas y las nuevas se llamarian igual midiendo snakes distintas.
-NUESTRO_SLUG_POR_DEFECTO = "v4-hojas"
+NUESTRO_SLUG_POR_DEFECTO = "v5-longitud"
 
 
 def slug_del_config(ruta):
-    """`snake/config/v1.json` -> `v1`; `default.json` -> `v4-hojas` (lo que es hoy)."""
+    """`snake/config/v1.json` -> `v1`; `default.json` -> `v5-longitud` (lo que es hoy)."""
     nombre = Path(ruta).stem
     return NUESTRO_SLUG_POR_DEFECTO if nombre == "default" else nombre
 

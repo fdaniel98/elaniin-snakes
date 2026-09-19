@@ -226,8 +226,8 @@ comprueba(tr.slug_del_config("snake/config/v1.json") == "v1",
           "el config v1 hace que juguemos como 'v1'")
 # `default.json` fue v0 hasta que v4 gano su A/B; ahora ES v4, y la etiqueta lo sigue.
 # v0 no se pierde: vive en `v0-baseline.json` con nombre propio, como manda §9.
-comprueba(tr.slug_del_config("snake/config/default.json") == "v4-hojas",
-          "el config por defecto es v4, que es la version que gano su A/B")
+comprueba(tr.slug_del_config("snake/config/default.json") == "v5-longitud",
+          "el config por defecto es v5, la ultima version que gano su A/B")
 comprueba(tr.slug_del_config("snake/config/v0-baseline.json") == "v0-baseline",
           "y v0 sigue existiendo con su nombre propio, que es la referencia fija")
 comprueba((tr.RAIZ / "snake/config/v0-baseline.json").exists(),
