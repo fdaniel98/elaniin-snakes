@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 11891
+size_bytes: 13039
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -41,6 +41,28 @@ El techo de computo bajo de 200 a 150 en consecuencia
 La resta cuadra: 337.6 - 141.3 = 196 ms de computo contra los 200 concedidos. Medido desde
 la maquina de referencia, que no es desde donde arbitra el torneo: es el caso malo, elegido
 a proposito.
+
+### P-09 El RTT de `curl` estaba inflado por el handshake {#p-09}
+
+Una partida real contra la URL desplegada, con el arbitro oficial y el computo ya en
+150 ms, dio latencias **muy** por debajo de lo que predecia `curl`:
+
+| medido por | p50 | p99 | maximo |
+|---|---:|---:|---:|
+| `curl` (`/move`, computo 200) | 337.6 ms | 397.5 ms | 397.5 ms |
+| **arbitro oficial** (`latency` del JSONL, computo 150) | **192 ms** | **207 ms** | **207 ms** |
+
+Descontando los ~148 ms de computo, el transporte real por movimiento es de **~44 ms de
+mediana y ~59 en el p99**, no los 259 que salieron con `curl`.
+
+La diferencia es **la reutilizacion de conexion**. Cada invocacion de `curl` abre una
+conexion TLS nueva y paga su handshake -dos vueltas mas el saludo-; el cliente HTTP del
+arbitro mantiene la conexion viva y lo paga UNA vez, en el primer movimiento de la partida.
+Medir con `curl` en bucle mide handshakes, no la latencia de juego.
+
+`scripts/verifica-despliegue.sh` sigue valiendo como cota superior y como prueba de que el
+servicio responde; para el numero que decide el presupuesto, manda
+`scripts/latencias-jsonl.py` sobre una partida de verdad.
 
 ## P-02 Como se miden los numeros publicables {#p-02}
 
