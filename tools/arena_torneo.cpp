@@ -129,6 +129,11 @@ int main(int argc, char** argv) {
 
     std::vector<std::string> salida(encargos.size());
     std::atomic<std::size_t> siguiente{0};
+    // Progreso por stderr. La salida de stdout sigue saliendo entera y ordenada al final
+    // -es lo que la hace identica con 1 hilo y con 16-, pero una corrida de una hora sin
+    // una sola linea parece colgada, y entonces se mata y se pierde.
+    std::atomic<std::size_t> hechas{0};
+    const auto t_inicio = std::chrono::steady_clock::now();
 
     // Calentar UNA vez y antes de los hilos: `warmup` escribe un sumidero volatil y no
     // hace falta que compitan por el.
@@ -171,6 +176,20 @@ int main(int argc, char** argv) {
                           nuestro.cortes_por_reloj,
                           nombre_final(r.final));
             salida[i] = buf;
+
+            const std::size_t n = hechas.fetch_add(1) + 1;
+            const double seg =
+                std::chrono::duration<double>(std::chrono::steady_clock::now() - t_inicio).count();
+            const double restan =
+                n > 0 ? seg / static_cast<double>(n) * static_cast<double>(encargos.size() - n)
+                      : 0.0;
+            std::fprintf(stderr,
+                         "\r%zu/%zu partidas  %.0f min transcurridos  ~%.0f min restantes ",
+                         n,
+                         encargos.size(),
+                         seg / 60.0,
+                         restan / 60.0);
+            std::fflush(stderr);
         }
     };
 
@@ -182,6 +201,7 @@ int main(int argc, char** argv) {
     for (auto& h : equipo) {
         h.join();
     }
+    std::fprintf(stderr, "\n");
 
     // Se imprime por indice y no segun termina cada hilo: la salida es identica con 1
     // hilo y con 16, que es lo que hace comparables dos corridas.

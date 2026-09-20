@@ -126,9 +126,12 @@ def main():
 
     t0 = time.time()
     print(" ".join(cmd), file=sys.stderr)
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    # `stderr=None` a proposito: el progreso de arena_torneo va directo a la terminal en
+    # vez de quedarse en un buffer hasta el final. Una corrida de una hora sin una sola
+    # linea parece colgada, y entonces se mata y se pierde.
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
     if proc.returncode != 0:
-        muere(f"arena_torneo salio con {proc.returncode}:\n{proc.stderr[:2000]}")
+        muere(f"arena_torneo salio con {proc.returncode}")
     filas = [json.loads(l) for l in proc.stdout.splitlines() if l.strip()]
     if not filas:
         muere("arena_torneo no devolvio ninguna partida")
