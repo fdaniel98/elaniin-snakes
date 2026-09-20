@@ -1240,3 +1240,62 @@ TEST_CASE("nodos: el tope no rompe la legalidad ni el fail-safe", "[search][nodo
         }
     }
 }
+
+// ---------------------------------------------------------------------------------
+// Final de dos. ver docs/strategy.md#s-duelo
+// ---------------------------------------------------------------------------------
+
+TEST_CASE("duelo: con duel.version=0 el arbol no se entera de que existe", "[search][duelo]") {
+    // El aislamiento no se promete, se comprueba. Con la version a 0 los pesos del duelo
+    // pueden valer cualquier disparate y tiene que salir el mismo movimiento, el mismo
+    // numero de nodos y la misma puntuacion, hasta el ultimo bit.
+    engine::Rng rng(20260920);
+    const snake::Params base = params_con_nodos(20000);
+    snake::Params absurdo = base;
+    absurdo.duel.prefer_shorter = 9999.0;
+    absurdo.duel.pressure_weight = 9999.0;
+    REQUIRE(base.duel.version == 0);
+
+    for (int caso = 0; caso < 15; ++caso) {
+        for (const int serpientes : {2, 3, 4}) {
+            const engine::State11 s = engine::start_board<11, 11, 4>(
+                serpientes, engine::Ruleset{}, 500 + static_cast<std::uint64_t>(rng.next() % 500));
+            const snake::SearchResult a = snake::search(s, inalcanzable(), base);
+            const snake::SearchResult b = snake::search(s, inalcanzable(), absurdo);
+            INFO("caso " << caso << " serpientes " << serpientes);
+            REQUIRE(a.best == b.best);
+            REQUIRE(a.score == b.score);
+            REQUIRE(a.nodes == b.nodes);
+        }
+    }
+}
+
+TEST_CASE("duelo: encendido cambia la evaluacion del 1v1 y no rompe la legalidad",
+          "[search][duelo]") {
+    // Dos cosas, y las dos hacen falta: que el camino nuevo se ejecute de verdad -un test
+    // que pasa porque el codigo no se alcanza no vale nada- y que encenderlo no produzca
+    // un movimiento ilegal, que es el invariante que no se negocia.
+    // ver docs/invariants.md#inv-10
+    engine::Rng rng(20260921);
+    const snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.duel.version = 1;
+
+    int distintos = 0;
+    for (int caso = 0; caso < 30; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 900 + static_cast<std::uint64_t>(rng.next() % 900));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        if (a.score != b.score || a.best != b.best) {
+            ++distintos;
+        }
+        const engine::MoveMask legal = engine::legal_moves(s, s.you);
+        INFO("caso " << caso);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, b.best));
+        }
+    }
+    INFO("posiciones de duelo en que la evaluacion cambio: " << distintos << " de 30");
+    REQUIRE(distintos > 0);
+}

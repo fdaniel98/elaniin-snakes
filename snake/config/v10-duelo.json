@@ -1,6 +1,6 @@
 {
-  "_comment": "v5: busqueda + territorio en las hojas + control de longitud. Es la que se despliega. Gano su A/B contra v4 por -0.6917 (IC95 [-1.012, -0.371]) y contra v0 por -1.0583: 26 primeros puestos de 60 y NINGUN cuarto. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-longitud-r",
-  "_version": "v5-longitud-150ms-m80",
+  "_comment": "v10: v5 con evaluacion propia del final de dos. Con un solo rival vivo el juego es de suma cero, el modelo paranoico deja de ser un sesgo, y la ventaja de longitud pasa de acumularse a cobrarse: prefer_shorter a 40 DENTRO del duelo y un gradiente de presion hacia la cabeza rival siendo mas largos. Fuera del duelo no cambia nada. ver docs/strategy.md#s-duelo",
+  "_version": "v10-duelo",
   "time": {
     "network_margin_ms": 80,
     "safety_margin_ms": 50,
@@ -44,7 +44,7 @@
     "budget_nodes": 0
   },
   "duel": {
-    "version": 0,
+    "version": 1,
     "prefer_shorter": 40.0,
     "pressure_weight": 25.0
   },

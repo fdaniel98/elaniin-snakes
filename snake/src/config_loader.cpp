@@ -181,6 +181,11 @@ Params parse_params(const json& doc) {
     params.search.reserve_us = read_plain_int(search, "reserve_us", params.search.reserve_us);
     params.search.budget_nodes = read_plain_int(search, "budget_nodes", params.search.budget_nodes);
 
+    const json& duel = child(doc, "duel");
+    params.duel.version = read_plain_int(duel, "version", params.duel.version);
+    params.duel.prefer_shorter = read_double(duel, "prefer_shorter", params.duel.prefer_shorter);
+    params.duel.pressure_weight = read_double(duel, "pressure_weight", params.duel.pressure_weight);
+
     const json& length = child(doc, "length");
     params.length.version = read_plain_int(length, "version", params.length.version);
     params.length.advantage_weight =

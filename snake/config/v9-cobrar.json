@@ -1,6 +1,6 @@
 {
-  "_comment": "v5: busqueda + territorio en las hojas + control de longitud. Es la que se despliega. Gano su A/B contra v4 por -0.6917 (IC95 [-1.012, -0.371]) y contra v0 por -1.0583: 26 primeros puestos de 60 y NINGUN cuarto. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-longitud-r",
-  "_version": "v5-longitud-150ms-m80",
+  "_comment": "v9: v5 con head.prefer_shorter a 40 y NADA mas. Una sola variable. La hipotesis es que la ventaja de longitud no se cobra: 8.0 frente a 80.0 de avoid_equal_or_longer es diez a uno, y el duelo de dos decide 50 de cada 60 partidas. ver docs/strategy.md#s-cobrar",
+  "_version": "v9-cobrar",
   "time": {
     "network_margin_ms": 80,
     "safety_margin_ms": 50,
@@ -21,7 +21,7 @@
   },
   "head": {
     "avoid_equal_or_longer": 80.0,
-    "prefer_shorter": 8.0
+    "prefer_shorter": 40.0
   },
   "hazard": {
     "weight": 20.0,
@@ -42,11 +42,6 @@
     "survival_bonus": 30.0,
     "reserve_us": 2000,
     "budget_nodes": 0
-  },
-  "duel": {
-    "version": 0,
-    "prefer_shorter": 40.0,
-    "pressure_weight": 25.0
   },
   "length": {
     "version": 1,

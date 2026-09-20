@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <utility>
 
 #include <engine/rules.hpp>
 
@@ -330,6 +331,11 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     int vivos = 0;
     int mas_largos = 0;
     int largo_rival_max = 0;
+    // Distancia a la cabeza de cada rival vivo y si es mas corto que nosotros. Se guarda
+    // para poder decidir DESPUES del bucle si esto es un duelo -que depende de `vivos`, y
+    // `vivos` no esta completo hasta el final- sin recorrer las serpientes dos veces. Son
+    // como mucho `max_snakes - 1` pares en la pila: ni una asignacion.
+    std::array<std::pair<int, bool>, static_cast<std::size_t>(State::max_snakes)> rivales{};
     for (int i = 0; i < s.count(); ++i) {
         if (i == static_cast<int>(us)) {
             continue;
@@ -338,15 +344,35 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
         if (!engine::is_alive(otro.status)) {
             continue;
         }
-        ++vivos;
         largo_rival_max = std::max(largo_rival_max, static_cast<int>(otro.length));
         if (static_cast<int>(otro.length) >= mi_largo) {
             ++mas_largos;
         }
+        rivales[static_cast<std::size_t>(vivos)] = {manhattan(s, yo.head(), otro.head()),
+                                                    static_cast<int>(otro.length) < mi_largo};
+        ++vivos;
+    }
+
+    // Final de dos: con un solo rival vivo el juego es de suma cero y la ventaja de
+    // longitud deja de ser algo que acumular para ser algo que cobrar.
+    // ver docs/strategy.md#s-duelo
+    const bool duelo = p.duel.version >= 1 && vivos == 1;
+    for (int k = 0; k < vivos; ++k) {
+        const int distancia = rivales[static_cast<std::size_t>(k)].first;
+        const bool mas_corto = rivales[static_cast<std::size_t>(k)].second;
         // Zona de cabeza: quedar al lado de una igual o mas larga es perder el duelo.
-        if (manhattan(s, yo.head(), otro.head()) <= 1) {
-            score -= static_cast<int>(otro.length) >= mi_largo ? p.head.avoid_equal_or_longer
-                                                               : -p.head.prefer_shorter;
+        if (distancia <= 1) {
+            const double premio = duelo ? p.duel.prefer_shorter : p.head.prefer_shorter;
+            score -= mas_corto ? -premio : p.head.avoid_equal_or_longer;
+        }
+        // Presion: la zona de cabeza solo puntua pegados, asi que sin un gradiente no hay
+        // nada que empuje hacia el rival desde lejos. Solo siendo estrictamente mas
+        // largos, que es cuando el cabezazo lo ganamos por regla.
+        if (duelo && mas_corto && p.duel.pressure_weight > 0.0) {
+            constexpr double kMaxManhattan =
+                static_cast<double>(State::width - 1) + static_cast<double>(State::height - 1);
+            const double d = std::min(static_cast<double>(distancia), kMaxManhattan);
+            score += p.duel.pressure_weight * (1.0 - d / kMaxManhattan);
         }
     }
     score -= p.head.avoid_equal_or_longer * 0.25 * mas_largos;

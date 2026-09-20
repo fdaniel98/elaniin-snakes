@@ -149,6 +149,26 @@ struct LengthParams {
     double hunt_weight = 10.0;
 };
 
+/// [v10] Final de dos. Cuando queda un solo rival vivo el juego deja de ser el que evalua
+/// el resto de `evaluate`: es de suma cero, el modelo paranoico deja de ser un sesgo y pasa
+/// a ser correcto, y la ventaja de longitud deja de ser estrategica para ser tactica.
+///
+/// Medido: 50 de 60 partidas de v5 llegan al duelo y lo ganamos al 54%; los 24 segundos
+/// puestos son los 24 en un 1v1. ver docs/experimentos.md#s-duelo
+struct DuelParams {
+    /// 0 = apagado. Con 0 el arbol devuelve EXACTAMENTE los mismos movimientos que sin
+    /// este codigo, y hay un test que lo comprueba en vez de prometerlo.
+    std::int32_t version = 0;
+    /// Sustituye a `head.prefer_shorter` dentro del duelo. La asimetria de 80 contra 8 es
+    /// la hipotesis: compramos ventaja durante 136 turnos y no la cobramos.
+    /// ver docs/strategy.md#s-cobrar
+    double prefer_shorter = 40.0;
+    /// Premio por acercar nuestra cabeza a la del rival **siendo estrictamente mas
+    /// largos**, en gradiente y no en escalon: la zona de cabeza solo puntua a distancia
+    /// 1, asi que sin esto no hay nada que empuje hacia el duelo desde lejos.
+    double pressure_weight = 25.0;
+};
+
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md
 struct SearchParams {
     /// 0 = decision de un turno (v0). 1 = busqueda con profundizacion iterativa.
@@ -218,6 +238,7 @@ struct Params {
     HazardParams hazard{};
     TerritoryParams territory{};
     SearchParams search{};
+    DuelParams duel{};
     LengthParams length{};
     SurvivalParams survival{};
 };
