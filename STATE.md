@@ -52,9 +52,9 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Hallazgos abiertos del loop
 
-- [ ] Los tests de reloj de 5 ms no son deterministas en la maquina de referencia: cargada
-      dio 9 ms en el primer fixture y 2 violaciones de 10 000; descargada pasan sin
-      calentar (ver docs/decisions/ADR-0021-arranque-en-frio.md#adr-0021-abierto).
+- [ ] Los tests de reloj de 5 ms no son deterministas en la de referencia: cargada dio
+      9 ms y 2 violaciones de 10 000; descargada pasan sin calentar
+      (ver docs/decisions/ADR-0021-arranque-en-frio.md#adr-0021-abierto).
 - [ ] El transporte se come casi todo el presupuesto: maximo del arbitro 169 ms contra
       0.388 del codigo, y 8 timeouts en 23 831 movimientos. Importa al recalibrar el
       margen de red de la fase 7 (ver docs/performance.md#p-07).
@@ -72,7 +72,7 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
       -cadencia >= 1-: con 0 devuelve un tablero sin hazards.
 - [ ] `budget_nodes` sin calibrar contra el presupuesto de despliegue: hoy un numero de
       nodos no se traduce a ms (ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0302).
-- [ ] `tools/` sigue fuera de los checks 4 y 5
+- [ ] `tools/` fuera de los checks 4 y 5
       (ver docs/decisions/ADR-0035-ambito-de-los-checks-4-y-5.md#d-0352).
 - [ ] `budget_nodes` calibrado solo en el contenedor (20 774 = 200 ms): hay que correr
       `sonda_arena --calibrar` en la maquina de referencia antes de su primer A/B.
@@ -83,6 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Driver de A/B en arena por bloques (semilla x rotacion de asientos) reutilizando
-`training-room/compara.py`, y paralelismo entre partidas. Despues, check 13 del gate con
-sus venenos y el loop de la fase.
+Correr `training-room/afina.py`: SPSA sobre los ~20 pesos nunca afinados. La propuesta se
+verifica con un A/B de arena de campo distinto a las dos ramas y, si gana, con el gauntlet.
+Despues, el loop de la fase 4.

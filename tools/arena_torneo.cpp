@@ -1,8 +1,13 @@
 /// @file arena_torneo.cpp
 /// A/B en la arena: dos configuraciones contra el mismo campo, sobre los mismos bloques.
 ///
-///     arena_torneo --a <config> --b <config> --campo <config> --bloques N
+///     arena_torneo --a <config> [--b <config>] --campo <config> --bloques N
 ///                  [--semilla-base S] [--hilos T] [--nodos N]
+///
+/// Sin `--b` solo juega la rama `a`. Es lo que usa el afinado: el puesto medio de una
+/// configuracion IDENTICA al campo es 2.5 exacto por construccion
+/// (ver docs/experimentos.md#s-tercer-rival-r), asi que la referencia no hay que jugarla,
+/// y cada evaluacion cuesta la mitad.
 ///
 /// Emite un objeto JSON por partida a stdout. El reparto en bloques, la estadistica y el
 /// veredicto NO viven aqui: los pone `training-room/arena_ab.py`, que reutiliza
@@ -99,15 +104,16 @@ int main(int argc, char** argv) {
         hilos = 1;
     }
 
-    if (ruta_a.empty() || ruta_b.empty() || ruta_campo.empty()) {
+    if (ruta_a.empty() || ruta_campo.empty()) {
         std::fprintf(stderr,
-                     "uso: arena_torneo --a <config> --b <config> --campo <config> "
+                     "uso: arena_torneo --a <config> [--b <config>] --campo <config> "
                      "--bloques N [--semilla-base S] [--hilos T] [--nodos N]\n");
         return 2;
     }
+    const bool hay_b = !ruta_b.empty();
 
     snake::Params pa = snake::load_params(ruta_a);
-    snake::Params pb = snake::load_params(ruta_b);
+    snake::Params pb = hay_b ? snake::load_params(ruta_b) : pa;
     snake::Params pc = snake::load_params(ruta_campo);
     // El presupuesto por nodos lo fija el torneo, no el config: las dos ramas tienen que
     // pensar lo mismo o la comparacion mide el presupuesto.
@@ -120,9 +126,9 @@ int main(int argc, char** argv) {
     encargos.reserve(static_cast<std::size_t>(bloques) * arena::max_contendientes * 2);
     for (int b = 0; b < bloques; ++b) {
         for (int asiento = 0; asiento < arena::max_contendientes; ++asiento) {
-            for (const char rama : {'a', 'b'}) {
-                encargos.push_back(
-                    {b, semilla_base + static_cast<std::uint64_t>(b), asiento, rama});
+            encargos.push_back({b, semilla_base + static_cast<std::uint64_t>(b), asiento, 'a'});
+            if (hay_b) {
+                encargos.push_back({b, semilla_base + static_cast<std::uint64_t>(b), asiento, 'b'});
             }
         }
     }
