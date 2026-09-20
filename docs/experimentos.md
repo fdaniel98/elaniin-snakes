@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 18108
+size_bytes: 20595
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -396,3 +396,52 @@ promesa.
 
 `snake/config/v8-afinado.json` se conserva como la evidencia del sobreajuste, no como
 candidata.
+
+### S-DUELO Donde se decide la partida, y nadie lo habia mirado {#s-duelo}
+
+Analisis de las mismas 60 partidas de `torneo-v5-longitud`, esta vez preguntando **en que
+fase** se pierde en vez de por que causa.
+
+| | n | donde salimos |
+|---|---:|---|
+| 1os | 26 | quedamos solos |
+| 2os | **24** | **las 24 en un 1v1** |
+| 3os | 10 | con tres vivas, turno 166 |
+
+**50 de las 60 partidas llegan a un duelo de dos y ganamos el 54%.** El duelo empieza hacia
+el turno 136 y dura 70 turnos de media: un tercio de la partida. Toda la diferencia entre
+primero y segundo vive ahi, y sale a cara o cruz.
+
+Y el predictor, por la ventaja de longitud con la que ENTRAMOS al duelo (contra el rival
+mas largo, que es la metrica que usa `evaluate`):
+
+| ventaja al empezar el duelo | n | duelos ganados |
+|---|---:|---:|
+| [-3, 0) | 12 | 75% |
+| empate | 4 | 75% |
+| [+1, +3] | 18 | 56% |
+| >= +4 | 16 | **31%** |
+
+Monotono y al reves de lo que predice v5. Con la ventaja medida contra la MEDIA de rivales
+sale el mismo cuadro: por debajo de -1 el puesto medio es 2.600 sin un solo primero, y por
+encima de la paridad la curva es plana (1.375 / 1.600 / 1.750 / 1.706).
+
+**La lectura, que es una hipotesis y no un hecho:** la ventaja de longitud no se cobra. El
+termino que la premia satura en `length.target_lead` y el unico sitio donde se convierte en
+algo es la zona de cabeza, con `head.prefer_shorter` a 8.0 frente a
+`head.avoid_equal_or_longer` a 80.0 -diez a uno-, mientras el espacio pesa 100 y el
+territorio 120. Pasamos 136 turnos comprando una ventaja y jugamos el duelo como si no la
+tuvieramos, cargando el coste del cuerpo grande en un tablero que se encoge.
+
+**El sesgo que juega en contra de esa lectura, y hay que decirlo:** es observacional, con
+12 a 18 partidas por celda, y hay seleccion. Un rival que llega al duelo siendo cuatro
+segmentos mas corto que nosotros es, justamente, uno que sabe sobrevivir sin comer. Puede
+que el 31% no diga «ser largo estorba» sino «el que llega corto al duelo es bueno». Eso
+solo lo separa una intervencion, que es ver docs/strategy.md#s-cobrar.
+
+**Y el dato que mas incomoda:** v1, v3, v4, v5, v6, v7 y v8 optimizaron todas la fase de
+cuatro. Ninguna toco el final de dos. Los tres rechazos seguidos contra v5 pueden no
+significar que v5 sea dificil de superar, sino que llevamos seis experimentos afinando el
+tramo ruidoso mientras el que decide sigue sin tocar.
+
+Hipotesis derivadas: ver docs/strategy.md#s-cobrar y ver docs/strategy.md#s-duelo

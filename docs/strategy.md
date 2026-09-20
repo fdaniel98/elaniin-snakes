@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 7993
+size_bytes: 10842
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -140,6 +140,54 @@ transposicion Zobrist y move ordering (killer y history) gana mas que seguir con
 
 Supuesto a mitigar: turnos alternos. Mitigacion propuesta: evaluacion paranoica en la
 raiz.
+
+### S-COBRAR Hipotesis: la ventaja de longitud no se cobra {#s-cobrar}
+
+**Hipotesis falsable:** si el duelo de dos decide 50 de cada 60 partidas y lo ganamos al
+54% (ver docs/experimentos.md#s-duelo), y el unico termino que convierte la ventaja de
+longitud en algo es `head.prefer_shorter` a 8.0 contra `head.avoid_equal_or_longer` a 80.0,
+entonces subir ese peso debe subir la **tasa de duelos ganados** sin cambiar nada mas.
+
+**Que se mide:** `snake/config/v9-cobrar.json`, que es `default.json` con
+`head.prefer_shorter` subido y **nada mas**. Una sola variable, cero codigo nuevo.
+
+**Metrica primaria:** diferencia pareada de puesto medio por bloque, como siempre. La tasa
+de duelos ganados se reporta como **descriptiva**, sin p-valor: es el mecanismo, no el
+veredicto (la leccion de ver docs/experimentos.md#s-supervivencia-r es justamente que un
+mecanismo que funciona no garantiza un puesto mejor).
+
+**Por que podria fallar, escrito antes de medir:** estar al lado de la cabeza de un rival
+mas corto no fuerza el cabezazo -son movimientos simultaneos y el rival puede apartarse-,
+asi que el premio puede estar pagando por una amenaza que no se ejecuta. Y un peso alto
+acerca nuestra cabeza a la suya, que es exactamente donde se pierde si la busqueda calculo
+mal la longitud relativa un turno mas tarde. Si el resultado es NO CONCLUYENTE con la tasa
+de duelos igual, la hipotesis del mecanismo queda viva; si la tasa sube y el puesto no se
+mueve, es otro caso de sintoma y no palanca.
+
+### S-DUELO Hipotesis: el final de dos necesita su propia evaluacion {#s-duelo}
+
+**Hipotesis falsable:** con exactamente dos vivas el juego deja de ser el que evalua v5
+-cuatro serpientes, causas de muerte que son sintomas de la posicion- y pasa a ser un
+juego de dos de suma cero, donde el modelo paranoico **deja de ser un sesgo y es
+correcto**. Una evaluacion propia para esa fase debe ganar su A/B sin tocar la fase de
+cuatro.
+
+**Que cambia en el duelo, y por que:**
+
+- la ventaja de longitud deja de acumularse y pasa a ser **presion**: si somos
+  estrictamente mas largos, acercarse a la cabeza rival vale, porque el cabezazo lo
+  ganamos por regla;
+- los terminos que solo tienen sentido con varias vivas -la penalizacion por numero de
+  vivos y la de «cuantos hay mas largos que yo»- dejan de aportar y se apagan.
+
+**Aislamiento:** detras de `duel.version`, a 0 por defecto. Con 0 el arbol produce
+exactamente los mismos movimientos que hoy, y eso es un test, no una promesa.
+
+**Por que podria fallar:** el duelo empieza en el turno 136 de media, con el tablero ya
+comido por los hazards. Puede que lo que decida ahi no sea la tactica sino la salud con la
+que se llega, en cuyo caso la evaluacion del duelo llega tarde a una partida que ya estaba
+perdida en el turno 100. La tasa de duelos ganados, segmentada por salud de entrada, lo
+separa.
 
 ## S-V4 Paralelismo {#s-v4}
 
