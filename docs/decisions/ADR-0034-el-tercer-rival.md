@@ -4,7 +4,7 @@ read_when: "antes de tocar search.max_rivals o de proponer gastar profundidad en
 authority: derived
 source: tools/sonda_tope.cpp y docs/experimentos.md
 last_verified: 2026-09-20
-size_bytes: 3652
+size_bytes: 4066
 ---
 
 # ADR-0034 — Simular tambien al tercer rival {#adr-0034}
@@ -73,4 +73,11 @@ y no otro termino de la evaluacion.
 
 ## D-0345 Estado {#d-0345}
 
-**SIN MEDIR.** Se enciende con `snake/config/v7-rivales3.json` y se mide CONTRA v5.
+**MEDIDO EN ARENA, NO CONCLUYENTE.** 15 bloques de self-play contra tres copias de v5:
+diferencia pareada **+0.0833** contra v7, IC95 [-0.2179, +0.3845]
+(ver docs/experimentos.md#s-tercer-rival-r).
+
+Paso lo que dice D-0343: las muertes por cabezazo bajaron de 10 a 7 -el mecanismo funciona-
+y v7 gano menos partidas igualmente. **Sin medir contra el gauntlet**: un veredicto de
+arena es sobre self-play y no llega para justificar un torneo de 2-3 horas.
+`default.json` se queda en `max_rivals: 2`.

@@ -114,9 +114,30 @@ def main():
             muere(f"no existe el config {r}")
 
     ha, hb = hash_config(args.a), hash_config(args.b)
+    hc = hash_config(args.campo)
     if ha == hb:
         muere(f"--a y --b son el MISMO config (hash {ha}). Un A/A se hace a proposito, "
               "apuntando a dos ficheros distintos con el mismo contenido.")
+
+    # Una rama IDENTICA al campo no mide nada, y conviene saberlo antes de gastar media
+    # corrida en ella. Con los cuatro contendientes iguales, las cuatro partidas de un
+    # bloque son LA MISMA partida -solo cambia a que silla llamamos "nuestra"-, asi que
+    # los cuatro puestos son 1, 2, 3 y 4 y la media del bloque sale 2.5 EXACTA siempre.
+    # No es un bug: es una identidad, y de paso una comprobacion fortisima de que la
+    # rotacion de asientos y `placements()` estan bien. Pero como medicion de fuerza
+    # aporta cero y cuesta la mitad del tiempo.
+    for etiqueta, h, ruta in (("--a", ha, args.a), ("--b", hb, args.b)):
+        if h == hc:
+            print(f"AVISO {etiqueta} ({pathlib.Path(ruta).name}) es el MISMO config que "
+                  f"--campo.\n"
+                  f"      Esa rama sacara 2.500 de puesto medio en TODOS los bloques, por "
+                  f"construccion:\n"
+                  f"      con los cuatro iguales, las cuatro partidas del bloque son la "
+                  f"misma partida.\n"
+                  f"      Sirve como comprobacion del arnes, no como medicion. Para un A/B "
+                  f"de verdad,\n"
+                  f"      usa un --campo distinto de las dos ramas (v4-hojas, por ejemplo).",
+                  file=sys.stderr)
 
     cmd = [args.binario, "--a", args.a, "--b", args.b, "--campo", args.campo,
            "--bloques", str(args.bloques), "--semilla-base", str(args.semilla_base),

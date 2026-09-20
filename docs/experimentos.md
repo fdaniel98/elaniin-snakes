@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 11650
+size_bytes: 13828
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -26,6 +26,7 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | v4 hojas | territorio en las HOJAS | **-0.367** | **MEJORA** |
 | v5 longitud | ventaja de longitud + comida | **-0.692** vs v4 | **MEJORA** |
 | v6 turnos | salud medida en turnos de vida | +0.058 | NO ENTRA |
+| v7 tercer rival | simular al 3er rival (ARENA, self-play) | +0.083 | NO CONCLUYENTE |
 
 ### S-SUPERVIVENCIA Por que v5 pierde las que pierde {#s-supervivencia}
 
@@ -271,3 +272,41 @@ experimento saliendo negativo, no una explicacion inventada despues.
 
 El codigo de v6 se queda en el arbol tras `survival.version`, en 0 por defecto: cuesta cero
 y la hipotesis puede volver a probarse cuando el campo sea otro.
+
+### S-TERCER-RIVAL-R Resultado en arena: NO CONCLUYENTE, y medio experimento tirado {#s-tercer-rival-r}
+
+Primera medicion hecha en la arena. **Es self-play**: las otras tres sillas eran v5, no el
+gauntlet (ver docs/decisions/ADR-0031-que-mide-la-arena.md#d-0311). 15 bloques, 19 761
+nodos por movimiento -el equivalente a 200 ms en la maquina de referencia-, 44 minutos.
+
+| | v5 | v7 |
+|---|---|---|
+| puesto medio | **2.500** | 2.583 |
+| turnos vividos | **162.6** | 157.6 |
+| gano la partida | **15** | 12 |
+| murio en cabezazo | 10 | **7** |
+
+Diferencia pareada **+0.0833** contra v7, IC95 [-0.2179, +0.3845]: **NO CONCLUYENTE**, y
+del lado malo. No llega para gastarle un torneo de 2-3 horas contra el gauntlet.
+
+**El mecanismo hizo lo suyo y no basto, otra vez.** Simular al tercer rival redujo las
+muertes por cabezazo de 10 a 7 -que es exactamente para lo que existe- y aun asi gano
+menos partidas. El riesgo estaba escrito antes de medir en
+ver docs/decisions/ADR-0034-el-tercer-rival.md#d-0343: con tres rivales simulados el modelo
+paranoico supone que las **tres** serpientes se coordinan contra nosotros, y eso encoge lo
+que la busqueda considera jugable.
+
+**Y un error de diseño mio que costo la mitad de la corrida.** La rama B era v5 y el campo
+tambien: con los cuatro contendientes iguales, las cuatro partidas de un bloque son **la
+misma partida** -solo cambia a que silla llamamos nuestra-, asi que los puestos son 1, 2,
+3 y 4 y la media sale **2.500 exacta en los quince bloques**. Se ve en los turnos: 306,
+306, 306, 306.
+
+No aporto nada sobre fuerza y consumio 60 de las 120 partidas. Lo unico que salva ese
+gasto es que resulto ser una comprobacion muy fuerte del arnes, aunque no la planee: la
+partida es invariante a que silla marcamos, los puestos suman 10 siempre y la rotacion de
+asientos no mete sesgo. `arena_ab.py` ahora avisa antes de empezar cuando una rama coincide
+con el campo.
+
+Para un A/B de verdad el campo tiene que ser distinto de las dos ramas. El candidato
+natural es `v4-hojas`, que es fuerte -perdio con v5 por 0.69- y no es ninguna de las dos.
