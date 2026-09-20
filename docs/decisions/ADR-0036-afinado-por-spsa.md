@@ -4,7 +4,7 @@ read_when: "antes de tocar un peso de default.json a mano, o de cambiar el afina
 authority: derived
 source: training-room/afina.py y docs/experimentos.md
 last_verified: 2026-09-20
-size_bytes: 5074
+size_bytes: 5649
 ---
 
 # ADR-0036 — Afinado por SPSA {#adr-0036}
@@ -94,4 +94,13 @@ contra la base **con un campo distinto de las dos ramas** -> si gana, A/B por HT
 
 ## D-0366 Estado {#d-0366}
 
-**ACEPTADA, sin correr todavia.** El afinador es `training-room/afina.py`.
+**ACEPTADA y corrida una vez.** 80 iteraciones, 5 120 partidas, 106 minutos: la
+trayectoria bajo el puesto medio de ~2.46 a ~2.29 contra el 2.500 del campo
+(ver docs/experimentos.md#s-afinado-r). Resultado en `snake/config/v8-afinado.json`, sin
+verificar.
+
+**Deuda que dejo esa corrida:** el script publica el MEJOR punto visto, y el mejor de 80
+evaluaciones ruidosas esta sesgado a la baja -imprimio 2.109 cuando la señal real es
+~2.29-. Aqui daba igual porque el mejor, el ultimo y el promedio de las 20 ultimas
+iteraciones coincidian dentro de +-0.05, pero el numero que imprime induce a error y
+deberia ser el promedio de la cola, no el minimo.

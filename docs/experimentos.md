@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 13828
+size_bytes: 16376
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -27,6 +27,7 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | v5 longitud | ventaja de longitud + comida | **-0.692** vs v4 | **MEJORA** |
 | v6 turnos | salud medida en turnos de vida | +0.058 | NO ENTRA |
 | v7 tercer rival | simular al 3er rival (ARENA, self-play) | +0.083 | NO CONCLUYENTE |
+| v8 afinado | SPSA sobre 14 pesos (ARENA, self-play) | ~-0.21 | SIN VERIFICAR |
 
 ### S-SUPERVIVENCIA Por que v5 pierde las que pierde {#s-supervivencia}
 
@@ -310,3 +311,53 @@ con el campo.
 
 Para un A/B de verdad el campo tiene que ser distinto de las dos ramas. El candidato
 natural es `v4-hojas`, que es fuerte -perdio con v5 por 0.69- y no es ninguna de las dos.
+
+### S-AFINADO-R Resultado del afinado: hay señal, y no es la que imprimio el script {#s-afinado-r}
+
+80 iteraciones de SPSA, 5 120 partidas, 1 000 nodos, 106 minutos
+(ver docs/decisions/ADR-0036-afinado-por-spsa.md). El script imprimio **2.109** como mejor
+puesto medio contra el 2.500 exacto del campo. **Ese numero esta sesgado y no se publica
+como resultado**: es el MINIMO de 80 evaluaciones ruidosas, y el minimo de 80 sorteos cae
+varios errores tipicos por debajo de la media aunque no hubiera mejorado nada.
+
+Lo que si mide algo es la trayectoria, porque promedia:
+
+| iteraciones | puesto medio |
+|---|---:|
+| 1-10 | 2.470 |
+| 11-20 | 2.459 |
+| 21-30 | 2.364 |
+| 31-40 | 2.302 |
+| 41-50 | 2.295 |
+| 51-60 | 2.298 |
+| 61-70 | 2.310 |
+| 71-80 | **2.263** |
+
+Media de las 20 primeras **2.4645**, de las 20 ultimas **2.2867**. Con 40 evaluaciones por
+tramo el error tipico es ~0.028, asi que el arranque es indistinguible del 2.500 de partida
+-como debe ser, porque ahi los pesos son los de v5- y el final esta a casi ocho errores
+tipicos. **La mejora real ronda -0.21, no -0.39.** 74 de las 80 evaluaciones quedaron por
+debajo de 2.5.
+
+El punto de llegada es estable: el mejor visto, el ultimo y el promedio de las 20 ultimas
+iteraciones coinciden **dentro de +-0.05 por parametro**. No hay que elegir entre ellos.
+
+**Lo que aprendio, que tiene sentido y no parece ruido:**
+
+| parametro | v5 | v8 | lectura |
+|---|---:|---:|---|
+| `head.avoid_equal_or_longer` | 80 | **69** | menos miedo a las cabezas iguales o mayores |
+| `head.prefer_shorter` | 8 | **9.5** | y mas ganas de ir a por las menores |
+| `length.advantage_weight` | 60 | **72.9** | la longitud pesa aun mas de lo que pesaba |
+| `length.hunt_weight` | 10 | **11.4** | y se persigue mas |
+| `territory.hazard_value_pct` | 50 | **38** | el territorio dentro del hazard vale menos |
+| `food.weight` | 6 | **5.6** | menos comida por comer |
+| `food.seek_below_in_hazard` | 75 | **86** | pero comer MUCHO antes dentro del hazard |
+
+Las dos ultimas juntas son lo interesante: el afinador no conoce el concepto de "turnos de
+vida" que v6 intento meter a mano (ver docs/experimentos.md#s-supervivencia-r), y aun asi
+llego solo a que dentro del hazard hay que comer antes. La hipotesis de v6 no era falsa;
+estaba implementada en el sitio equivocado.
+
+`snake/config/v8-afinado.json`. **SIN VERIFICAR**: falta medirlo con semillas frescas, a
+presupuesto de despliegue y con un campo distinto de las dos ramas.

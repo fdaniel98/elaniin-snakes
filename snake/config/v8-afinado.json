@@ -1,0 +1,59 @@
+{
+  "_comment": "v8 = v5 con los pesos afinados por SPSA (80 iteraciones, 5120 partidas, 1000 nodos, docs/results/afinado-1). La trayectoria bajo el puesto medio de ~2.46 a ~2.29 contra el 2.500 exacto del campo; el 2.109 que imprimio el afinador es el MINIMO de 80 evaluaciones ruidosas y esta sesgado a la baja, no lo uses como estimacion. El mejor punto, el ultimo y el promedio de las 20 ultimas iteraciones coinciden en +-0.05 por parametro, asi que la region es estable. SIN VERIFICAR: se mide contra v5 con semillas frescas. ver docs/decisions/ADR-0036-afinado-por-spsa.md",
+  "time": {
+    "network_margin_ms": 100,
+    "safety_margin_ms": 50,
+    "max_compute_ms": 200
+  },
+  "food": {
+    "seek_below": 50,
+    "seek_below_in_hazard": 86,
+    "free_food_distance": 2,
+    "weight": 5.5714
+  },
+  "space": {
+    "min_space_ratio": 1.0,
+    "weight": 100.0,
+    "tail_escape": true,
+    "worst_case_weight": 0.0,
+    "worst_case_max_cuellos": 24
+  },
+  "head": {
+    "avoid_equal_or_longer": 69.3613,
+    "prefer_shorter": 9.5134
+  },
+  "hazard": {
+    "weight": 20.9156,
+    "low_health_multiplier": 3.9864
+  },
+  "territory": {
+    "version": 1,
+    "weight": 112.1411,
+    "contested_weight": 0.0,
+    "hazard_value_pct": 38
+  },
+  "search": {
+    "version": 1,
+    "max_depth": 64,
+    "max_rivals": 2,
+    "death_value": -100000.0,
+    "win_value": 100000.0,
+    "survival_bonus": 32.0318,
+    "reserve_us": 2000,
+    "budget_nodes": 0
+  },
+  "length": {
+    "version": 1,
+    "advantage_weight": 72.8625,
+    "target_lead": 3,
+    "hunt_weight": 11.4329
+  },
+  "survival": {
+    "version": 0,
+    "safe_turns": 25,
+    "weight": 25.0,
+    "seek_below_turns": 15,
+    "critical_turns": 5,
+    "panic_weight": 120.0
+  }
+}
