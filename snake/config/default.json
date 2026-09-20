@@ -1,10 +1,10 @@
 {
   "_comment": "v5: busqueda + territorio en las hojas + control de longitud. Es la que se despliega. Gano su A/B contra v4 por -0.6917 (IC95 [-1.012, -0.371]) y contra v0 por -1.0583: 26 primeros puestos de 60 y NINGUN cuarto. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-longitud-r",
-  "_version": "v5-longitud",
+  "_version": "v5-longitud-150ms",
   "time": {
-    "network_margin_ms": 100,
+    "network_margin_ms": 260,
     "safety_margin_ms": 50,
-    "max_compute_ms": 200
+    "max_compute_ms": 150
   },
   "food": {
     "seek_below": 50,

@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 11223
+size_bytes: 11891
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -19,14 +19,28 @@ Fijo por contrato; cambiarlo exige aprobacion humana explicita y un ADR.
 | Concepto | Valor | Origen |
 |---|---|---|
 | `timeout` anunciado por el arbitro | 500 ms | `game.timeout` del request (ver docs/rules-parametros.md#r-20) |
-| Margen de red | 100 ms | `time.network_margin_ms` de `snake/config/default.json` |
+| Margen de red | **260 ms, MEDIDO** | `time.network_margin_ms`; p99 de RTT contra el despliegue real |
 | Margen de seguridad | 50 ms | `time.safety_margin_ms` |
-| Deadline de computo | 350 ms como techo | `time.max_compute_ms` |
+| Techo de computo | **150 ms** | `time.max_compute_ms` |
 | p99 de `POST /move` local sobre fixtures | 50 ms como techo | check 8 del gate |
 | Maximo de `POST /move` local | 150 ms como techo | check 8 del gate |
 
-Pasar de 350 ms de computo es fallo duro. El margen de red se recalibra con el p99 de RTT
-real medido en la fase 7 y se reescribe en `default.json`.
+Pasar de 350 ms de computo sigue siendo fallo duro.
+
+**El margen de red dejo de ser una estimacion el 2026-09-20.** Valia 100 ms porque se
+escribio a ojo en la fase 0; medido contra el despliegue de `us-east1` con
+`scripts/verifica-despliegue.sh`, el p99 de RTT puro es **259.4 ms**, o sea 2.6 veces mas.
+El techo de computo bajo de 200 a 150 en consecuencia
+(ver docs/decisions/ADR-0037-margenes-medidos.md#d-0371).
+
+| | p50 | p95 | p99 |
+|---|---:|---:|---:|
+| RTT puro (`GET /health`, sin cerebro) | 141.3 ms | 187.1 ms | 259.4 ms |
+| `POST /move` completo, computo 200 ms | 337.6 ms | 361.0 ms | 397.5 ms |
+
+La resta cuadra: 337.6 - 141.3 = 196 ms de computo contra los 200 concedidos. Medido desde
+la maquina de referencia, que no es desde donde arbitra el torneo: es el caso malo, elegido
+a proposito.
 
 ## P-02 Como se miden los numeros publicables {#p-02}
 

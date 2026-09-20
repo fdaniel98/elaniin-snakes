@@ -14,13 +14,22 @@ namespace snake {
 /// Presupuesto de latencia. `deadline = timeout - network_margin - safety_margin`.
 /// El timeout del request INCLUYE la latencia de red.
 struct TimeParams {
-    std::int32_t network_margin_ms = 100;
+    /// Latencia de ida y vuelta que se le reserva a la red. **Medida**, no estimada: 260
+    /// es el p99 de `GET /health` -que no invoca al cerebro, asi que es transporte puro-
+    /// contra el despliegue real de `us-east1`. Estuvo en 100 desde la fase 0 porque lo
+    /// escribi a ojo, y estaba mal por 2.6 veces.
+    /// ver docs/decisions/ADR-0037-margenes-medidos.md#d-0371
+    std::int32_t network_margin_ms = 260;
     std::int32_t safety_margin_ms = 50;
     /// Techo duro de computo aunque el timeout anunciado sea mayor.
-    /// Tope de computo, en ms. 200 y no 350 porque los ultimos 150 ms compran 0.19
-    /// niveles de profundidad -un 3%- y cuestan la mitad del colchon contra el timeout
-    /// del arbitro. Medido en ver docs/decisions/ADR-0023-presupuesto-de-computo.md.
-    std::int32_t max_compute_ms = 200;
+    ///
+    /// 150 y no 200 desde que se midio el RTT real. Lo que cuesta es ~1 nivel de
+    /// profundidad, y la profundidad esta medida: de 6 a 12 niveles movio -0.0167 con el
+    /// IC95 cruzando el cero (ver docs/experimentos.md#s-busq-r). Lo que compra son 50 ms
+    /// de colchon contra un timeout, que no es jugar peor sino que el arbitro aplique el
+    /// movimiento por defecto, que suele matar.
+    /// ver docs/decisions/ADR-0037-margenes-medidos.md#d-0371
+    std::int32_t max_compute_ms = 150;
 };
 
 /// Cuando merece la pena ir a por comida. No se come por comer.
