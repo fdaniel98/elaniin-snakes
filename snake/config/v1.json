@@ -1,5 +1,6 @@
 {
   "_comment": "v1: territorio por Voronoi. Mismo binario que v0; solo cambia territory.version. ver docs/strategy.md#s-v1",
+  "_version": "v1-territorio",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,

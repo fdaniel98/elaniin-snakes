@@ -1,5 +1,6 @@
 {
   "_comment": "v8 = v5 con los pesos afinados por SPSA. SOBREAJUSTADO, NO ES CANDIDATA: saca 2.2188 en las 32 partidas con las que se afino y 2.4688 -o sea nada- en 80 partidas de semillas frescas, contra el 2.500 exacto del campo. El afinador usaba los mismos 8 bloques en las 160 evaluaciones y se los aprendio. Se conserva como evidencia del sobreajuste. ver docs/experimentos.md#s-afinado-control",
+  "_version": "v8-afinado-SOBREAJUSTADO",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,

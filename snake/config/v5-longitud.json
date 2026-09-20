@@ -1,5 +1,6 @@
 {
   "_comment": "v5 = v4 mas control de longitud. Medido sobre las 60 partidas de v4: en 47 moriamos siendo iguales o mas cortos que TODOS los rivales vivos, y el puesto medio caia monotonamente con la desventaja de longitud. ver docs/experimentos.md#s-longitud",
+  "_version": "v5-longitud",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,

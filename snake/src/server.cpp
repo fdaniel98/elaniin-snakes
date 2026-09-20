@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <exception>
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -123,8 +124,33 @@ void log_move(int turn,
 
 } // namespace
 
+/// Que estrategia lleva dentro el binario, leida del MISMO fichero que la carga.
+///
+/// Estaba escrita a mano como "v0-baseline" desde la fase 0, y siguio diciendo eso
+/// mientras el default pasaba por v1, v4 y v5. `GET /` es el unico sitio donde se puede
+/// comprobar desde fuera que se desplego lo que se creia desplegar, y decia lo contrario
+/// de la verdad. Ahora sale del config: si el config cambia, la etiqueta cambia con el.
+std::string version_desplegada(const std::string& ruta) {
+    try {
+        std::ifstream fichero(ruta);
+        if (!fichero) {
+            return "desconocida";
+        }
+        const json doc = json::parse(fichero, nullptr, false);
+        if (!doc.is_discarded() && doc.contains("_version") && doc["_version"].is_string()) {
+            return doc["_version"].get<std::string>();
+        }
+    } catch (const std::exception& error) {
+        // Un config ilegible no puede tumbar el servidor por una etiqueta, pero tampoco
+        // se calla: si esto sale por el log, lo que se desplego no es lo que se cree.
+        std::cerr << "WARN=version_ilegible motivo=" << error.what() << "\n";
+    }
+    return "desconocida";
+}
+
 int main() {
     const snake::Params params = snake::load_params("snake/config/default.json");
+    const std::string version = version_desplegada("snake/config/default.json");
 
     httplib::Server server;
     server.set_payload_max_length(max_payload_bytes);
@@ -132,13 +158,13 @@ int main() {
     server.set_read_timeout(socket_timeout_seconds, 0);
     server.set_write_timeout(socket_timeout_seconds, 0);
 
-    server.Get("/", [](const httplib::Request&, httplib::Response& res) {
+    server.Get("/", [&version](const httplib::Request&, httplib::Response& res) {
         const json info{{"apiversion", "1"},
                         {"author", "battlesnake-royale"},
                         {"color", "#1b5e20"},
                         {"head", "beluga"},
                         {"tail", "bolt"},
-                        {"version", "v0-baseline"}};
+                        {"version", version}};
         res.set_content(info.dump(), "application/json");
     });
 

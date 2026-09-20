@@ -1,5 +1,6 @@
 {
   "_comment": "v7 = v5 con max_rivals 3: se simula TAMBIEN el tercer rival, que hasta ahora recibia el movimiento por defecto del motor y era invisible para la busqueda. Cuesta 1.06 niveles de profundidad con 4 vivas (10.92 -> 9.86, tools/sonda_tope.cpp) y nada con 3 o menos. La apuesta es que ese nivel se paga solo, porque duplicar la profundidad de 6 a 12 movio -0.017. SIN MEDIR: se mide CONTRA v5. ver docs/decisions/ADR-0034-el-tercer-rival.md ---- base v5: Gano su A/B contra v4 por -0.6917 (IC95 [-1.012, -0.371]) y contra v0 por -1.0583: 26 primeros puestos de 60 y NINGUN cuarto. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-longitud-r",
+  "_version": "v7-rivales3",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,

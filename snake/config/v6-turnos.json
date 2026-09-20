@@ -1,5 +1,6 @@
 {
   "_comment": "v6 = v5 con la salud medida en TURNOS DE VIDA. Medido sobre las 60 partidas de v5: 27 de 34 muertes fueron hambre o hazard con poca vida, y de los 21 segundos puestos, 11 hazard y 10 hambre. ver docs/experimentos.md#s-supervivencia",
+  "_version": "v6-turnos",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,

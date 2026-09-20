@@ -1,5 +1,6 @@
 {
-  "_comment": "v0, la referencia fija. NO se toca y NO se borra: es contra esto que se mide todo lo demas (§9 del prompt maestro). Sin busqueda y sin territorio. ver docs/experimentos.md#exp-resumen",
+  "_comment": "v0, la referencia fija. NO se toca y NO se borra: es contra esto que se mide todo lo demas (\u00a79 del prompt maestro). Sin busqueda y sin territorio. ver docs/experimentos.md#exp-resumen",
+  "_version": "v0-baseline",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,

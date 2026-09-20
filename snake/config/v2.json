@@ -1,5 +1,6 @@
 {
   "_comment": "v2: territorio por Voronoi MAS penalizacion de salas con una sola puerta. ver docs/strategy.md#s-v1",
+  "_version": "v2",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,
