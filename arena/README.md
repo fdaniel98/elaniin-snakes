@@ -44,10 +44,18 @@ Implementada y usable:
   maquina, que es lo primero que hay que correr antes de montar un A/B.
 
 ```bash
-./build/release/bin/sonda_arena --calibrar
-python3 training-room/arena_ab.py --a <config> --b <config> --campo snake/config/default.json \
-    --bloques 15 --nodos <el que diga --calibrar> --out docs/results/arena-<nombre>
+./build/release/bin/sonda_arena --calibrar     # en la de referencia: 19761
+python3 training-room/arena_ab.py \
+    --a snake/config/v7-rivales3.json \
+    --b snake/config/default.json \
+    --campo snake/config/default.json \
+    --bloques 15 --nodos 19761 \
+    --out docs/results/arena-v7
 ```
+
+El numero de `--nodos` se escribe entero, no entre `<>`: en bash eso es una redireccion y
+el comando muere con `No such file or directory` antes de empezar. La cifra de la maquina
+de referencia esta en ver docs/performance.md#p-08.
 
 Falta el loop de la fase 4 (ver docs/decisions/ADR-0032-arena-en-el-ambito-del-loop.md#d-0322)
 y la DoD: test A/A, regresion inyectada y verificacion del pareado.

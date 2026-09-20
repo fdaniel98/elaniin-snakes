@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 10775
+size_bytes: 11223
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -185,6 +185,12 @@ sobre 12 posiciones del turno 25 con cuatro vivas). Ese es el presupuesto que ha
 arena piense como el despliegue, y **vale para esta maquina y este commit**: hay que
 re-calibrar en la maquina donde se vaya a correr el A/B
 (ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0302).
+
+**En la maquina de referencia** (`sonda_arena --calibrar`, 8 CPU logicas, commit 9edc7fa):
+**19 761 nodos** de mediana en 200 ms, con minimo 18 197 y maximo 24 010. Esta un 5% por
+debajo del contenedor, que tiene la mitad de nucleos pero no comparte reloj con nadie: dos
+maquinas distintas dando el mismo orden de magnitud es lo que se esperaba, y no dice nada
+sobre cual es mas rapida. **El A/B de la maquina de referencia se corre con 19 761.**
 
 La ultima fila es la que importa: a presupuesto equivalente al del despliegue, y con solo
 **dos** nucleos, un A/B de 60 partidas sale en poco mas de una hora, contra las 2-3 horas
