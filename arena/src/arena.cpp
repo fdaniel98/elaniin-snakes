@@ -51,6 +51,16 @@ Partida play(const ArenaConfig& cfg, std::span<const snake::Params> contendiente
         }
     }
 
+    // La precondicion de `royale_hazards()`: con cadencia menor que 1 devuelve un tablero
+    // sin hazards, que es indistinguible de un turno anterior al primer shrink. El motor
+    // oficial aborta ahi, y aqui tambien: una partida de royale sin zona de peligro no es
+    // una partida de royale, y publicarla como si lo fuera es peor que no jugarla.
+    // ver docs/rules.md#r-09
+    if (cfg.rules.map_is_royale && cfg.rules.shrink_every_n_turns < 1) {
+        out.final = Final::reglas_invalidas;
+        return out;
+    }
+
     State s = engine::start_board<11, 11, 4>(n, cfg.rules, cfg.seed);
     // Los hazards del turno 0 son los que toquen por cadencia, igual que en el arbitro:
     // no se asume que el turno 0 esta limpio, se pregunta. ver docs/rules.md#r-09
@@ -59,7 +69,6 @@ Partida play(const ArenaConfig& cfg, std::span<const snake::Params> contendiente
             engine::royale_hazards<11, 11>(cfg.seed, s.turn, cfg.rules.shrink_every_n_turns);
     }
 
-    std::array<int, max_contendientes> vivos_hasta{};
     while (!engine::is_terminal(s) && s.turn < cfg.max_turns) {
         std::array<engine::Direction, max_contendientes> movimientos{};
         for (int i = 0; i < n; ++i) {
@@ -85,7 +94,6 @@ Partida play(const ArenaConfig& cfg, std::span<const snake::Params> contendiente
             if (m.corto_el_reloj) {
                 ++r.cortes_por_reloj;
             }
-            vivos_hasta[static_cast<std::size_t>(i)] = s.turn;
         }
 
         engine::apply(

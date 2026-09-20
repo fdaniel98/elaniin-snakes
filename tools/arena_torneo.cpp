@@ -76,6 +76,8 @@ const char* nombre_final(arena::Final f) noexcept {
             return "tope_turnos";
         case arena::Final::invalida:
             return "invalida";
+        case arena::Final::reglas_invalidas:
+            return "reglas_invalidas";
         default:
             return "sin_presupuesto";
     }

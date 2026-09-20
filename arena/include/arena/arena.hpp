@@ -51,6 +51,13 @@ enum class Final : std::uint8_t {
     /// tope de nodos y con un deadline inalcanzable la busqueda iria hasta `max_depth`, y
     /// lo que saliera no seria reproducible ni terminaria en un tiempo util.
     sin_presupuesto,
+    /// El ruleset no describe una partida jugable: hoy, cadencia de shrink menor que 1 en
+    /// mapa royale. El motor oficial aborta la partida en ese caso
+    /// (`maps/royale.go:50-52`), y `royale_hazards()` devuelve un tablero SIN hazards que
+    /// el llamante no puede distinguir de un turno temprano. Callarse eso convertiria una
+    /// partida sin zona de peligro en una medicion que parece normal.
+    /// ver docs/rules.md#r-09
+    reglas_invalidas,
 };
 
 struct Resultado {
