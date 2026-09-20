@@ -43,6 +43,11 @@
     "reserve_us": 2000,
     "budget_nodes": 0
   },
+  "duel": {
+    "version": 0,
+    "prefer_shorter": 40.0,
+    "pressure_weight": 25.0
+  },
   "length": {
     "version": 1,
     "advantage_weight": 60.0,
