@@ -10,9 +10,10 @@ add_executable(unit_tests
   test_brain_v0.cpp
   test_differential.cpp
   test_voronoi.cpp
+  test_arena.cpp
 )
 
-target_link_libraries(unit_tests PRIVATE engine snake_brain bsr_warnings Catch2::Catch2WithMain)
+target_link_libraries(unit_tests PRIVATE engine snake_brain arena bsr_warnings Catch2::Catch2WithMain)
 target_include_directories(unit_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(unit_tests PRIVATE
   BSR_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"

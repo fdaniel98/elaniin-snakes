@@ -24,3 +24,6 @@ target_link_libraries(sonda_tope PRIVATE engine snake_brain bsr_warnings)
 
 add_executable(sonda_overshoot sonda_overshoot.cpp)
 target_link_libraries(sonda_overshoot PRIVATE engine snake_brain bsr_warnings)
+
+add_executable(sonda_arena sonda_arena.cpp)
+target_link_libraries(sonda_arena PRIVATE arena engine snake_brain bsr_warnings)

@@ -35,6 +35,7 @@ target_compile_options(bsr_warnings INTERFACE
 
 add_subdirectory(engine)
 add_subdirectory(snake)
+add_subdirectory(arena)
 
 if(BSR_BUILD_TESTS)
   enable_testing()

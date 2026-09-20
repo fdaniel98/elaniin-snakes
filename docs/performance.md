@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 8062
+size_bytes: 9726
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -162,3 +162,33 @@ ella.
 Dos maquinas con la mitad de nucleos y otra frecuencia dan numeros distintos: la caida de
 `apply()` frente a P-03 **no es una regresion medida**, es otra maquina. Para saber si la
 fase 1 movio el rendimiento hay que correr `./scripts/bench.sh` en la de referencia.
+
+## P-08 Throughput de la arena {#p-08}
+
+`tools/sonda_arena.cpp`, un hilo, mismo contenedor de P-06 (2 CPU logicas), commit de la
+fase 4. **No es la maquina de referencia.**
+
+| `budget_nodes` | partidas/min | nodos/movimiento | un A/B de 60 partidas |
+|---:|---:|---:|---:|
+| 500 | 17.8 | 499 | 3.4 min |
+| 2 000 | 4.8 | 1 986 | 12.5 min |
+| 8 000 | 1.6 | 7 904 | 37 min |
+
+Turnos medios por partida: 204. El coste es **lineal en el presupuesto**, que es lo que
+se esperaba: la arena no tiene transporte que amortizar, solo busqueda.
+
+Lo que esto dice, y conviene leerlo antes de prometerse nada: **la arena no es rapida
+porque quite el HTTP, es rapida porque se juega con menos presupuesto**. Un torneo de 60
+partidas por HTTP tardo unas 2-3 horas; a 2 000 nodos la arena hace lo mismo en 12
+minutos, pero 2 000 nodos son del orden de la decima parte de lo que cabe en los 200 ms de
+`time.max_compute_ms`. A presupuesto equivalente el ahorro se queda en unas 4 veces.
+
+**Donde se va el tiempo, medido y no supuesto.** La hipotesis era la ordenacion de
+movimientos: hace hasta cuatro flood fills por llamada y se llama tres veces por nodo.
+Quitandolos enteros, las mismas 20 partidas a 2 000 nodos pasaron de 251 s a **276 s**, un
+10% mas LENTAS con menos trabajo por nodo. Con el numero de nodos fijado por el
+presupuesto, peor ordenacion significa menos poda y mas hojas alcanzadas, y cada hoja
+cuesta un Voronoi. **Manda la evaluacion de las hojas, no la ordenacion** -que es el mismo
+sitio donde v4 encontro la unica mejora grande del proyecto-. La hipotesis estaba
+equivocada y el experimento la mato en cinco minutos; queda escrita para que nadie la
+repita.

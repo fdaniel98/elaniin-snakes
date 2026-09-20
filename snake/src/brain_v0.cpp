@@ -423,7 +423,7 @@ Move decide(const State& state, Deadline deadline, const Params& params) noexcep
                 // Cinturon: la busqueda no puede devolver algo que v0 rechazaria por
                 // mortal. Si lo hiciera -un bug ahi dentro- se cae a v0 en vez de morir.
                 if (engine::mask_has(engine::legal_moves(state, state.you), r.best)) {
-                    return Move{r.best, 0, r.score, r.depth};
+                    return Move{r.best, 0, r.score, r.depth, r.depth, r.nodes, r.corto_el_reloj};
                 }
             }
             // Sin una sola profundidad completada, o con un movimiento sospechoso, manda

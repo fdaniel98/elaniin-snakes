@@ -23,6 +23,14 @@ struct Move {
     double score{0.0};
     /// Movimientos candidatos evaluados.
     int considered{0};
+    /// Ultima profundidad COMPLETADA por la busqueda; 0 si decidio v0.
+    int depth{0};
+    /// Nodos gastados por la busqueda, para calibrar `search.budget_nodes`.
+    long long nodes{0};
+    /// Cierto si a la busqueda la corto el RELOJ. Con presupuesto por nodos puesto eso
+    /// significa que el resultado depende de la carga de la maquina: la arena aborta la
+    /// partida. ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0301
+    bool corto_el_reloj{false};
 };
 
 /// Decide un movimiento. NUNCA lanza, NUNCA excede el deadline y NUNCA devuelve una
