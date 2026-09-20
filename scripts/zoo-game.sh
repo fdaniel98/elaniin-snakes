@@ -156,22 +156,39 @@ fi
 echo "OK   $NAME responde en $ZOO_URL"
 
 # ---------------------------------------------------------------- 7. nuestra snake
-PORT=$OUR_PORT "$BINARY" >"${RESULTS}/.zoo-game-server.log" 2>&1 &
-SERVER_PID=$!
-ready=0
-for _ in $(seq 1 50); do
-    curl -fsS "http://127.0.0.1:${OUR_PORT}/health" >/dev/null 2>&1 && {
-        ready=1
-        break
-    }
-    sleep 0.2
-done
-[[ $ready -eq 1 ]] || die "nuestro servidor no respondio en /health"
-echo "OK   v0-baseline responde en 127.0.0.1:${OUR_PORT}"
+#
+# `NUESTRA_URL=https://... ./scripts/zoo-game.sh <slug>` juega contra la snake YA
+# DESPLEGADA en vez de contra el binario local. Es la unica forma de medir lo que de
+# verdad importa la vispera de un torneo: la latencia que ve el ARBITRO, con transporte
+# real y no con localhost. `curl` mide el transporte; solo una partida mide la snake.
+if [[ -n "${NUESTRA_URL:-}" ]]; then
+    NUESTRA_URL="${NUESTRA_URL%/}"
+    curl -fsS --max-time 15 "${NUESTRA_URL}/health" >/dev/null 2>&1 ||
+        die "la snake desplegada no respondio a GET ${NUESTRA_URL}/health"
+    OUR_URL="$NUESTRA_URL"
+    OUR_LABEL="desplegada"
+    SERVER_PID=""
+    echo "OK   nuestra snake DESPLEGADA responde en $NUESTRA_URL"
+else
+    PORT=$OUR_PORT "$BINARY" >"${RESULTS}/.zoo-game-server.log" 2>&1 &
+    SERVER_PID=$!
+    ready=0
+    for _ in $(seq 1 50); do
+        curl -fsS "http://127.0.0.1:${OUR_PORT}/health" >/dev/null 2>&1 && {
+            ready=1
+            break
+        }
+        sleep 0.2
+    done
+    [[ $ready -eq 1 ]] || die "nuestro servidor no respondio en /health"
+    OUR_URL="http://127.0.0.1:${OUR_PORT}"
+    OUR_LABEL="local"
+    echo "OK   nuestra snake local responde en 127.0.0.1:${OUR_PORT}"
+fi
 
 # ---------------------------------------------------------------- 8. la partida
 mkdir -p "$RESULTS"
-OUT="${RESULTS}/$(date -u +%Y-%m-%d)-v0-vs-${SLUG}.jsonl"
+OUT="${RESULTS}/$(date -u +%Y-%m-%d)-${OUR_LABEL}-vs-${SLUG}.jsonl"
 
 # Flags verificados en cli/commands/play.go del SHA de docs/SOURCES.md, no supuestos:
 #   -W/-H tablero, -g ruleset, -m mapa, -t timeout en ms, -r semilla, -o salida JSONL.
@@ -181,7 +198,7 @@ echo "-- jugando --"
     -g royale -m royale \
     -t 500 \
     -r "$SEED" \
-    --name "v0-baseline" --url "http://127.0.0.1:${OUR_PORT}" \
+    --name "nuestra" --url "$OUR_URL" \
     --name "$NAME" --url "$ZOO_URL" \
     -o "$OUT" 2>&1 | tail -15
 play_status=${PIPESTATUS[0]}
