@@ -1,5 +1,5 @@
 {
-  "_comment": "v8 = v5 con los pesos afinados por SPSA (80 iteraciones, 5120 partidas, 1000 nodos, docs/results/afinado-1). La trayectoria bajo el puesto medio de ~2.46 a ~2.29 contra el 2.500 exacto del campo; el 2.109 que imprimio el afinador es el MINIMO de 80 evaluaciones ruidosas y esta sesgado a la baja, no lo uses como estimacion. El mejor punto, el ultimo y el promedio de las 20 ultimas iteraciones coinciden en +-0.05 por parametro, asi que la region es estable. SIN VERIFICAR: se mide contra v5 con semillas frescas. ver docs/decisions/ADR-0036-afinado-por-spsa.md",
+  "_comment": "v8 = v5 con los pesos afinados por SPSA. SOBREAJUSTADO, NO ES CANDIDATA: saca 2.2188 en las 32 partidas con las que se afino y 2.4688 -o sea nada- en 80 partidas de semillas frescas, contra el 2.500 exacto del campo. El afinador usaba los mismos 8 bloques en las 160 evaluaciones y se los aprendio. Se conserva como evidencia del sobreajuste. ver docs/experimentos.md#s-afinado-control",
   "time": {
     "network_margin_ms": 100,
     "safety_margin_ms": 50,

@@ -29,8 +29,21 @@ pesos van de 2 a 120 y un paso absoluto que es un roce para uno es un salto para
 cambia casi nada -la busqueda compara valores- asi que sin ancla SPSA gastaria una
 dimension entera en pasearse por esa escala.
 
-Semillas COMUNES: todas las evaluaciones de una corrida usan los mismos bloques. Lo que se
-compara entre dos evaluaciones es la configuracion, no la suerte.
+## Semillas: comunes DENTRO de la iteracion, distintas entre iteraciones
+
+Las dos evaluaciones de una misma iteracion -la de `+c` y la de `-c`- juegan los mismos
+bloques: ahi los numeros comunes son correctos y son lo que hace preciso el gradiente.
+
+Entre iteraciones, NO. La primera version usaba los mismos 8 bloques para las 160
+evaluaciones y el afinador se los aprendio: bajaba a 2.22 en esos 32 partidas y sacaba
+2.47 -o sea nada- en semillas frescas. Numeros comunes es lo correcto para COMPARAR dos
+alternativas fijas y es una trampa para OPTIMIZAR, porque el optimizador puede explotar
+una muestra que no cambia. ver docs/experimentos.md#s-afinado-r
+
+## Y una evaluacion de control que el script no puede saltarse
+
+Al terminar, la propuesta se mide en un rango de semillas que NO se uso en ninguna
+iteracion. Ese, y no el mejor visto, es el numero que se publica.
 """
 
 import argparse
@@ -109,6 +122,8 @@ def main():
     ap.add_argument("--nodos", type=int, required=True)
     ap.add_argument("--hilos", type=int, default=0)
     ap.add_argument("--semilla-base", type=int, default=1000)
+    ap.add_argument("--bloques-control", type=int, default=24,
+                    help="bloques de la evaluacion de control, en semillas nunca usadas")
     ap.add_argument("--semilla-spsa", type=int, default=7)
     ap.add_argument("--c", type=float, default=0.15, help="perturbacion relativa inicial")
     ap.add_argument("--a", dest="paso", type=float, default=0.12, help="paso inicial")
@@ -140,6 +155,7 @@ def main():
 
     n = len(TUNABLES)
     x = [1.0] * n
+    trayectoria = []
     mejor_x, mejor_y = x[:], None
     t0 = time.time()
     partidas = 0
@@ -163,12 +179,17 @@ def main():
         xmas = [acota(x[i] + ck * delta[i], TUNABLES[i][2], TUNABLES[i][3]) for i in range(n)]
         xmen = [acota(x[i] - ck * delta[i], TUNABLES[i][2], TUNABLES[i][3]) for i in range(n)]
 
+        # Bloques propios de esta iteracion, sin solapar con los de ninguna otra. Las dos
+        # evaluaciones de la iteracion SI los comparten: es donde los numeros comunes
+        # ayudan de verdad, y donde no dejan nada que memorizar.
+        semilla_k = args.semilla_base + (k - 1) * args.bloques
+
         tmp.write_text(json.dumps(aplica(base, xmas), indent=2))
-        ymas, np_ = evalua(args.binario, tmp, campo, args.bloques, args.semilla_base,
+        ymas, np_ = evalua(args.binario, tmp, campo, args.bloques, semilla_k,
                            args.nodos, args.hilos)
         partidas += np_
         tmp.write_text(json.dumps(aplica(base, xmen), indent=2))
-        ymen, np_ = evalua(args.binario, tmp, campo, args.bloques, args.semilla_base,
+        ymen, np_ = evalua(args.binario, tmp, campo, args.bloques, semilla_k,
                            args.nodos, args.hilos)
         partidas += np_
 
@@ -177,10 +198,12 @@ def main():
             x[i] = acota(x[i] - ak * g, TUNABLES[i][2], TUNABLES[i][3])
 
         y_medio = (ymas + ymen) / 2.0
+        trayectoria.append(x[:])
         if mejor_y is None or y_medio < mejor_y:
             mejor_y, mejor_x = y_medio, x[:]
 
-        fila = {"iteracion": k, "y_mas": round(ymas, 4), "y_menos": round(ymen, 4),
+        fila = {"iteracion": k, "semilla_base": semilla_k,
+                "y_mas": round(ymas, 4), "y_menos": round(ymen, 4),
                 "y_medio": round(y_medio, 4), "mejor": round(mejor_y, 4),
                 "x": [round(v, 4) for v in x], "partidas": partidas,
                 "segundos": round(time.time() - t0, 1)}
@@ -191,18 +214,44 @@ def main():
               end="", file=sys.stderr)
 
     print("", file=sys.stderr)
-    diario.close()
-    propuesta = out / "propuesta.json"
-    doc = aplica(base, mejor_x)
-    doc["_comment"] = (f"PROPUESTA de afinado SPSA ({args.iteraciones} iteraciones, "
-                       f"{partidas} partidas, {args.nodos} nodos). Puesto medio en arena "
-                       f"{mejor_y:.3f} contra 2.500 del campo. NO ENTRA en default.json "
-                       f"sin ganar su A/B contra gauntlet-v1.")
-    propuesta.write_text(json.dumps(doc, indent=2))
 
-    print(f"\nmejor puesto medio {mejor_y:.4f} (campo = 2.5000)", file=sys.stderr)
+    # La propuesta es el PROMEDIO de la cola de la trayectoria, no el mejor punto visto.
+    # El mejor de N evaluaciones ruidosas esta sesgado a la baja por seleccion; el
+    # promedio de los ultimos iterados es el estimador robusto de toda la vida.
+    cola = trayectoria[-max(1, len(trayectoria) // 4):]
+    x_final = [sum(v[i] for v in cola) / len(cola) for i in range(n)]
+
+    propuesta = out / "propuesta.json"
+    doc = aplica(base, x_final)
+    # Evaluacion de CONTROL, en semillas que no toco ninguna iteracion. Este es el numero
+    # que se publica: el mejor visto y el de la ultima iteracion estan medidos sobre
+    # partidas que el afinador ya habia jugado.
+    semilla_control = args.semilla_base + args.iteraciones * args.bloques + 10_000
+    propuesta.write_text(json.dumps(doc, indent=2))
+    print(f"control: {args.bloques_control * 4} partidas en semillas nunca usadas "
+          f"(base {semilla_control})...", file=sys.stderr)
+    y_control, n_control = evalua(args.binario, propuesta, campo, args.bloques_control,
+                                  semilla_control, args.nodos, args.hilos)
+
+    doc["_comment"] = (f"PROPUESTA de afinado SPSA ({args.iteraciones} iteraciones, "
+                       f"{partidas} partidas, {args.nodos} nodos). Puesto medio de CONTROL "
+                       f"{y_control:.4f} sobre {n_control} partidas en semillas nunca "
+                       f"usadas, contra el 2.500 exacto del campo. NO ENTRA en "
+                       f"default.json sin ganar su A/B contra gauntlet-v1.")
+    propuesta.write_text(json.dumps(doc, indent=2))
+    diario.write(json.dumps({"control": round(y_control, 4), "partidas": n_control,
+                             "semilla_base": semilla_control}) + "\n")
+    diario.close()
+
+    print(f"\nCONTROL  {y_control:.4f}  (campo = 2.5000, {n_control} partidas frescas)",
+          file=sys.stderr)
+    print(f"durante el afinado se vio {mejor_y:.4f} como mejor, pero eso esta medido "
+          f"sobre partidas ya jugadas", file=sys.stderr)
+    if y_control >= 2.5:
+        print("NO MEJORA: el control no baja de 2.5. No lo lleves al gauntlet.",
+              file=sys.stderr)
     print("cambios sobre la base:", file=sys.stderr)
-    for (grupo, clave, _lo, _hi, _e), xi in zip(TUNABLES, mejor_x):
+    for (grupo, clave, _lo, _hi, _e), xi in zip(TUNABLES, x_final):
         if abs(xi - 1.0) > 0.02:
             print(f"  {grupo}.{clave}: {base[grupo][clave]} -> {doc[grupo][clave]} "
                   f"(x{xi:.2f})", file=sys.stderr)

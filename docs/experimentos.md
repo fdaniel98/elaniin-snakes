@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 16376
+size_bytes: 18108
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -27,7 +27,7 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | v5 longitud | ventaja de longitud + comida | **-0.692** vs v4 | **MEJORA** |
 | v6 turnos | salud medida en turnos de vida | +0.058 | NO ENTRA |
 | v7 tercer rival | simular al 3er rival (ARENA, self-play) | +0.083 | NO CONCLUYENTE |
-| v8 afinado | SPSA sobre 14 pesos (ARENA, self-play) | ~-0.21 | SIN VERIFICAR |
+| v8 afinado | SPSA sobre 14 pesos (ARENA, self-play) | -0.03 en control | NO ENTRA (sobreajuste) |
 
 ### S-SUPERVIVENCIA Por que v5 pierde las que pierde {#s-supervivencia}
 
@@ -333,11 +333,8 @@ Lo que si mide algo es la trayectoria, porque promedia:
 | 61-70 | 2.310 |
 | 71-80 | **2.263** |
 
-Media de las 20 primeras **2.4645**, de las 20 ultimas **2.2867**. Con 40 evaluaciones por
-tramo el error tipico es ~0.028, asi que el arranque es indistinguible del 2.500 de partida
--como debe ser, porque ahi los pesos son los de v5- y el final esta a casi ocho errores
-tipicos. **La mejora real ronda -0.21, no -0.39.** 74 de las 80 evaluaciones quedaron por
-debajo de 2.5.
+Media de las 20 primeras **2.4645**, de las 20 ultimas **2.2867**. Parecia una mejora de
+-0.21, a casi ocho errores tipicos. **No lo era.**
 
 El punto de llegada es estable: el mejor visto, el ultimo y el promedio de las 20 ultimas
 iteraciones coinciden **dentro de +-0.05 por parametro**. No hay que elegir entre ellos.
@@ -359,5 +356,43 @@ vida" que v6 intento meter a mano (ver docs/experimentos.md#s-supervivencia-r), 
 llego solo a que dentro del hazard hay que comer antes. La hipotesis de v6 no era falsa;
 estaba implementada en el sitio equivocado.
 
-`snake/config/v8-afinado.json`. **SIN VERIFICAR**: falta medirlo con semillas frescas, a
-presupuesto de despliegue y con un campo distinto de las dos ramas.
+### El control lo tumba {#s-afinado-control}
+
+Medido en semillas que el afinado no jugo nunca:
+
+| donde se mide | partidas | v8 | v5 | mejora |
+|---|---:|---:|---:|---:|
+| semillas DEL AFINADO (base 1000) | 32 | **2.2188** | 2.5000 | -0.28 |
+| semillas FRESCAS (base 50000) | 80 | **2.4688** | 2.5000 | **-0.03** |
+
+Con 20 bloques el error tipico ronda 0.116, asi que 2.4688 es **indistinguible de 2.5**.
+La mejora entera era memoria de 32 partidas concretas. **v8 NO entra.**
+
+**La causa es una decision mia, y estaba escrita como si fuera una virtud.** El afinador
+usaba los MISMOS 8 bloques en las 160 evaluaciones. Numeros aleatorios comunes son lo
+correcto para **comparar** dos alternativas fijas -reducen la varianza de la diferencia- y
+son una trampa para **optimizar**, porque el optimizador puede explotar una muestra que no
+cambia nunca. Eso es exactamente lo que hizo: los pesos que encontro son buenos en esas 32
+partidas y en ninguna otra.
+
+Arreglado en `afina.py`, y en dos sitios:
+
+1. **Las semillas rotan entre iteraciones.** Dentro de una iteracion las dos evaluaciones
+   siguen compartiendolas -ahi los numeros comunes son correctos y no dejan nada que
+   memorizar-, pero cada iteracion juega bloques propios.
+2. **Evaluacion de control obligatoria al terminar**, en semillas que ninguna iteracion
+   toco, y **ese** es el numero que se publica. Si no baja de 2.5, el script lo dice:
+   `NO MEJORA: el control no baja de 2.5`.
+
+Lo que costo saberlo: cuatro minutos. Por eso el paso de verificacion existe antes del
+gauntlet y no despues.
+
+**Un resultado colateral que si es bueno:** las 80 partidas de control dieron **2.4688
+exacto** en la maquina de referencia y en el contenedor de desarrollo, que son maquinas
+distintas con la mitad de nucleos una que la otra. Es la primera comprobacion de extremo a
+extremo de que la arena es reproducible entre maquinas, que era una promesa del diseño
+(ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0301) y hasta ahora solo una
+promesa.
+
+`snake/config/v8-afinado.json` se conserva como la evidencia del sobreajuste, no como
+candidata.

@@ -4,7 +4,7 @@ read_when: "antes de tocar un peso de default.json a mano, o de cambiar el afina
 authority: derived
 source: training-room/afina.py y docs/experimentos.md
 last_verified: 2026-09-20
-size_bytes: 5649
+size_bytes: 6137
 ---
 
 # ADR-0036 — Afinado por SPSA {#adr-0036}
@@ -46,8 +46,11 @@ Tres detalles que no son accesorios:
 - **`space.weight` queda FIJO como ancla.** Multiplicar todos los pesos por una constante
   casi no cambia nada: la busqueda compara valores entre si. Sin ancla, SPSA gastaria una
   dimension entera paseandose por esa escala.
-- **Semillas comunes.** Todas las evaluaciones de una corrida juegan los mismos bloques.
-  Lo que se compara entre dos evaluaciones es la configuracion, no la suerte.
+- **Semillas comunes DENTRO de la iteracion, distintas entre iteraciones.** Las dos
+  evaluaciones de una misma iteracion comparten bloques: ahi los numeros comunes son
+  correctos y son lo que hace preciso el gradiente. Entre iteraciones, no. La primera
+  version las compartia todas y el afinador se aprendio la muestra
+  (ver docs/experimentos.md#s-afinado-control).
 
 **Lo que NO se afina**, y no por olvido: `*.version`, `max_depth`, `max_rivals`,
 `death_value`, `win_value`, `reserve_us`, `budget_nodes` y todo `time`. No son pesos de
@@ -73,8 +76,9 @@ Se escribe antes de la primera corrida, como en las dos anteriores.
 3. **Ruido mayor que la señal.** Con 32 partidas por evaluacion, el error tipico de la
    diferencia entre las dos ramas de una iteracion es del orden de la propia diferencia.
    SPSA lo tolera promediando a lo largo de las iteraciones, pero significa que una
-   corrida corta puede terminar en un sitio peor que donde empezo. Por eso se guarda el
-   MEJOR punto visto, no el ultimo.
+   corrida corta puede terminar en un sitio peor que donde empezo.
+4. **Sobreajuste a la muestra.** Este NO estaba en la lista y es el que paso. Esta
+   corregido en D-0367.
 
 ## D-0364 Que pasa con la propuesta {#d-0364}
 
@@ -94,13 +98,17 @@ contra la base **con un campo distinto de las dos ramas** -> si gana, A/B por HT
 
 ## D-0366 Estado {#d-0366}
 
-**ACEPTADA y corrida una vez.** 80 iteraciones, 5 120 partidas, 106 minutos: la
-trayectoria bajo el puesto medio de ~2.46 a ~2.29 contra el 2.500 del campo
-(ver docs/experimentos.md#s-afinado-r). Resultado en `snake/config/v8-afinado.json`, sin
-verificar.
+**ACEPTADA. Primera corrida: SOBREAJUSTE, y el metodo corregido.**
 
-**Deuda que dejo esa corrida:** el script publica el MEJOR punto visto, y el mejor de 80
-evaluaciones ruidosas esta sesgado a la baja -imprimio 2.109 cuando la señal real es
-~2.29-. Aqui daba igual porque el mejor, el ultimo y el promedio de las 20 ultimas
-iteraciones coincidian dentro de +-0.05, pero el numero que imprime induce a error y
-deberia ser el promedio de la cola, no el minimo.
+80 iteraciones, 5 120 partidas, 106 minutos. Parecia bajar el puesto medio de 2.46 a 2.29;
+en semillas frescas saco 2.4688, o sea nada (ver docs/experimentos.md#s-afinado-control).
+La mejora entera era memoria de las 32 partidas con las que se afino.
+
+## D-0367 Lo que se corrigio {#d-0367}
+
+1. **Las semillas rotan entre iteraciones.** Numeros comunes dentro de la iteracion, donde
+   son correctos; bloques propios en cada una, para que no haya muestra fija que aprender.
+2. **Evaluacion de control obligatoria**, en semillas que ninguna iteracion toco, y ese es
+   el numero que el script publica. Si no baja de 2.5, lo dice con todas las letras.
+3. **La propuesta es el promedio de la cola de la trayectoria**, no el mejor punto visto:
+   el mejor de N evaluaciones ruidosas esta sesgado a la baja por seleccion.
