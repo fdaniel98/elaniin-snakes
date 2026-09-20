@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 14460
+size_bytes: 16448
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -275,3 +275,36 @@ mismo que dijo P-08 por otro camino-.
 
 Decision: `max_compute_ms` se queda en 150
 (ver docs/decisions/ADR-0037-margenes-medidos.md#d-0377).
+
+## P-11 El despliegue con el margen corregido, verificado {#p-11}
+
+Dos partidas completas del arbitro oficial contra la URL desplegada
+(`v5-longitud-150ms-m80`), royale 11x11, cuatro serpientes, timeout 500. Los tres rivales
+son nuestro propio binario en local con el config por defecto, asi que la unica diferencia
+entre las cuatro es que la nuestra viaja por internet.
+
+| metrica | valor |
+|---|---:|
+| movimientos medidos | 337 |
+| latencia del arbitro p50 / p95 / p99 / maximo | 207 / 216 / 226 / **230 ms** |
+| movimientos por encima del timeout | **0** |
+| movimientos sin respuesta | **0** |
+| transporte (latencia menos los 150 de computo) p50 / p99 / maximo | 57 / 76 / **80 ms** |
+
+El maximo, 230 ms, deja **270 ms de aire** sobre el timeout de 500. Las partidas se
+repartieron 1-1, que es lo que se espera de cuatro copias del mismo cerebro.
+
+**El transporte maximo es 80 ms, exactamente `network_margin_ms`.** No es un problema
+-a timeout 500 el margen no participa, manda el techo de 150-, pero conviene tenerlo
+escrito: el 80 salio del p99 de 57 ms medido desde la maquina de referencia, y desde el
+contenedor de la nube el maximo lo roza. Aun en el caso que el margen cubre -un timeout
+anunciado de 300- saldrian 150 de computo mas 80 de transporte = 230 < 300.
+
+**Un fallo que no es de latencia y conviene no olvidar.** Una de las tres partidas lanzadas
+murio antes de empezar: `Error getting snake metadata ... context deadline exceeded`. El
+arbitro pide `GET /` antes del primer turno, con el mismo timeout de 500 ms y **conexion
+nueva**, asi que esa peticion paga el handshake TLS entero (ver P-09). Quince `GET /`
+seguidos desde el mismo sitio dieron 200 en todos, con maximo de 480 ms: cabe, pero por
+poco, y desde un contenedor que ademas sale por un proxy. No hay nada que arreglar en
+nuestro codigo -el servidor contesta en microsegundos-; es distancia y handshake. Lo que
+lo reduce es que la instancia este caliente, que es para lo que esta `--min-instances=4`.

@@ -4,7 +4,7 @@ read_when: "antes de tocar time.* en snake/config/default.json o de desplegar en
 authority: derived
 source: scripts/verifica-despliegue.sh contra el despliegue de us-east1
 last_verified: 2026-09-20
-size_bytes: 6896
+size_bytes: 7044
 ---
 
 # ADR-0037 — Margenes medidos {#adr-0037}
@@ -130,6 +130,8 @@ medible. `arena_torneo` ademas fuerza el mismo `budget_nodes` a las dos ramas po
 
 ## D-0375 Estado {#d-0375}
 
-**ACEPTADA**. `network_margin_ms` = 80 (D-0376). `max_compute_ms` se queda en 150 (D-0377):
+**ACEPTADA Y VERIFICADA EN PRODUCCION**: 337 movimientos contra la URL desplegada, 0 por
+encima del timeout, maximo 230 ms de 500 (ver docs/performance.md#p-11).
+`network_margin_ms` = 80 (D-0376). `max_compute_ms` se queda en 150 (D-0377):
 a 207 ms de maximo sobre un timeout de 500 hay 293 ms de aire, y la profundidad extra que
 compraria subirlo no es medible.
