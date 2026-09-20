@@ -14,12 +14,18 @@ namespace snake {
 /// Presupuesto de latencia. `deadline = timeout - network_margin - safety_margin`.
 /// El timeout del request INCLUYE la latencia de red.
 struct TimeParams {
-    /// Latencia de ida y vuelta que se le reserva a la red. **Medida**, no estimada: 260
-    /// es el p99 de `GET /health` -que no invoca al cerebro, asi que es transporte puro-
-    /// contra el despliegue real de `us-east1`. Estuvo en 100 desde la fase 0 porque lo
-    /// escribi a ojo, y estaba mal por 2.6 veces.
-    /// ver docs/decisions/ADR-0037-margenes-medidos.md#d-0371
-    std::int32_t network_margin_ms = 260;
+    /// Latencia de ida y vuelta que se le reserva a la red. **Medida**, no estimada: 57 ms
+    /// es el p99 de transporte que reporto el ARBITRO en partida real contra `us-east1`
+    /// (207 de total menos los 150 de computo), y 80 le deja un 40% de holgura. Estuvo en
+    /// 260 unas horas porque lo medi con `curl`, que abre un handshake TLS por peticion
+    /// mientras el arbitro reusa la conexion: 4.5 veces de mas.
+    ///
+    /// A `timeout` 500 este numero no hace nada -manda `max_compute_ms`-; existe para que
+    /// un timeout anunciado mas corto no colapse el presupuesto. Con 260, un `timeout` de
+    /// 300 daba 300-260-50 = -10, que `Deadline::from_timeout` acota a 1 ms: la snake
+    /// jugaria por ordenacion estatica, sin buscar.
+    /// ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376
+    std::int32_t network_margin_ms = 80;
     std::int32_t safety_margin_ms = 50;
     /// Techo duro de computo aunque el timeout anunciado sea mayor.
     ///

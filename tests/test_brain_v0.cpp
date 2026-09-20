@@ -451,6 +451,27 @@ TEST_CASE("time manager: el colchon contra el timeout del arbitro", "[deadline][
         }
     }
 
+    SECTION("un timeout mas corto que 500 sigue dejando buscar") {
+        // El caso que el margen de red de 260 rompia en silencio: 300-260-50 = -10, que
+        // `from_timeout` acota a 1 ms, y con 1 ms la snake juega por ordenacion estatica
+        // sin buscar nada. El torneo puede anunciar un timeout distinto de 500 y el gate
+        // no lo veria: ningun fixture lleva timeout propio.
+        // ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376
+        const auto t0 = snake::Deadline::Clock::now();
+        for (const int timeout : {250, 300, 400, 500}) {
+            const auto d = snake::Deadline::from_timeout(timeout, p.time, t0);
+            const auto presupuesto =
+                std::chrono::duration_cast<std::chrono::milliseconds>(d.end() - t0).count();
+            INFO("timeout=" << timeout << " presupuesto=" << presupuesto);
+            // 100 ms es el suelo por debajo del cual se pierde un nivel entero de
+            // profundidad (tabla del ADR-0023), el mismo suelo que exige la seccion de
+            // arriba para el timeout de torneo.
+            REQUIRE(presupuesto >= 100);
+            // Y sigue cabiendo: computo + transporte medido (57 ms p99) bajo el timeout.
+            REQUIRE(presupuesto + 57 < timeout);
+        }
+    }
+
     SECTION("los margenes se restan de verdad") {
         const auto t0 = snake::Deadline::Clock::now();
         snake::Params sin_techo = p;

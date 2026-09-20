@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 13039
+size_bytes: 14460
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -250,3 +250,28 @@ cuesta un Voronoi. **Manda la evaluacion de las hojas, no la ordenacion** -que e
 sitio donde v4 encontro la unica mejora grande del proyecto-. La hipotesis estaba
 equivocada y el experimento la mato en cinco minutos; queda escrita para que nadie la
 repita.
+
+## P-10 Subir el techo de computo no compra profundidad {#p-10}
+
+`bin/sonda_busqueda`, contenedor de la nube (maquina de P-06, 2 CPU logicas), commit
+8a9a137, sobre 37 posiciones de media partida con cuatro serpientes vivas y `max_rivals`
+2. La pregunta era si valia la pena subir `time.max_compute_ms` de 150 a 300 aprovechando
+los 293 ms de aire que dejo la medicion del arbitro (ver P-09).
+
+| presupuesto | profundidad media | minima | nodos/movimiento | mejor movimiento fijado en | profundidades confirmatorias |
+|---:|---:|---:|---:|---:|---:|
+| 150 ms | 6.2 | 3 | 22 675 | profundidad 2.9 | 49 de 93 (53%) |
+| 300 ms | 6.6 | 4 | 45 692 | profundidad 3.0 | 54 de 99 (55%) |
+
+**El doble de tiempo da el doble de nodos y 0.4 niveles.** Y el movimiento elegido se fija
+donde se fijaba: en la profundidad ~3. Mas de la mitad de las profundidades que se
+completan a 300 ms son confirmatorias -terminan eligiendo el mismo movimiento que ya
+estaba-, asi que el gasto no se traduce en decision distinta casi nunca.
+
+Concuerda con el A/B de 6 contra 12 niveles, que movio -0.0167 con el IC95 cruzando el
+cero (ver docs/experimentos.md#s-busq-r): dos instrumentos distintos, misma respuesta. La
+fuerza de esta snake esta en la evaluacion de las hojas, no en la profundidad -que es lo
+mismo que dijo P-08 por otro camino-.
+
+Decision: `max_compute_ms` se queda en 150
+(ver docs/decisions/ADR-0037-margenes-medidos.md#d-0377).

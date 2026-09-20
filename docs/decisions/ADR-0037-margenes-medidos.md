@@ -4,7 +4,7 @@ read_when: "antes de tocar time.* en snake/config/default.json o de desplegar en
 authority: derived
 source: scripts/verifica-despliegue.sh contra el despliegue de us-east1
 last_verified: 2026-09-20
-size_bytes: 4612
+size_bytes: 6896
 ---
 
 # ADR-0037 — Margenes medidos {#adr-0037}
@@ -80,11 +80,56 @@ corto, `500 -> 300` daria `300 - 260 - 50 = -10`, que `Deadline::from_timeout` a
 **1 ms**: la snake jugaria por ordenacion estatica, sin buscar. Un margen inventado por
 arriba es tan peligroso como uno inventado por abajo, solo que falla en otro sitio.
 
+## D-0376 Se baja el margen de red a 80, y solo ese {#d-0376}
+
+`network_margin_ms` pasa de **260 a 80**. El transporte p99 que reporta el arbitro es de
+57 ms (207 de total menos los 150 de computo), asi que 80 deja un 40% de holgura sobre el
+dato real en vez de un 4.5x sobre un dato contaminado por el handshake.
+
+**A `timeout` 500 el cambio no altera nada**: `500 - 80 - 50 = 370` y `500 - 260 - 50 =
+190` se recortan los dos al techo de 150. Lo que compra es el caso que D-0374 describe:
+
+| `timeout` anunciado | margen 260 | margen 80 |
+|---|---|---|
+| 500 | 150 ms | 150 ms |
+| 400 | 90 ms | 150 ms |
+| 300 | **1 ms** (juega a ciegas) | 150 ms |
+| 250 | **1 ms** | 120 ms |
+
+El JSONL de la partida real anuncia `timeout: 500` en los 36 turnos, asi que hoy esto es
+un seguro, no una mejora. Se contrata porque su prima es cero y el siniestro -jugar sin
+buscar una partida entera- no tiene arreglo en caliente.
+
+`_version` pasa a `v5-longitud-150ms-m80`, que es como se comprueba desde `GET /` que el
+redespliegue aterrizo.
+
+**El check nuevo**: `tests/test_brain_v0.cpp` seccion «un timeout mas corto que 500 sigue
+dejando buscar», que exige presupuesto >= 100 ms y `presupuesto + 57 < timeout` para 250,
+300, 400 y 500. Ningun fixture lleva `timeout` propio, asi que el gate no veia este caso.
+
+## D-0377 Lo que NO se toca: el techo de computo {#d-0377}
+
+Se evaluo subir `max_compute_ms` de 150 a 300, que es lo unico que aportaria fuerza real.
+**No se hace.** `bin/sonda_busqueda` sobre 37 posiciones de media partida con 4 serpientes
+vivas (ver docs/performance.md#p-10):
+
+| presupuesto | profundidad media | nodos/movimiento | donde se fija el mejor movimiento |
+|---|---|---|---|
+| 150 ms | 6.2 | 22 675 | profundidad 2.9 |
+| 300 ms | 6.6 | 45 692 | profundidad 3.0 |
+
+El doble de tiempo da el doble de nodos y **+0.4 niveles**, y el movimiento elegido se fija
+igual en la profundidad ~3: 54 de 99 profundidades a 300 ms son confirmatorias, no cambian
+la decision. Concuerda con el A/B previo de 6 a 12 niveles, que dio -0.0167 con el IC95
+cruzando el cero (ver docs/experimentos.md#s-busq-r).
+
+Lo que si cambiaria es la exposicion: 150 ms mas por movimiento a cambio de una ganancia no
+medible. `arena_torneo` ademas fuerza el mismo `budget_nodes` a las dos ramas por contrato
+(ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0302), asi que un A/B de N contra
+2N nodos no se puede correr sin romper el invariante que hace pareada la comparacion.
+
 ## D-0375 Estado {#d-0375}
 
-**ACEPTADA**, con el margen de red pendiente de bajar de 260 a ~80 sobre el dato del
-arbitro. `max_compute_ms` se queda en 150: a 207 ms de maximo sobre un timeout de 500 hay
-293 ms de aire, y la profundidad extra que compraria subirlo esta medida en -0.0167.
-
-`_version` pasa a `v5-longitud-150ms` para que `GET /` distinga este despliegue del
-anterior sin tener que mirar el hash de la imagen.
+**ACEPTADA**. `network_margin_ms` = 80 (D-0376). `max_compute_ms` se queda en 150 (D-0377):
+a 207 ms de maximo sobre un timeout de 500 hay 293 ms de aire, y la profundidad extra que
+compraria subirlo no es medible.
