@@ -19,6 +19,15 @@ contra snakes publicas.
 | `docs/` | Capa de contexto: reglas citadas, invariantes, ADRs, context packs |
 | `.loop/` | Ledgers del loop de ingenieria (§14 del prompt maestro) |
 
+## Remoto
+
+```
+https://github.com/fdaniel98/elaniin-snakes.git
+```
+
+`origin` ya esta configurado. El primer push se hace desde WSL2, que es donde viven las
+credenciales de git: `git push -u origin master`.
+
 ## Requisitos
 
 El toolchain vive en **WSL2 (Ubuntu 24.04)**; el repositorio se edita desde Windows. Ver
