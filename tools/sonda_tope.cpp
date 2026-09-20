@@ -43,42 +43,49 @@ static engine::State11 gen(engine::Rng& rng, int vivas) {
 int main() {
     for (const int vivas : {2, 3, 4}) {
         std::printf("\n=== %d serpientes vivas ===\n", vivas);
+        // Dos barridos en el mismo recorrido: el control de longitud (v5) y cuantos
+        // rivales se simulan. El segundo solo puede cambiar algo con 4 vivas, porque con
+        // 3 o menos ya no hay un tercer rival que dejar fuera.
         for (const int lon : {0, 1}) {
-            snake::Params p;
-            p.search.version = 1;
-            p.territory.version = 1;
-            p.length.version = lon;
-            snake::warmup(p);
-            engine::Rng rng(20260918);
-            long long prof = 0, us_acum = 0, tope_us = 0;
-            int n = 0, tocan_tope = 0;
-            for (int i = 0; i < 40; ++i) {
-                auto st = gen(rng, vivas);
-                if (engine::legal_moves(st, st.you) == engine::move_mask_none) {
-                    continue;
+            for (const int riv : {2, 3}) {
+                snake::Params p;
+                p.search.version = 1;
+                p.territory.version = 1;
+                p.length.version = lon;
+                p.search.max_rivals = riv;
+                snake::warmup(p);
+                engine::Rng rng(20260918);
+                long long prof = 0, us_acum = 0, tope_us = 0;
+                int n = 0, tocan_tope = 0;
+                for (int i = 0; i < 40; ++i) {
+                    auto st = gen(rng, vivas);
+                    if (engine::legal_moves(st, st.you) == engine::move_mask_none) {
+                        continue;
+                    }
+                    const auto t0 = snake::Deadline::Clock::now();
+                    const snake::Deadline d(t0 + std::chrono::milliseconds(200));
+                    const auto r = snake::search(st, d, p);
+                    const auto us = static_cast<long long>(
+                        std::chrono::duration_cast<std::chrono::microseconds>(
+                            snake::Deadline::Clock::now() - t0)
+                            .count());
+                    prof += r.depth;
+                    us_acum += us;
+                    tope_us = std::max(tope_us, us);
+                    if (r.depth >= p.search.max_depth) {
+                        ++tocan_tope;
+                    }
+                    ++n;
                 }
-                const auto t0 = snake::Deadline::Clock::now();
-                const snake::Deadline d(t0 + std::chrono::milliseconds(200));
-                const auto r = snake::search(st, d, p);
-                const auto us =
-                    static_cast<long long>(std::chrono::duration_cast<std::chrono::microseconds>(
-                                               snake::Deadline::Clock::now() - t0)
-                                               .count());
-                prof += r.depth;
-                us_acum += us;
-                tope_us = std::max(tope_us, us);
-                if (r.depth >= p.search.max_depth) {
-                    ++tocan_tope;
-                }
-                ++n;
+                std::printf("  longitud=%d rivales=%d -> profundidad %.2f | %6lld us medios "
+                            "(de 200000) | %d de %d tocan el tope\n",
+                            lon,
+                            riv,
+                            double(prof) / n,
+                            us_acum / n,
+                            tocan_tope,
+                            n);
             }
-            std::printf("  longitud=%d -> profundidad %.2f | %6lld us medios (de 200000) | "
-                        "%d de %d tocan el tope\n",
-                        lon,
-                        double(prof) / n,
-                        us_acum / n,
-                        tocan_tope,
-                        n);
         }
     }
     return 0;
