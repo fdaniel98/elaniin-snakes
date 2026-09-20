@@ -69,7 +69,6 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
 - [ ] Las causas de muerte de los RIVALES son ambiguas (349 de 600): no tenemos su
       cerebro. Las nuestras si.
-- [ ] `origin` apunta a GitHub, falta el primer push: la historia vive en un disco.
 - [ ] `royale_hazards()` ya tiene llamante, pero su precondicion -cadencia >= 1- sigue sin
       comprobarla nadie: con 0 devuelve un tablero sin hazards.
 - [ ] `budget_nodes` sin calibrar contra el presupuesto de despliegue: hoy un numero de
