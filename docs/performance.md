@@ -3,7 +3,7 @@ title: Numeros medidos
 read_when: "antes de afirmar cualquier cosa sobre rendimiento, y despues de cada bench"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 9726
+size_bytes: 10775
 ---
 
 Este archivo es el **unico dueño** de todo numero medido. `STATE.md` no tiene numeros
@@ -168,14 +168,30 @@ fase 1 movio el rendimiento hay que correr `./scripts/bench.sh` en la de referen
 `tools/sonda_arena.cpp`, un hilo, mismo contenedor de P-06 (2 CPU logicas), commit de la
 fase 4. **No es la maquina de referencia.**
 
-| `budget_nodes` | partidas/min | nodos/movimiento | un A/B de 60 partidas |
-|---:|---:|---:|---:|
-| 500 | 17.8 | 499 | 3.4 min |
-| 2 000 | 4.8 | 1 986 | 12.5 min |
-| 8 000 | 1.6 | 7 904 | 37 min |
+| `budget_nodes` | hilos | partidas/min | nodos/movimiento | un A/B de 60 partidas |
+|---:|---:|---:|---:|---:|
+| 500 | 1 | 17.8 | 499 | 3.4 min |
+| 2 000 | 1 | 4.8 | 1 986 | 12.5 min |
+| 8 000 | 1 | 1.6 | 7 904 | 37 min |
+| **20 774** | **2** | **0.94** | 20 389 | **64 min** |
 
-Turnos medios por partida: 204. El coste es **lineal en el presupuesto**, que es lo que
-se esperaba: la arena no tiene transporte que amortizar, solo busqueda.
+Turnos medios por partida: 204 con presupuesto corto, 238 con el largo. El coste es
+**lineal en el presupuesto**, que es lo que se esperaba: la arena no tiene transporte que
+amortizar, solo busqueda.
+
+**Calibracion** (`sonda_arena --calibrar`, misma maquina): en 200 ms de
+`time.max_compute_ms` caben **20 774 nodos** de mediana (minimo 18 595, maximo 27 987,
+sobre 12 posiciones del turno 25 con cuatro vivas). Ese es el presupuesto que hace que la
+arena piense como el despliegue, y **vale para esta maquina y este commit**: hay que
+re-calibrar en la maquina donde se vaya a correr el A/B
+(ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0302).
+
+La ultima fila es la que importa: a presupuesto equivalente al del despliegue, y con solo
+**dos** nucleos, un A/B de 60 partidas sale en poco mas de una hora, contra las 2-3 horas
+del mismo A/B por HTTP. El paralelismo escala casi lineal -8 partidas en 8m32s de reloj
+consumieron 16m39s de CPU- asi que en una maquina con ocho hilos utiles son unos 16
+minutos. La salida es **identica con 1 hilo y con 4**: las partidas se escriben por indice
+y no segun termina cada una.
 
 Lo que esto dice, y conviene leerlo antes de prometerse nada: **la arena no es rapida
 porque quite el HTTP, es rapida porque se juega con menos presupuesto**. Un torneo de 60

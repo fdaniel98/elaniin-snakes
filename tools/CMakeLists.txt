@@ -27,3 +27,7 @@ target_link_libraries(sonda_overshoot PRIVATE engine snake_brain bsr_warnings)
 
 add_executable(sonda_arena sonda_arena.cpp)
 target_link_libraries(sonda_arena PRIVATE arena engine snake_brain bsr_warnings)
+
+find_package(Threads REQUIRED)
+add_executable(arena_torneo arena_torneo.cpp)
+target_link_libraries(arena_torneo PRIVATE arena engine snake_brain bsr_warnings Threads::Threads)

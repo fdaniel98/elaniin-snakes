@@ -98,6 +98,10 @@ EOF
 
 poison_4() { printf 'namespace engine {   int    sin_formatear   =    1 ;  }\n' >>engine/src/rules.cpp; }
 
+# `arena/` entro en la fase 4 y estuvo fuera de los checks 4 y 5 hasta que se amplio su
+# lista de ficheros. Un veneno en engine/ no prueba eso: prueba el check, no su AMBITO.
+poison_4b() { printf 'namespace arena {   int    sin_formatear   =    1 ;  }\n' >>arena/src/arena.cpp; }
+
 poison_5() {
     # modernize-use-nullptr: compila sin avisos del compilador, pero clang-tidy lo caza.
     cat >>engine/src/rules.cpp <<'EOF'
@@ -533,6 +537,7 @@ POISONS=(
     "poison_2|2|codigo que solo rompe el build debug"
     "poison_3|3|un test que falla"
     "poison_4|4|codigo sin formatear"
+    "poison_4b|4|codigo sin formatear en arena/, que entro despues que el check"
     "poison_5|5|aviso de clang-tidy"
     "poison_5b|5|generador prohibido de la STL en un comentario de engine/"
     "poison_6|6|doc sin front-matter"

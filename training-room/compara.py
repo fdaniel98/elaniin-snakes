@@ -59,8 +59,20 @@ def topologia(c):
     return t
 
 
-def nuestro_slug(c):
-    """La snake nuestra es la que no sale del zoo: su `imagen` no empieza por `zoo/`."""
+def nuestro_slug(c, explicito=None):
+    """La snake nuestra es la que no sale del zoo: su `imagen` no empieza por `zoo/`.
+
+    En una corrida de arena no hay zoo -las otras tres sillas tambien son nuestras-, asi
+    que ahi el slug se pasa con `--slug`. Se comprueba que exista en vez de creerselo: un
+    slug mal escrito daria cero bloques y un "no comparten ninguna semilla" que no es el
+    problema real.
+    """
+    if explicito:
+        n = c.execute("SELECT COUNT(*) FROM participantes WHERE slug = ?",
+                      (explicito,)).fetchone()[0]
+        if not n:
+            muere(f"no hay ningun participante con slug '{explicito}' en esa corrida")
+        return explicito
     filas = c.execute(
         "SELECT slug, COUNT(*) FROM participantes WHERE imagen NOT LIKE 'zoo/%' "
         "GROUP BY slug ORDER BY 2 DESC").fetchall()
@@ -110,6 +122,13 @@ def salud_del_campo(c):
     # de mas abajo, ese cero falso invertiria la conclusion.
     # La columna puede no existir siquiera: esto abre en solo lectura a proposito -una
     # herramienta de analisis no toca los datos- asi que no puede migrar la tabla.
+    # Una corrida de arena no tiene peticiones que perder: no hay HTTP. Decirlo es
+    # distinto de medir cero, igual que NULL es distinto de cero mas abajo.
+    if not c.execute("SELECT COUNT(*) FROM latencias").fetchone()[0]:
+        return {"medido": False, "filas_sin_medir": 0,
+                "motivo": "sin HTTP: la corrida es de arena",
+                "timeouts": None, "conexion": None, "otros": None,
+                "fallos_por_partida": None}
     hay = {f[1] for f in c.execute("PRAGMA table_info(latencias)")}
     if "fallos_conexion" not in hay:
         return {"medido": False, "filas_sin_medir": 0, "motivo": "la columna no existe",
@@ -170,6 +189,9 @@ def main():
     ap.add_argument("--b", required=True, help="corrida candidata")
     ap.add_argument("--delta", type=float, default=0.10,
                     help="ventaja minima de puesto medio que se considera util (default 0.10)")
+    ap.add_argument("--slug", default=None,
+                    help="slug de NUESTRA snake en cada corrida, 'a,b' si difieren. Solo "
+                         "hace falta cuando el campo no sale del zoo, como en la arena.")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
@@ -193,7 +215,12 @@ def main():
                 "timeout suyo es\n  un movimiento por defecto que suele matarlos: eso "
                 "mueve el puesto mas que\n  cualquier heuristica. Estas dos no se comparan.")
 
-    sa, sb = nuestro_slug(ca), nuestro_slug(cb)
+    if args.slug:
+        partes = args.slug.split(",")
+        ea, eb = (partes + partes)[:2]
+    else:
+        ea = eb = None
+    sa, sb = nuestro_slug(ca, ea), nuestro_slug(cb, eb)
     ha = ca.execute("SELECT DISTINCT hash_config FROM participantes WHERE slug = ?",
                     (sa,)).fetchone()
     hb = cb.execute("SELECT DISTINCT hash_config FROM participantes WHERE slug = ?",
@@ -287,13 +314,19 @@ def main():
     print(f"\n-- salud del campo (peticiones que los RIVALES no contestaron) --")
     for etiqueta, s_ in (("A", salud_a), ("B", salud_b)):
         if not s_["medido"]:
-            print(f"  {etiqueta}  SIN MEDIR ({s_['motivo']}). "
-                  "Corre `tr.py reanaliza --out <corrida>`.")
+            arreglo = ("" if "arena" in s_["motivo"]
+                       else " Corre `tr.py reanaliza --out <corrida>`.")
+            print(f"  {etiqueta}  SIN MEDIR ({s_['motivo']}).{arreglo}")
         else:
             print(f"  {etiqueta}  {s_['fallos_por_partida']}/partida   "
                   f"(timeout {s_['timeouts']}, conexion {s_['conexion']}, "
                   f"otros {s_['otros']})")
-    if not (salud_a["medido"] and salud_b["medido"]):
+    es_arena = all("arena" in x["motivo"] for x in (salud_a, salud_b) if not x["medido"])
+    if es_arena and not (salud_a["medido"] or salud_b["medido"]):
+        # En la arena no hay peticiones que perder, asi que el aviso no aplica: repetirlo
+        # entrenaria a ignorarlo el dia que SI aplique.
+        print("  (en la arena no hay campo que averiar: no hay peticiones)")
+    elif not (salud_a["medido"] and salud_b["medido"]):
         print("  AVISO sin la salud de las dos, el veredicto de arriba va sin su contexto:"
               "\n        un campo averiado regala puestos y no se sabe si lo estaba.")
     fa = salud_a["fallos_por_partida"] or 0.0

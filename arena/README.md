@@ -33,5 +33,21 @@ transporte: ver docs/performance.md#p-08.
 
 ## Estado
 
-Implementada: `arena::play()` juega una partida entera y es reproducible. Falta el driver
-de A/B por bloques y el paralelismo entre partidas.
+Implementada y usable:
+
+- `arena::play()` juega una partida entera y es reproducible.
+- `bin/arena_torneo` juega las dos ramas de un A/B en la misma corrida, en paralelo. Las
+  partidas se escriben por indice, asi que la salida es identica con 1 hilo y con 16.
+- `training-room/arena_ab.py` las vuelca en dos bases con el esquema de `tr.py` y el
+  veredicto lo da `compara.py`, que sigue siendo la unica ruta estadistica del repositorio.
+- `bin/sonda_arena --calibrar` dice cuantos nodos caben en `time.max_compute_ms` en ESTA
+  maquina, que es lo primero que hay que correr antes de montar un A/B.
+
+```bash
+./build/release/bin/sonda_arena --calibrar
+python3 training-room/arena_ab.py --a <config> --b <config> --campo snake/config/default.json \
+    --bloques 15 --nodos <el que diga --calibrar> --out docs/results/arena-<nombre>
+```
+
+Falta el loop de la fase 4 (ver docs/decisions/ADR-0032-arena-en-el-ambito-del-loop.md#d-0322)
+y la DoD: test A/A, regresion inyectada y verificacion del pareado.

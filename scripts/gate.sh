@@ -133,7 +133,9 @@ run_tests_debug() {
 # ---------------------------------------------------------------- check 4
 check_format() {
     local files
-    files="$(find engine snake tests bench -name '*.cpp' -o -name '*.hpp' 2>/dev/null | sort)"
+    # `arena` entro en la fase 4 y estaba fuera de este check: un modulo entero sin
+    # formatear ni revisar. `tools/` sigue fuera a proposito y esta anotado en STATE.md.
+    files="$(find engine snake arena tests bench -name '*.cpp' -o -name '*.hpp' 2>/dev/null | sort)"
     [[ -z "$files" ]] && {
         echo "FAIL no hay fuentes que formatear"
         return 1
@@ -152,7 +154,7 @@ check_tidy() {
     fi
 
     local files
-    files="$(find engine/src snake/src -name '*.cpp' | sort)"
+    files="$(find engine/src snake/src arena/src -name '*.cpp' | sort)"
     # shellcheck disable=SC2086
     clang-tidy-18 -p build/release --warnings-as-errors='*' $files || status=1
 

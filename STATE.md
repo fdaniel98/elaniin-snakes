@@ -59,22 +59,23 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
       0.388 del codigo, y 8 timeouts en 23 831 movimientos. Importa al recalibrar el
       margen de red de la fase 7 (ver docs/performance.md#p-07).
 - [ ] El servidor es agotable con 64 conexiones a medio abrir: una peticion legitima
-      espera hasta el read timeout de 2 s. Acotado, no eliminado; en la fase 7 hay un
-      balanceador delante.
+      espera al read timeout de 2 s. Acotado; en la fase 7 hay un balanceador delante.
 - [ ] Dos convenciones propias que la fuente no define: el desempate promediado de
       `placements()` y la secuencia de lados del shrink
       (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091). La arena no reproduce una
-      partida oficial casilla por casilla.
+      partida oficial casilla a casilla.
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
 - [ ] Las causas de muerte de los RIVALES son ambiguas (349 de 600): no tenemos su
       cerebro. Las nuestras si.
-- [ ] `royale_hazards()` ya tiene llamante, pero su precondicion -cadencia >= 1- sigue sin
-      comprobarla nadie: con 0 devuelve un tablero sin hazards.
+- [ ] `royale_hazards()` ya tiene llamante, pero nadie comprueba su precondicion
+      -cadencia >= 1-: con 0 devuelve un tablero sin hazards.
 - [ ] `budget_nodes` sin calibrar contra el presupuesto de despliegue: hoy un numero de
       nodos no se traduce a ms (ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0302).
-- [ ] La arena corre en UN hilo y las partidas son independientes: el paralelismo es el
-      factor grande de throughput sin usar (ver docs/performance.md#p-08).
+- [ ] `tools/` sigue fuera de los checks 4 y 5
+      (ver docs/decisions/ADR-0035-ambito-de-los-checks-4-y-5.md#d-0352).
+- [ ] `budget_nodes` calibrado solo en el contenedor (20 774 = 200 ms): hay que correr
+      `sonda_arena --calibrar` en la maquina de referencia antes de su primer A/B.
 
 ## Desviaciones del arbol de archivos
 
