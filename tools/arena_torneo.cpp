@@ -4,6 +4,9 @@
 ///     arena_torneo --a <config> [--b <config>] --campo <config> --bloques N
 ///                  [--semilla-base S] [--hilos T] [--nodos N]
 ///
+/// `--hilos` por defecto deja DOS nucleos libres: estas corridas duran horas y la maquina
+/// tiene que poder usarse mientras tanto.
+///
 /// Sin `--b` solo juega la rama `a`. Es lo que usa el afinado: el puesto medio de una
 /// configuracion IDENTICA al campo es 2.5 exacto por construccion
 /// (ver docs/experimentos.md#s-tercer-rival-r), asi que la referencia no hay que jugarla,
@@ -97,9 +100,13 @@ int main(int argc, char** argv) {
     const auto semilla_base =
         static_cast<std::uint64_t>(std::atoll(arg(argc, argv, "--semilla-base", "1").c_str()));
     const int nodos = std::atoi(arg(argc, argv, "--nodos", "2000").c_str());
-    int hilos = std::atoi(
-        arg(argc, argv, "--hilos", std::to_string(std::thread::hardware_concurrency()).c_str())
-            .c_str());
+    // Por defecto se dejan DOS nucleos libres. Una corrida de afinado dura horas, y una
+    // maquina con todos los nucleos al 100% no se puede usar para nada mientras tanto.
+    // Es ademas la misma convencion que el orquestador aplica a los contenedores del zoo
+    // (nucleos fisicos - 2). Con `--hilos N` se pide un numero exacto.
+    const unsigned nucleos = std::thread::hardware_concurrency();
+    const int por_defecto = nucleos > 3 ? static_cast<int>(nucleos) - 2 : 1;
+    int hilos = std::atoi(arg(argc, argv, "--hilos", std::to_string(por_defecto).c_str()).c_str());
     if (hilos < 1) {
         hilos = 1;
     }

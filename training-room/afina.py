@@ -120,7 +120,9 @@ def main():
     ap.add_argument("--iteraciones", type=int, default=60)
     ap.add_argument("--bloques", type=int, default=8, help="bloques por evaluacion")
     ap.add_argument("--nodos", type=int, required=True)
-    ap.add_argument("--hilos", type=int, default=0)
+    ap.add_argument("--hilos", type=int, default=0,
+                    help="0 = el default de arena_torneo, que deja dos nucleos libres. "
+                         "Bajalo mas si vas a usar la maquina: la corrida dura horas.")
     ap.add_argument("--semilla-base", type=int, default=1000)
     ap.add_argument("--bloques-control", type=int, default=24,
                     help="bloques de la evaluacion de control, en semillas nunca usadas")

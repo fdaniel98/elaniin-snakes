@@ -38,6 +38,9 @@ Implementada y usable:
 - `arena::play()` juega una partida entera y es reproducible.
 - `bin/arena_torneo` juega las dos ramas de un A/B en la misma corrida, en paralelo. Las
   partidas se escriben por indice, asi que la salida es identica con 1 hilo y con 16.
+  Por defecto deja **dos nucleos libres**: estas corridas duran horas y la maquina tiene
+  que poder usarse. `--hilos N` pide un numero exacto, y `renice -n 19` sobre una corrida
+  ya lanzada la manda al fondo de la cola sin matarla.
 - `training-room/arena_ab.py` las vuelca en dos bases con el esquema de `tr.py` y el
   veredicto lo da `compara.py`, que sigue siendo la unica ruta estadistica del repositorio.
 - `bin/sonda_arena --calibrar` dice cuantos nodos caben en `time.max_compute_ms` en ESTA

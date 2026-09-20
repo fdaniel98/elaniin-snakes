@@ -102,7 +102,8 @@ def main():
                     help="presupuesto por movimiento; obligatorio y sin default a "
                          "proposito: un numero de nodos no es comparable entre commits "
                          "que cambian el coste del nodo (ADR-0030)")
-    ap.add_argument("--hilos", type=int, default=0, help="0 = todos los nucleos")
+    ap.add_argument("--hilos", type=int, default=0,
+                    help="0 = el default de arena_torneo, que deja dos nucleos libres")
     ap.add_argument("--out", required=True)
     ap.add_argument("--binario", default=str(RAIZ / "build/release/bin/arena_torneo"))
     args = ap.parse_args()
@@ -175,7 +176,8 @@ def main():
         # `paralelo` es uno de los campos que invalidan una comparacion en compara.py. Aqui
         # las dos ramas salen de la MISMA corrida, asi que siempre coincide; se guarda de
         # todas formas para que el reporte diga con cuantos hilos se jugo.
-        "topologia": {"modo": "arena", "paralelo": args.hilos or os.cpu_count(),
+        "topologia": {"modo": "arena",
+                      "paralelo": args.hilos or max(1, (os.cpu_count() or 3) - 2),
                       "nucleos": os.cpu_count(), "hilos_por_nucleo": 1,
                       "nodos": args.nodos},
         "rng_version": "xoshiro256++/repo",
