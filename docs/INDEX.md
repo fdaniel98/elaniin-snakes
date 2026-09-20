@@ -3,7 +3,7 @@ title: Mapa de lectura y presupuesto de bytes
 read_when: "al empezar cualquier sesion, para decidir que NO leer"
 authority: canonical
 last_verified: 2026-09-18
-size_bytes: 3379
+size_bytes: 3378
 ---
 
 ## I-01 Que leer segun la tarea {#i-01}
@@ -23,7 +23,7 @@ context pack de la tarea. Los packs listan los archivos de codigo que hace falta
 | `docs/strategy.md` | al proponer una version nueva del cerebro | speculative |
 | `docs/SOURCES.md` | al afirmar algo sobre una herramienta externa | canonical |
 | `docs/decisions/` | al reabrir una decision ya tomada | canonical |
-| `docs/context-packs/` | al empezar una tarea de uno de los cinco tipos | derived |
+| `docs/context-packs/` | al empezar una tarea de uno de los seis tipos | derived |
 
 ## I-02 Presupuesto de bytes {#i-02}
 

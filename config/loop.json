@@ -5,7 +5,8 @@
     "deliverable_scope": [
       "engine/",
       "snake/",
-      "training-room/"
+      "training-room/",
+      "arena/"
     ],
     "min_iterations": 3,
     "max_iterations": 8,
@@ -106,6 +107,25 @@
       "sin declararla aqui hace fallar el check 9 (ver ADR-0019). El motivo no puede",
       "estar vacio: un umbral que no aplica 'porque no' es un umbral que se ajusto."
     ],
+    "arena": {
+      "robustness": {
+        "no_aplica": {
+          "failsafe_levels_covered": "los 4 escalones del fail-safe son del cerebro (ver docs/rules.md#r-03); la arena no decide movimientos, se los pide a decide()",
+          "illegal_moves": "la arena no elige direcciones: pasa las que le da el cerebro a apply(), que acepta cualquiera",
+          "deadline_violations": "aqui el presupuesto es por nodos y el deadline es inalcanzable a proposito (ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0301)"
+        }
+      },
+      "perf": {
+        "no_aplica": {
+          "p99_move_ms": "la arena no responde a /move; su rendimiento son partidas por minuto (ver docs/performance.md#p-08)",
+          "max_move_ms": "misma razon que p99_move_ms",
+          "timeouts": "no hay peticiones que expiren: sin HTTP y sin reloj no existe el timeout"
+        },
+        "metricas_extra": [
+          "partidas_por_minuto"
+        ]
+      }
+    },
     "training-room": {
       "robustness": {
         "no_aplica": {

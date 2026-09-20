@@ -2,10 +2,9 @@
 
 ## Estado actual
 
-Fase: 3 (Training Room MVP) — COMPLETA
-Gate: PASS 14/14 en la maquina de referencia (2026-09-19, 2f06c27)
-El 11 (lint-zoo) y el 12 (tests del orquestador) son nuevos de esta fase, con 5 venenos.
-Loop: `training-room/` → CLOSED en `.loop/3/` (4 iteraciones + auditoria, 5 hallazgos reparados)
+Fase: 4 (Arena in-process + A/B) — EN CURSO. La 3 quedo COMPLETA.
+Gate: PASS 14/14 en la de referencia (2026-09-19, 2f06c27); la fase 4 aun sin gate completo.
+Loop: fase 3 CLOSED en `.loop/3/`; la 4 abre cuando este el driver de A/B.
 Snake activa: **v5** (busqueda + territorio en hojas + control de longitud). Gano su A/B
 contra v4 por -0.6917 y contra v0 por -1.0583: 26 primeros de 60 y ningun cuarto
 (ver docs/experimentos.md#s-longitud-r). v0 sigue entero en `v0-baseline.json`. v6 se
@@ -31,7 +30,7 @@ La regenera `./scripts/sync_state.sh` desde su dueño, `docs/performance.md`.
 <!-- BEGIN:loop-deliverables -->
 | slug | archivo | clases obligatorias |
 |---|---|---|
-| training-room | training-room/ | correctness, robustness, perf, context |
+| arena | arena/ | correctness, robustness, perf, context |
 
 El zoo queda fuera a proposito
 (ver docs/decisions/ADR-0017-el-instrumento-lleva-loop.md#d-0161). Que entra aqui lo
@@ -40,48 +39,43 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Bloqueado / pendiente de decision humana
 
+- [ ] **Desplegar v5:** solo falta el ID del proyecto GCP. Sin eso no hay RTT real y los
+      margenes de red siguen siendo un default sin medir.
 - [ ] **El fixture `02-spawn-turno2-cola-apilada.json` afirma algo falso:** prohibe `down`
       diciendo que bajar es mortal, y no lo es -el rival apunta hacia abajo y no puede
       subir por la columna 5-. La busqueda lo ve y baja. Decidir si se corrige.
-
 - [ ] **Cuarta snake del campo:** `TheApX/battlesnake-hungry` (MIT, C++). Aprobar un
       repositorio es confirmacion humana (ver zoo/README.md); sin ella `gauntlet-v1` se
       queda con tres snakes del mismo motor y mide menos de lo que parece.
-
-- [ ] **Linea base de la fase 1 en la maquina de referencia:** `./scripts/bench.sh` en
-      WSL2; lo de ver docs/performance.md#p-06 es de otra maquina.
-
-## Decisiones humanas
-
-Cada una con su ADR en `docs/decisions/`, que es donde vive el contenido.
+- [ ] **Lineas base en la de referencia:** `./scripts/bench.sh` y `sonda_arena` en WSL2;
+      ver docs/performance.md#p-06 y ver docs/performance.md#p-08 son de otra maquina.
 
 ## Hallazgos abiertos del loop
 
-- [ ] Los tests de reloj de 5 ms no son deterministas en la maquina de referencia: con la
-      maquina cargada dieron 9 ms en el primer fixture y 2 violaciones de 10 000, y con
-      ella descargada pasan incluso sin calentar. El calentamiento les devuelve margen
-      pero no los hace deterministas (ver
-      docs/decisions/ADR-0021-arranque-en-frio.md#adr-0021-abierto).
-
-- [ ] El transporte se come casi todo el presupuesto: el maximo del arbitro son 169 ms y
-      el de nuestro codigo 0.388. En el torneo eso costo 8 timeouts en 23 831 movimientos.
-      Importa al recalibrar el margen de red de la fase 7 (ver docs/performance.md#p-07).
-
-- [ ] El servidor sigue siendo agotable con 64 conexiones a medio abrir (los hilos del
-      pool): una peticion legitima espera hasta el read timeout de 2 s. Acotado, no
-      eliminado; en la fase 7 hay un balanceador delante.
-
+- [ ] Los tests de reloj de 5 ms no son deterministas en la maquina de referencia: cargada
+      dio 9 ms en el primer fixture y 2 violaciones de 10 000; descargada pasan sin
+      calentar (ver docs/decisions/ADR-0021-arranque-en-frio.md#adr-0021-abierto).
+- [ ] El transporte se come casi todo el presupuesto: maximo del arbitro 169 ms contra
+      0.388 del codigo, y 8 timeouts en 23 831 movimientos. Importa al recalibrar el
+      margen de red de la fase 7 (ver docs/performance.md#p-07).
+- [ ] El servidor es agotable con 64 conexiones a medio abrir: una peticion legitima
+      espera hasta el read timeout de 2 s. Acotado, no eliminado; en la fase 7 hay un
+      balanceador delante.
 - [ ] Dos convenciones propias que la fuente no define: el desempate promediado de
       `placements()` y la secuencia de lados del shrink
-      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091). La forma del hazard si esta
-      verificada; la arena no reproducira una partida oficial casilla por casilla.
+      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091). La arena no reproduce una
+      partida oficial casilla por casilla.
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
-- [ ] Las causas de muerte de los RIVALES son ambiguas en su mayoria (349 de 600) y
-      seguiran siendolo: no tenemos su cerebro. Las nuestras si, 193 de 194.
-- [ ] El repositorio sigue sin remoto: toda la historia vive en un solo disco.
-- [ ] `royale_hazards()` no tiene llamante todavia y su precondicion -cadencia >= 1- no
-      la comprueba nadie: la arena de la fase 4 tendra que validarla antes de llamar.
+- [ ] Las causas de muerte de los RIVALES son ambiguas (349 de 600): no tenemos su
+      cerebro. Las nuestras si, 193 de 194.
+- [ ] El repositorio sigue sin remoto: la historia vive en un solo disco.
+- [ ] `royale_hazards()` ya tiene llamante, pero su precondicion -cadencia >= 1- sigue sin
+      comprobarla nadie: con 0 devuelve un tablero sin hazards.
+- [ ] `budget_nodes` sin calibrar contra el presupuesto de despliegue: hoy un numero de
+      nodos no se traduce a ms (ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0302).
+- [ ] La arena corre en UN hilo y las partidas son independientes: el paralelismo es el
+      factor grande de throughput sin usar (ver docs/performance.md#p-08).
 
 ## Desviaciones del arbol de archivos
 
@@ -89,5 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Desplegar v5: falta el ID del proyecto GCP y nada mas. v6 ya se midio y NO entra
-(ver docs/experimentos.md#s-supervivencia-r): la snake que se despliega es v5.
+Driver de A/B en arena por bloques (semilla x rotacion de asientos) reutilizando
+`training-room/compara.py`, y paralelismo entre partidas. Despues, check 13 del gate con
+sus venenos y el loop de la fase.
