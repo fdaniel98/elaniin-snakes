@@ -9,6 +9,9 @@ Snake activa: **v5** (busqueda + territorio en hojas + control de longitud). Gan
 contra v4 por -0.6917 y contra v0 por -1.0583: 26 primeros de 60 y ningun cuarto
 (ver docs/experimentos.md#s-longitud-r). v0 sigue entero en `v0-baseline.json`. v6 se
 midio y no entra (ver docs/experimentos.md#s-supervivencia-r): apagada en `survival.version`.
+Desplegada en Cloud Run `us-east1` y registrada. Partida real: 0 timeouts, maximo 207 ms de
+500 (ver docs/performance.md#p-09). Margenes ya medidos, no inventados
+(ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376).
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -39,8 +42,6 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Bloqueado / pendiente de decision humana
 
-- [ ] **Desplegar v5:** solo falta el ID del proyecto GCP. Sin eso no hay RTT real y los
-      margenes de red siguen siendo un default sin medir.
 - [ ] **El fixture `02-spawn-turno2-cola-apilada.json` afirma algo falso:** prohibe `down`
       diciendo que bajar es mortal, y no lo es -el rival apunta hacia abajo y no puede
       subir por la columna 5-. La busqueda lo ve y baja. Decidir si se corrige.
@@ -81,6 +82,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr `training-room/afina.py`: SPSA sobre los ~20 pesos nunca afinados. La propuesta se
-verifica con un A/B de arena de campo distinto a las dos ramas y, si gana, con el gauntlet.
-Despues, el loop de la fase 4.
+Redesplegar con `network_margin_ms` 80 y comprobar que `GET /` dice
+`v5-longitud-150ms-m80`; despues, una partida real y `scripts/latencias-jsonl.py`.
