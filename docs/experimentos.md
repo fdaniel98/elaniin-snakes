@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 22766
+size_bytes: 24551
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -485,3 +485,36 @@ Consecuencias:
   un minimizador.
 - `compara.py` ahora marca **RAMAS IDENTICAS** cuando el puesto de cada asiento coincide en
   todos los bloques, para que un termino muerto no vuelva a leerse como ruido.
+
+### S-DUELO-R Resultado: NO CONCLUYENTE, y el tamaño del efecto ya esta acotado {#s-duelo-r}
+
+Mismo protocolo que ver docs/experimentos.md#s-cobrar-r: v5 contra v10 (`duel.version` 1),
+campo `v4-hojas`, 15 bloques, 14 821 nodos, maquina de referencia.
+
+| | v5 | v10 |
+|---|---|---|
+| puesto medio | 1.742 | 1.725 |
+| turnos vividos | 200.2 | 193.7 |
+| sobrevivio (gano) | 32 | 33 |
+| hambre / hazard | 9 / 10 | 6 / 12 |
+
+Diferencia pareada **-0.0167**, IC95 **[-0.161, +0.127]**, delta util 0.1: **NO
+CONCLUYENTE**. v10 **no entra**; `default.json` sigue en v5 y `duel.version` en 0.
+
+Por bloque: 5 mejores, 4 peores, 6 iguales. Que haya bloques identicos cuadra con la sonda previa: v10 cambia el movimiento en el
+3.9% de las posiciones de duelo, asi que muchas partidas no llegan a divergir.
+
+**Lo que si dice, y vale:** el IC95 acota el efecto. Si el modo duelo ayuda, ayuda **como
+mucho 0.16 de puesto**, y puede que empeore 0.13. No es la palanca grande que sugeria el
+analisis de ver docs/experimentos.md#s-duelo. Y en las causas se repite el patron de v6
+(ver docs/experimentos.md#s-supervivencia-r): menos hambre, mas hazard, puesto igual. La
+muerte se redistribuye; la posicion no cambia.
+
+**Lo que no dice:** el analisis del duelo salio de partidas contra el gauntlet; esta
+medicion es contra `v4-hojas` en la arena. El duelo contra un v4 no tiene por que parecerse
+al duelo contra las snakes del zoo. Y 15 bloques no resuelven efectos por debajo de ~0.15:
+para ver 0.05 harian falta del orden de cien bloques.
+
+**Balance de la serie contra v5:** v6, v7, v8, v9 y v10, cinco candidatas, ninguna entra.
+v9 era un termino muerto; las otras cuatro tienen efectos compatibles con cero y acotados
+por debajo de ~0.2. Lo que se mueve a este tamaño de muestra ya se movio en v5.
