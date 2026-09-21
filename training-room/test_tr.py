@@ -618,6 +618,20 @@ comprueba(json.loads(_compara(a3, b3).stdout)["veredicto"] == "NO CONCLUYENTE",
 comprueba(json.loads(_compara(a3, b3, ("--delta", "0.01")).stdout)["veredicto"] == "MEJORA",
           "y con el delta bajado a sabiendas, si")
 
+# Ramas que juegan las MISMAS partidas: diferencia 0 en todos los bloques. Paso de verdad
+# con v9 (head.prefer_shorter): el termino no llegaba a ninguna decision. No es ruido y
+# tiene que avisarse como tal. ver docs/experimentos.md#s-cobrar-r
+a7 = _corrida("a", "v0-baseline", {1: [1, 2, 3, 2], 2: [2, 2, 3, 1], 3: [3, 1, 2, 2]},
+              SERIE, "hA")
+b7 = _corrida("b", "cuellos", {1: [1, 2, 3, 2], 2: [2, 2, 3, 1], 3: [3, 1, 2, 2]},
+              SERIE, "hB")
+d7 = json.loads(_compara(a7, b7).stdout)
+comprueba(d7["ramas_identicas"] is True, "dos ramas con las mismas partidas se marcan identicas")
+comprueba("RAMAS IDENTICAS" in _compara_texto(a7, b7), "y el texto lo avisa, no solo el JSON")
+comprueba(d["ramas_identicas"] is False, "una mejora real no se marca identica")
+comprueba(json.loads(_compara(a2, b2).stdout)["ramas_identicas"] is False,
+          "ni el ruido simetrico, aunque su media sea cero")
+
 # Los cuatro casos en que se tiene que NEGAR.
 comprueba(_compara(a1, _corrida("b", "cuellos", {1: [2] * 4}, PAR2, "hB")).returncode == 2,
           "se niega a comparar topologias distintas")

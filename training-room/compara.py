@@ -264,6 +264,13 @@ def main():
         veredicto = "EMPEORA"
     else:
         veredicto = "NO CONCLUYENTE"
+    # El MISMO puesto en cada asiento de cada bloque no es «no se distingue»: es que las
+    # dos ramas jugaron las mismas partidas. (Diferencia 0 por bloque no basta: 2,3 contra
+    # 3,2 tambien da 0 y son partidas distintas.) Con semillas comunes y presupuesto por nodos
+    # eso solo pasa si el cambio de B no alcanzo ninguna decision -un termino inerte-, y
+    # merece un aviso propio en vez de pasar por ruido. ver docs/experimentos.md#s-cobrar-r
+    ramas_identicas = (all(ba[f[0]] == bb[f[0]] for f in filas)
+                       and turnos_a == turnos_b and causas_a == causas_b)
 
     salida = {
         "a": str(da.parent.name), "b": str(db_.parent.name),
@@ -279,6 +286,7 @@ def main():
         "t": round(t, 3) if math.isfinite(t) else None, "gl": gl,
         "delta_declarado": args.delta,
         "veredicto": veredicto,
+        "ramas_identicas": ramas_identicas,
         "salud_del_campo": {"a": salud_a, "b": salud_b},
         "descriptivo_sin_veredicto": {
             "turnos_vividos_a": round(media(turnos_a), 1),
@@ -311,6 +319,11 @@ def main():
     if veredicto == "NO CONCLUYENTE":
         print("  El intervalo cruza el cero o el efecto no llega al delta declarado. Eso")
         print("  NO dice que B sea igual que A: dice que con estos bloques no se distingue.")
+    if ramas_identicas:
+        print("\n  AVISO: RAMAS IDENTICAS. Diferencia 0 en todos los bloques y mismas causas")
+        print("  y turnos: A y B jugaron las MISMAS partidas. El cambio de B no llego a")
+        print("  ninguna decision. Esto no es ruido: es un termino inerte, y mas bloques no")
+        print("  lo van a mover.")
     print(f"\n-- salud del campo (peticiones que los RIVALES no contestaron) --")
     for etiqueta, s_ in (("A", salud_a), ("B", salud_b)):
         if not s_["medido"]:

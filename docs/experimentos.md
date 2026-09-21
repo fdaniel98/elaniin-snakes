@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 20595
+size_bytes: 22766
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -445,3 +445,43 @@ significar que v5 sea dificil de superar, sino que llevamos seis experimentos af
 tramo ruidoso mientras el que decide sigue sin tocar.
 
 Hipotesis derivadas: ver docs/strategy.md#s-cobrar y ver docs/strategy.md#s-duelo
+
+### S-COBRAR-R Resultado: el termino esta muerto, no es ruido {#s-cobrar-r}
+
+A/B de arena en la maquina de referencia: v5 contra v9 (`head.prefer_shorter` 8 -> 40),
+campo `v4-hojas`, 15 bloques, 14 821 nodos (los 150 ms del despliegue alli).
+
+| | v5 | v9 |
+|---|---|---|
+| puesto medio | 1.742 | 1.742 |
+| diferencia por bloque | | **0.000 en los 15** |
+| turnos vividos | 200.2 | 200.2 |
+| causas | identicas | identicas |
+
+`compara.py` dijo NO CONCLUYENTE con IC95 [0, 0], y eso era enganoso: **las dos ramas
+jugaron las mismas 60 partidas**, movimiento a movimiento. Con semillas comunes y
+presupuesto por nodos, eso solo pasa si el cambio no alcanzo ni una decision.
+
+Lo confirma una sonda sobre 612 posiciones de self-play (1 500 nodos): con
+`prefer_shorter` a 8, a 40 y a **400**, la **puntuacion de la raiz** es identica en las 612,
+incluidas las 41 (6.7%) con un rival mas corto a distancia 3 o menos.
+
+**Por que, y es lo que hay que recordar:** el termino premia terminar con la cabeza pegada
+a la de un rival mas corto. En la busqueda paranoica ese rival es un **minimizador**:
+entre sus respuestas elige la que nos da menos puntuacion, y apartarse siempre es una de
+ellas. El premio solo sobreviviria en una hoja donde el rival no tenga a donde ir, y eso
+casi no existe. El termino simetrico, `avoid_equal_or_longer`, si esta vivo -al rival le
+conviene acercarse- asi que la asimetria de 80 contra 8 no la pone el peso: **la pone el
+modelo paranoico**, que por construccion nunca deja cobrar la zona de cabeza.
+
+Consecuencias:
+
+- **v9 no entra**, y mas bloques no la moverian.
+- La mitad `duel.prefer_shorter` de v10 es igual de inerte; lo que puede estar vivo en v10
+  es el **gradiente de presion**, que puntua la distancia y no solo el contacto: el rival
+  puede alejarse, pero no a cualquier distancia. El test del duelo ya encontro posiciones
+  donde la evaluacion cambia.
+- Cobrar la ventaja no es premiar el contacto, es **quitarle sitio** al rival: eso si lo ve
+  un minimizador.
+- `compara.py` ahora marca **RAMAS IDENTICAS** cuando el puesto de cada asiento coincide en
+  todos los bloques, para que un termino muerto no vuelva a leerse como ruido.
