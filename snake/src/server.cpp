@@ -160,8 +160,8 @@ int main() {
 
     server.Get("/", [&version](const httplib::Request&, httplib::Response& res) {
         const json info{{"apiversion", "1"},
-                        {"author", "battlesnake-royale"},
-                        {"color", "#1b5e20"},
+                        {"author", "Daniel L. Estevez"},
+                        {"color", "#98eb34"},
                         {"head", "beluga"},
                         {"tail", "bolt"},
                         {"version", version}};
