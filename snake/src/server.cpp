@@ -162,8 +162,8 @@ int main() {
         const json info{{"apiversion", "1"},
                         {"author", "Daniel L. Estevez"},
                         {"color", "#98eb34"},
-                        {"head", "beluga"},
-                        {"tail", "bolt"},
+                        {"head", "nr-rocket"},
+                        {"tail", "nr-booster"},
                         {"version", version}};
         res.set_content(info.dump(), "application/json");
     });
