@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 22209
+size_bytes: 23530
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -464,3 +464,28 @@ lo trata como certeza y prefiere una muerte segura en 4 turnos a una apuesta con
 casillas por delante.
 
 Hipotesis derivada: ver docs/strategy.md#s-desesperacion
+
+### S-DESESPERACION-R Resultado en 1v1: cambia COMO se muere, no QUIEN gana {#s-desesperacion-r}
+
+Arena, 1v1 estandar, v11 contra v5 (campo v5, asi que la rama A sale 1.500 exacto), 60
+bloques, 14 821 nodos, maquina de referencia.
+
+| | v5 | v11 |
+|---|---|---|
+| puesto medio | 1.500 | 1.492 |
+| bloques distintos | | 3 de 60 (2 mejores, 1 peor) |
+| muertes: cuerpo propio / cabezazo | **42** / 16 | 16 / **42** |
+
+Diferencia pareada **-0.0083**, IC95 **[-0.037, +0.020]**: NO CONCLUYENTE, y con un
+intervalo tan estrecho que acota el efecto a casi cero. v11 **no entra**.
+
+Lo que si dice, y es util: las muertes «contra si misma» se convierten en cabezazos. Contra
+un rival que busca -v5-, la partida que la busqueda da por perdida suele estarlo de verdad;
+salir del bolsillo solo cambia la forma de morir. Mismo patron que v6 y v10: la causa de
+muerte es un sintoma.
+
+**Donde se decide entonces**, con una sonda de 8 duelos v5 contra v5: el perdedor se rinde
+siempre **sin ir por delante en longitud** (diferencia al rendirse: -5, -1 x6, 0 x2) y a
+los 100 turnos ya iba por detras en 6 de 8. Coincide con la partida real, donde ibamos 5
+por detras. En un duelo, ser mas corto regala el cabezazo, y el supuesto paranoico lo
+convierte en derrota segura. La palanca es llegar al final por delante, no la tactica final.
