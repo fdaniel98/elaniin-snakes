@@ -10,6 +10,7 @@
 /// ver docs/rules-parametros.md#r-20
 
 #include <string>
+#include <vector>
 
 #include <engine/ruleset.hpp>
 #include <engine/state.hpp>
@@ -26,6 +27,13 @@ namespace snake {
 /// Carga `snake/config/default.json` (o el que indique `path`). Ante cualquier error
 /// devuelve los defaults del struct, que son los mismos que trae el JSON.
 [[nodiscard]] Params load_params(const std::string& path);
+
+/// Claves de un config que este binario NO sabe leer, como "grupo.clave". Una clave
+/// desconocida se ignora al cargar, asi que un binario viejo con un config nuevo juega
+/// otra snake sin decir nada: un A/B asi mide v5 contra v5 y parece un resultado. La arena
+/// aborta si esta lista no esta vacia y el servidor avisa con WARN.
+/// ver docs/experimentos-instrumento.md#s-territorio-duelo-r
+[[nodiscard]] std::vector<std::string> unknown_keys(const std::string& path);
 
 /// Parametros del ruleset desde el objeto `game` del request.
 [[nodiscard]] engine::Ruleset parse_ruleset(const nlohmann::json& game);

@@ -3,7 +3,10 @@
 /// verificada contra el codigo del arbitro; `settings` NO es plano.
 /// ver docs/rules-parametros.md#r-20
 
+#include <algorithm>
 #include <fstream>
+#include <utility>
+#include <vector>
 
 #include <snake/config_loader.hpp>
 
@@ -213,6 +216,74 @@ Params parse_params(const json& doc) {
         read_double(survival, "panic_weight", params.survival.panic_weight);
 
     return params;
+}
+
+std::vector<std::string> unknown_keys(const std::string& path) {
+    // Una sola lista de lo que el cargador lee: si alguien añade un campo a parse_params y
+    // no aqui, el test 1:1 de test_ruleset_parse.cpp lo caza por el otro lado.
+    static const std::vector<std::pair<std::string, std::vector<std::string>>> conocidas = {
+        {"time", {"network_margin_ms", "safety_margin_ms", "max_compute_ms"}},
+        {"food", {"seek_below", "seek_below_in_hazard", "free_food_distance", "weight"}},
+        {"space",
+         {"min_space_ratio",
+          "weight",
+          "tail_escape",
+          "worst_case_weight",
+          "worst_case_max_cuellos"}},
+        {"head", {"avoid_equal_or_longer", "prefer_shorter"}},
+        {"hazard", {"weight", "low_health_multiplier"}},
+        {"territory", {"version", "weight", "contested_weight", "hazard_value_pct"}},
+        {"search",
+         {"version",
+          "max_depth",
+          "max_rivals",
+          "death_value",
+          "win_value",
+          "survival_bonus",
+          "reserve_us",
+          "budget_nodes",
+          "despair_version"}},
+        {"duel",
+         {"version",
+          "prefer_shorter",
+          "pressure_weight",
+          "length_version",
+          "length_weight",
+          "hunt_weight",
+          "territory_version",
+          "territory_scale"}},
+        {"length", {"version", "advantage_weight", "target_lead", "hunt_weight"}},
+        {"survival",
+         {"version", "safe_turns", "weight", "seek_below_turns", "critical_turns", "panic_weight"}},
+    };
+    std::vector<std::string> fuera;
+    std::ifstream file(path);
+    const json doc = json::parse(file, nullptr, false);
+    if (doc.is_discarded() || !doc.is_object()) {
+        return fuera;
+    }
+    for (const auto& [grupo, valor] : doc.items()) {
+        if (grupo.rfind('_', 0) == 0) {
+            continue; // comentarios y metadatos: _comment, _version
+        }
+        const auto g = std::find_if(conocidas.begin(), conocidas.end(), [&](const auto& par) {
+            return par.first == grupo;
+        });
+        if (g == conocidas.end()) {
+            fuera.push_back(grupo);
+            continue;
+        }
+        if (!valor.is_object()) {
+            continue;
+        }
+        for (const auto& [clave, v] : valor.items()) {
+            (void)v;
+            if (std::find(g->second.begin(), g->second.end(), clave) == g->second.end()) {
+                fuera.push_back(grupo + "." + clave);
+            }
+        }
+    }
+    return fuera;
 }
 
 Params load_params(const std::string& path) {

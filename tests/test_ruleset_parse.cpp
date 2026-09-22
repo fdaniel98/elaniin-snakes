@@ -4,6 +4,7 @@
 /// ver docs/rules-parametros.md#r-20
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <string>
 
@@ -213,4 +214,35 @@ TEST_CASE("parse_state: rechaza tableros sin instanciacion", "[ruleset][r-11]") 
     REQUIRE(state.turn == 3);
     REQUIRE(state.snake(0).length == 3);
     REQUIRE(state.snake(0).tail_is_stacked());
+}
+
+TEST_CASE("config: ningun config del repo lleva claves que el binario no lee", "[config][params]") {
+    // Un config con una clave que el cargador ignora juega otra snake sin decirlo. Paso
+    // de verdad: un binario sin `duel.territory_version` midio v5 contra v5 durante una
+    // hora. ver docs/experimentos-instrumento.md#s-territorio-duelo-r
+    int revisados = 0;
+    for (const auto& e : std::filesystem::directory_iterator(BSR_CONFIG_DIR)) {
+        if (e.path().extension() != ".json") {
+            continue;
+        }
+        const auto fuera = snake::unknown_keys(e.path().string());
+        INFO(e.path().filename().string());
+        REQUIRE(fuera.empty());
+        ++revisados;
+    }
+    REQUIRE(revisados >= 10);
+}
+
+TEST_CASE("config: una clave que el binario no conoce se detecta", "[config][params]") {
+    const std::string ruta =
+        (std::filesystem::temp_directory_path() / "bsr-config-clave-rara.json").string();
+    {
+        std::ofstream f(ruta);
+        f << R"({"_comment": "x", "duel": {"version": 0, "clave_del_futuro": 1}, "raro": {}})";
+    }
+    const auto fuera = snake::unknown_keys(ruta);
+    REQUIRE(fuera.size() == 2);
+    REQUIRE(std::find(fuera.begin(), fuera.end(), "duel.clave_del_futuro") != fuera.end());
+    REQUIRE(std::find(fuera.begin(), fuera.end(), "raro") != fuera.end());
+    std::filesystem::remove(ruta);
 }

@@ -133,6 +133,23 @@ int main(int argc, char** argv) {
     }
     const bool hay_b = !ruta_b.empty();
 
+    // Un config con claves que este binario no sabe leer juega OTRA snake sin avisar: se
+    // aborta antes de gastar una hora en medir v5 contra v5.
+    // ver docs/experimentos-instrumento.md#s-territorio-duelo-r
+    for (const std::string& ruta : {ruta_a, ruta_b, ruta_campo}) {
+        if (ruta.empty()) {
+            continue;
+        }
+        const auto fuera = snake::unknown_keys(ruta);
+        if (!fuera.empty()) {
+            std::fprintf(stderr, "ERROR %s tiene claves que este binario no conoce:", ruta.c_str());
+            for (const auto& k : fuera) {
+                std::fprintf(stderr, " %s", k.c_str());
+            }
+            std::fprintf(stderr, "\n      Recompila: cmake --build --preset release\n");
+            return 2;
+        }
+    }
     snake::Params pa = snake::load_params(ruta_a);
     snake::Params pb = hay_b ? snake::load_params(ruta_b) : pa;
     snake::Params pc = snake::load_params(ruta_campo);

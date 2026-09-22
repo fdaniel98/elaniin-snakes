@@ -149,6 +149,11 @@ std::string version_desplegada(const std::string& ruta) {
 }
 
 int main() {
+    for (const auto& clave : snake::unknown_keys("snake/config/default.json")) {
+        // Nunca se aborta en produccion: se avisa.
+        // ver docs/experimentos-instrumento.md#s-territorio-duelo-r
+        std::cerr << "WARN=clave_desconocida " << clave << "\n";
+    }
     const snake::Params params = snake::load_params("snake/config/default.json");
     const std::string version = version_desplegada("snake/config/default.json");
 
