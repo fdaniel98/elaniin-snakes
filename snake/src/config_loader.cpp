@@ -187,6 +187,12 @@ Params parse_params(const json& doc) {
     params.duel.version = read_plain_int(duel, "version", params.duel.version);
     params.duel.prefer_shorter = read_double(duel, "prefer_shorter", params.duel.prefer_shorter);
     params.duel.pressure_weight = read_double(duel, "pressure_weight", params.duel.pressure_weight);
+    params.duel.length_version = read_plain_int(duel, "length_version", params.duel.length_version);
+    params.duel.length_weight = read_double(duel, "length_weight", params.duel.length_weight);
+    params.duel.hunt_weight = read_double(duel, "hunt_weight", params.duel.hunt_weight);
+    params.duel.territory_version =
+        read_plain_int(duel, "territory_version", params.duel.territory_version);
+    params.duel.territory_scale = read_double(duel, "territory_scale", params.duel.territory_scale);
 
     const json& length = child(doc, "length");
     params.length.version = read_plain_int(length, "version", params.length.version);

@@ -1365,3 +1365,89 @@ TEST_CASE("desesperacion: si la busqueda no se rinde, v11 decide igual que v5",
     }
     REQUIRE(comparadas > 0);
 }
+
+TEST_CASE("longitud en duelo: con length_version=0 el arbol no se entera", "[search][duelo]") {
+    // Mismo contrato que el modo duelo: apagado, sus pesos pueden valer cualquier cosa.
+    // ver docs/strategy.md#s-longitud-duelo
+    engine::Rng rng(20260923);
+    const snake::Params base = params_con_nodos(20000);
+    snake::Params absurdo = base;
+    absurdo.duel.length_weight = 9999.0;
+    absurdo.duel.hunt_weight = 9999.0;
+    REQUIRE(base.duel.length_version == 0);
+    for (int caso = 0; caso < 15; ++caso) {
+        for (const int serpientes : {2, 4}) {
+            const engine::State11 s = engine::start_board<11, 11, 4>(
+                serpientes, engine::Ruleset{}, 300 + static_cast<std::uint64_t>(rng.next() % 500));
+            const snake::SearchResult a = snake::search(s, inalcanzable(), base);
+            const snake::SearchResult b = snake::search(s, inalcanzable(), absurdo);
+            INFO("caso " << caso << " serpientes " << serpientes);
+            REQUIRE(a.best == b.best);
+            REQUIRE(a.score == b.score);
+            REQUIRE(a.nodes == b.nodes);
+        }
+    }
+}
+
+TEST_CASE("longitud en duelo: encendida cambia la evaluacion del 1v1 y no rompe nada",
+          "[search][duelo]") {
+    engine::Rng rng(20260924);
+    const snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.duel.length_version = 1;
+    int distintos = 0;
+    for (int caso = 0; caso < 30; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 700 + static_cast<std::uint64_t>(rng.next() % 900));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        distintos += (a.score != b.score || a.best != b.best) ? 1 : 0;
+        const engine::MoveMask legal = engine::legal_moves(s, s.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, b.best));
+        }
+    }
+    INFO("posiciones de duelo en que cambio: " << distintos << " de 30");
+    REQUIRE(distintos > 0);
+}
+
+TEST_CASE("territorio en duelo: con territory_version=0 el arbol no se entera", "[search][duelo]") {
+    engine::Rng rng(20260925);
+    const snake::Params base = params_con_nodos(20000);
+    snake::Params absurdo = base;
+    absurdo.duel.territory_scale = 9999.0;
+    REQUIRE(base.duel.territory_version == 0);
+    for (int caso = 0; caso < 15; ++caso) {
+        for (const int serpientes : {2, 4}) {
+            const engine::State11 s = engine::start_board<11, 11, 4>(
+                serpientes, engine::Ruleset{}, 400 + static_cast<std::uint64_t>(rng.next() % 500));
+            const snake::SearchResult a = snake::search(s, inalcanzable(), base);
+            const snake::SearchResult b = snake::search(s, inalcanzable(), absurdo);
+            INFO("caso " << caso << " serpientes " << serpientes);
+            REQUIRE(a.best == b.best);
+            REQUIRE(a.score == b.score);
+            REQUIRE(a.nodes == b.nodes);
+        }
+    }
+}
+
+TEST_CASE("territorio en duelo: encendido cambia el 1v1 y no rompe la legalidad",
+          "[search][duelo]") {
+    engine::Rng rng(20260926);
+    const snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.duel.territory_version = 1;
+    int distintos = 0;
+    for (int caso = 0; caso < 30; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 800 + static_cast<std::uint64_t>(rng.next() % 900));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        distintos += (a.score != b.score || a.best != b.best) ? 1 : 0;
+        const engine::MoveMask legal = engine::legal_moves(s, s.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, b.best));
+        }
+    }
+    REQUIRE(distintos > 0);
+}

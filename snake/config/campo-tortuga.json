@@ -47,7 +47,12 @@
   "duel": {
     "version": 0,
     "prefer_shorter": 40.0,
-    "pressure_weight": 25.0
+    "pressure_weight": 25.0,
+    "length_version": 0,
+    "length_weight": 40.0,
+    "hunt_weight": 30.0,
+    "territory_version": 0,
+    "territory_scale": 2.0
   },
   "length": {
     "version": 0,

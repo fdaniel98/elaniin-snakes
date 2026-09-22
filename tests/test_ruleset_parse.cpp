@@ -146,6 +146,11 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     REQUIRE(from_json.duel.version == defaults.duel.version);
     REQUIRE(from_json.duel.prefer_shorter == defaults.duel.prefer_shorter);
     REQUIRE(from_json.duel.pressure_weight == defaults.duel.pressure_weight);
+    REQUIRE(from_json.duel.length_version == defaults.duel.length_version);
+    REQUIRE(from_json.duel.length_weight == defaults.duel.length_weight);
+    REQUIRE(from_json.duel.hunt_weight == defaults.duel.hunt_weight);
+    REQUIRE(from_json.duel.territory_version == defaults.duel.territory_version);
+    REQUIRE(from_json.duel.territory_scale == defaults.duel.territory_scale);
 
     // 2. Y al reves: ningun grupo ni clave sobra en el JSON. Si alguien añade una clave
     //    al config sin añadirla al struct, este test la caza.
@@ -159,7 +164,8 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
       "territory": ["version", "weight", "contested_weight", "hazard_value_pct"],
       "search": ["version", "max_depth", "max_rivals", "death_value", "win_value",
                  "survival_bonus", "reserve_us", "budget_nodes", "despair_version"],
-      "duel": ["version", "prefer_shorter", "pressure_weight"],
+      "duel": ["version", "prefer_shorter", "pressure_weight", "length_version",
+               "length_weight", "hunt_weight", "territory_version", "territory_scale"],
       "length": ["version", "advantage_weight", "target_lead", "hunt_weight"],
       "survival": ["version", "safe_turns", "weight", "seek_below_turns",
                    "critical_turns", "panic_weight"]

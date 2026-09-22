@@ -167,6 +167,28 @@ struct DuelParams {
     /// largos**, en gradiente y no en escalon: la zona de cabeza solo puntua a distancia
     /// 1, asi que sin esto no hay nada que empuje hacia el duelo desde lejos.
     double pressure_weight = 25.0;
+    /// [v12] Longitud en el duelo, independiente de `version`. 0 = la politica de v5.
+    /// 1 = con un solo rival vivo, ir por delante en longitud manda: penalizacion lineal y
+    /// empinada por cada segmento de desventaja, saturada en +1 por arriba, y caza de
+    /// comida mientras no vayamos estrictamente por delante.
+    ///
+    /// Medido: en duelos v5 contra v5 el perdedor se rinde siempre sin ir por delante en
+    /// longitud, y a los 100 turnos ya iba por detras en 6 de 8. En el duelo real del
+    /// torneo ibamos 5 por detras. ver docs/experimentos.md#s-desesperacion-r
+    std::int32_t length_version = 0;
+    /// Puntos por segmento de ventaja dentro del duelo. v5 da 20 (60 / target_lead 3).
+    double length_weight = 40.0;
+    /// Peso de acercarse a la comida mientras no vamos por delante. v5 da 10.
+    double hunt_weight = 30.0;
+    /// [v13] Territorio en el duelo. 0 = el peso de siempre. 1 = con un solo rival vivo,
+    /// `territory.weight` se multiplica por `territory_scale`.
+    ///
+    /// Sonda previa, 1v1 estandar contra v5 con 3 000 nodos y 24 partidas por variante:
+    /// territorio x2 dio 1.375 de puesto medio, x0.5 dio 1.542 y v12 (cazar longitud)
+    /// 1.75, sobre 1.5 del espejo. Es una sonda, no un A/B.
+    /// ver docs/strategy.md#s-territorio-duelo
+    std::int32_t territory_version = 0;
+    double territory_scale = 2.0;
 };
 
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md

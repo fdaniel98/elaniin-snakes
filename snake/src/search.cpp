@@ -314,7 +314,21 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     const int espacio = eval::flood(libres, yo.head()).cells;
     if (p.territory.version >= 1) {
         const auto t = eval::voronoi(s, blocked, p.territory.hazard_value_pct);
-        score += p.territory.weight *
+        // [v13] En el duelo el territorio pesa mas: gana quien corta el tablero, no quien
+        // come. Solo se cuenta si hay exactamente un rival vivo; con la version a 0 el
+        // factor es 1 y la cuenta ni se hace. ver docs/strategy.md#s-territorio-duelo
+        double factor = 1.0;
+        if (p.duel.territory_version >= 1) {
+            int rivales_vivos = 0;
+            for (int i = 0; i < s.count(); ++i) {
+                rivales_vivos += (i != static_cast<int>(us) &&
+                                  engine::is_alive(s.snakes[static_cast<unsigned>(i)].status))
+                                     ? 1
+                                     : 0;
+            }
+            factor = rivales_vivos == 1 ? p.duel.territory_scale : 1.0;
+        }
+        score += factor * p.territory.weight *
                  static_cast<double>(t.weighted[static_cast<std::size_t>(us)]) /
                  static_cast<double>(State::cells * 100);
         score -= p.territory.contested_weight * static_cast<double>(t.contested) /
@@ -419,8 +433,16 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     // iguales o mas cortos que TODOS los vivos en 47, y el puesto medio caia monotonamente
     // con la desventaja de longitud. ver docs/experimentos.md#s-longitud
     const int ventaja = vivos > 0 ? mi_largo - largo_rival_max : p.length.target_lead;
-    const bool corto = p.length.version >= 1 && ventaja < p.length.target_lead;
-    if (p.length.version >= 1) {
+    // [v12] En el duelo manda otra politica: ir por delante es casi todo, porque el mas
+    // largo gana cualquier cabezazo y la busqueda paranoica lo da por hecho.
+    // ver docs/strategy.md#s-longitud-duelo
+    const bool longitud_duelo = p.duel.length_version >= 1 && vivos == 1;
+    const bool corto =
+        longitud_duelo ? ventaja < 1 : p.length.version >= 1 && ventaja < p.length.target_lead;
+    if (longitud_duelo) {
+        const double v = std::clamp(static_cast<double>(ventaja), -6.0, 1.0);
+        score += p.duel.length_weight * v;
+    } else if (p.length.version >= 1) {
         // Satura en `target_lead`: lo que decide un cabezazo es ir por delante, y a partir
         // de cierta ventaja el cuerpo de mas estorba mas de lo que aporta.
         const double v = std::clamp(static_cast<double>(ventaja),
@@ -454,8 +476,9 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
                                                                : -1;
         // Con hambre manda la salud; yendo cortos manda la ventaja. El peso de cada
         // motivo es distinto y se declara por separado.
-        const double peso =
-            yo.health <= p.food.seek_below ? p.food.weight * 2.0 : p.length.hunt_weight;
+        const double peso = yo.health <= p.food.seek_below ? p.food.weight * 2.0
+                            : longitud_duelo               ? p.duel.hunt_weight
+                                                           : p.length.hunt_weight;
         score += d >= 0 ? peso * (1.0 - static_cast<double>(d) / static_cast<double>(State::cells))
                         : (yo.health <= p.food.seek_below ? -p.food.weight * 2.0 : 0.0);
     }

@@ -1,6 +1,6 @@
 {
-  "_comment": "v5: busqueda + territorio en las hojas + control de longitud. Es la que se despliega. Gano su A/B contra v4 por -0.6917 (IC95 [-1.012, -0.371]) y contra v0 por -1.0583: 26 primeros puestos de 60 y NINGUN cuarto. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-longitud-r",
-  "_version": "v5-longitud-150ms-m80",
+  "_comment": "v13: v5 con duel.territory_version 1 y nada mas. Con un solo rival vivo el territorio pesa el doble: gana quien corta el tablero. ver docs/strategy.md#s-territorio-duelo",
+  "_version": "v13-territorio-duelo",
   "time": {
     "network_margin_ms": 80,
     "safety_margin_ms": 50,
@@ -51,7 +51,7 @@
     "length_version": 0,
     "length_weight": 40.0,
     "hunt_weight": 30.0,
-    "territory_version": 0,
+    "territory_version": 1,
     "territory_scale": 2.0
   },
   "length": {
