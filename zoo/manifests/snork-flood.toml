@@ -1,0 +1,19 @@
+# Manifest propio de una snake publica del zoo. ver zoo/README.md
+#
+# L4r0x/snork (MIT). El agente Flood se elige al ARRANCAR, no por ruta: una sola imagen sirve
+# a snork-flood y snork-tree, y `zoo.sh up` le pasa AGENT=Flood.
+# Segun su README: Tree fue 1o y 2o en las arenas global, duel y royale; Flood fue 2o en
+# la Elite del Winter Classic Invitational 2021. Ambos usan busqueda max-n.
+
+name = "snork Flood"
+slug = "snork-flood"
+repo = "https://github.com/L4r0x/snork"
+sha = "76bec0c9c76b31b209fbeb8e409bb3e4c9133eb2"
+dockerfile = "zoo/dockerfiles/snork.Dockerfile"
+agent = "Flood"
+port = 5001
+strategy = "max-n (Flood)"
+
+# Confirmacion humana, una vez por repositorio (ver zoo/README.md).
+approved_by = "Daniel"
+approved_at = "2026-09-22"

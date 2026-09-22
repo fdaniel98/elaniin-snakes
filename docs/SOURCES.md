@@ -3,8 +3,8 @@ title: Fuentes externas verificadas
 read_when: "antes de afirmar algo sobre una herramienta externa o de re-verificar una regla"
 authority: canonical
 source: BattlesnakeOfficial/rules@87e094e2e1c224e9dea67743fd3c2249137c4057
-last_verified: 2026-09-20
-size_bytes: 6464
+last_verified: 2026-09-22
+size_bytes: 7150
 ---
 
 Este archivo lleva **fuentes**, no hechos: qué se consultó, en qué SHA, cuándo, y qué
@@ -24,6 +24,8 @@ documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven
 | mismo repo, `cli/commands/output.go` | mismo SHA | 2026-09-14 | Formato del JSONL y ausencia de placements | ver docs/rules.md#r-12 |
 | mismo repo, `rand.go`, `settings.go` | mismo SHA | 2026-09-14 | El motor usa `math/rand` de Go: no reproducible desde C++ | ver docs/rules-parametros.md#r-99 |
 | `github.com/coreyja/battlesnake-rs` | `d3a9bed45789f00918ea25df6025ed4e01462ae3` | 2026-09-15 | Que su contenedor sirve todas sus snakes en un solo puerto y elige por ruta (`web-axum/src/main.rs:170`), y que su runtime es `debian:stable-slim` sin escrituras | `zoo/manifests/eremetic-eric.toml` |
+| `github.com/L4r0x/snork` | `76bec0c9c76b31b209fbeb8e409bb3e4c9133eb2` | 2026-09-22 | Que elige agente al arrancar con `--config` JSON y escucha en `--host` (`src/bin/server.rs:28-52`), sin Dockerfile ni `Cargo.lock`; compila con rustc 1.95 | `zoo/manifests/snork-flood.toml` |
+| `github.com/JaxHodg/battlesnake` | `070165422d275588adbc7cd47bee2af62b79d463` | 2026-09-22 | Puerto por `PORT` (`server.py:41`); HEAD `395137f` no arranca (`gamestate.py:273`, NameError), 0701654 si | `zoo/manifests/jaxhodg.toml` |
 | `github.com/smallsco/robosnake` | `72de4ab9dd99186cb5c5ba657d5d1320b60121f0` | 2026-09-15 | Que su `CMD` hace `sed -i` sobre la config de nginx, incompatible con `--read-only` | `zoo/README.md` |
 | `github.com/BattlesnakeOfficial/snake-zoo` | `6c2edcdb6e35a5ccc03a9cdd80e4af74e9baf4a8` | 2026-09-14 | Formato del manifest TOML, requisito de Rust, y que su runner lanza contenedores sin aislamiento (`src/docker.rs:80-91`) | `zoo/README.md` |
 | `math/rand` de la biblioteca estandar de Go | go1.24.7 | 2026-09-17 | Que el generador del motor oficial es un retardo de Fibonacci con tabla de 607 constantes no regenerable (`rng.go:14`, `gen_cooked.go:81`), que es el coste real de la alternativa descartada | ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0092 |
@@ -36,6 +38,7 @@ documento del repo es dueño de lo que se derivó. Los hechos sobre reglas viven
 | `BattlesnakeOfficial/rules` | **AGPL-3.0** | 2026-09-20 | Las REGLAS del juego, no su codigo (ver docs/decisions/ADR-0033-de-donde-salen-las-reglas.md#d-0331) |
 | `BattlesnakeOfficial/snake-zoo` | de sus autores | 2026-09-14 | Formato del manifest; ningun fichero se copia |
 | `coreyja/battlesnake-rs`, `smallsco/robosnake` | de sus autores | 2026-09-15 | Como exponen puertos. Se construyen sus imagenes en un temporal fuera del repo; su codigo no entra |
+| `L4r0x/snork`, `JaxHodg/battlesnake` | de sus autores (MIT) | 2026-09-22 | Como arrancan y por que puerto. Se compilan en un temporal fuera del repo; su codigo no entra |
 | `cpp-httplib` | MIT | 2026-09-15 | El codigo, vendorizado con su `LICENSE` en `third_party/` |
 
 `rules` es la unica fuente copyleft y por eso lleva ADR propio. Que se tomo de ella, y por

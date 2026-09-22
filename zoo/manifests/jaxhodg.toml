@@ -1,0 +1,19 @@
+# Manifest propio de una snake publica del zoo. ver zoo/README.md
+#
+# JaxHodg/battlesnake (MIT). Minimax + flood fill, 4o en Experienced de RBC Summer 2023.
+#
+# El commit NO es el HEAD: en 395137f (HEAD) y en su merge a16c729 `gamestate.py` deja
+# codigo suelto a nivel de modulo que revienta al importar (NameError: MOVES). 0701654 es
+# el ultimo commit que arranca, comprobado levantando el servidor. Trata los hazards como
+# casillas bloqueadas: un rival que los evita siempre.
+
+name = "JaxHodg"
+slug = "jaxhodg"
+repo = "https://github.com/JaxHodg/battlesnake"
+sha = "070165422d275588adbc7cd47bee2af62b79d463"
+dockerfile = "./Dockerfile"
+port = 8000
+strategy = "Minimax + flood fill"
+
+approved_by = "Daniel"
+approved_at = "2026-09-22"

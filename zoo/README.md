@@ -31,6 +31,14 @@ completa del arbitro oficial contra esa snake y guarda el JSONL en `docs/results
 `entrypoint` no es un binario: es el **segmento de ruta** con el que un servidor de varias
 snakes elige cual responde. Las snakes de un solo cerebro no lo traen y sirven en la raiz.
 
+Dos campos opcionales para repos que no encajan en el molde de snake-zoo:
+
+- `dockerfile = "zoo/dockerfiles/<x>.Dockerfile"`: el repo no trae Dockerfile y la receta
+  es **nuestra**. Se construye con el contexto del clon ajeno; solo se compila, no se
+  copia nada suyo aqui.
+- `agent = "<Nombre>"`: el repo elige la snake al **arrancar**, no por ruta. `zoo.sh up`
+  la pasa como `-e AGENT=<Nombre>`; solo letras, digitos y guion bajo.
+
 El aislamiento manda sobre el catalogo: una snake cuyo arranque escriba en el sistema de
 archivos -Robosnake hace `sed -i` sobre la config de nginx- no funciona con `--read-only`,
 y no se añade relajando el aislamiento, sino montando un `tmpfs` en la ruta concreta que

@@ -178,7 +178,17 @@ cmd_build() {
                 die "el commit $sha no existe en $repo"
             }
         fi
-        docker_run build -t "$img" -f "$tmp/src/${dockerfile#./}" "$tmp/src" || {
+        # Un repo sin Dockerfile lleva uno NUESTRO en zoo/dockerfiles/: se construye con el
+        # contexto del clon ajeno pero con la receta de este repo, que es la que se revisa.
+        # Cualquier otra ruta se resuelve dentro del clon, como siempre. ver zoo/README.md
+        local receta
+        if [[ "$dockerfile" == zoo/dockerfiles/* ]]; then
+            receta="$RAIZ/$dockerfile"
+            [[ -f "$receta" ]] || { rm -rf "$tmp"; die "no existe $receta"; }
+        else
+            receta="$tmp/src/${dockerfile#./}"
+        fi
+        docker_run build -t "$img" -f "$receta" "$tmp/src" || {
             rm -rf "$tmp"
             die "fallo el docker build de $slug"
         }
@@ -220,13 +230,19 @@ cmd_up() {
     done
     [[ -n "$puerto" ]] || die "up necesita --port"
 
-    local m img puerto_snake entrypoint
+    local m img puerto_snake entrypoint agente
     m="$(manifest_de "$slug")"
     valida_manifest "$m"
     img="$(imagen_de "$slug")"
     puerto_snake="$(campo "$m" port)"
     entrypoint="$(campo "$m" entrypoint)"
     [[ -n "$puerto_snake" ]] || die "$m sin port"
+    # Un repo que sirve varias snakes eligiendolas al ARRANCAR -no por ruta- recibe cual
+    # en `agent`, que llega al contenedor como la variable AGENT. Solo letras, digitos y
+    # guion bajo: es texto de un manifest que acaba en la linea de `docker run`.
+    agente="$(campo "$m" agent)"
+    [[ -z "$agente" || "$agente" =~ ^[A-Za-z0-9_]+$ ]] ||
+        die "$m: agent solo admite letras, digitos y guion bajo"
 
     # Las banderas de recursos son opcionales aqui y obligatorias en el torneo: quien mide
     # las pone, y sin ellas ningun numero de este zoo vale. ver zoo/README.md
@@ -245,6 +261,7 @@ cmd_up() {
         "${recursos[@]+${recursos[@]}}" \
         -p "127.0.0.1:${puerto}:${puerto_snake}" \
         -e "PORT=${puerto_snake}" \
+        ${agente:+-e "AGENT=${agente}"} \
         "$img" >/dev/null || die "no arranco el contenedor de $slug"
 
     # `entrypoint` no es un binario: es el segmento de ruta con el que un servidor de
