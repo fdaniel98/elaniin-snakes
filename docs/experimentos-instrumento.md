@@ -4,7 +4,7 @@ read_when: "cuando un A/B sale RAMAS IDENTICAS o raro, antes de fiarse del resul
 authority: derived
 source: docs/results/arena-* y training-room/compara.py
 last_verified: 2026-09-23
-size_bytes: 1069
+size_bytes: 1848
 ---
 
 # Fallos del instrumento {#exp-instrumento}
@@ -21,3 +21,21 @@ decisiones, asi que la corrida uso un binario sin `duel.territory_version`, y el
 Arreglado: `snake::unknown_keys()` lista las claves que el binario no lee; `arena_torneo`
 **aborta** si un config trae alguna y el servidor emite `WARN=clave_desconocida`. Un test
 exige que ningun config del repo tenga claves huerfanas.
+
+### S-TERRITORIO-DUELO-R2 La corrida buena, y la sonda que mintio {#s-territorio-duelo-r2}
+
+Repetido con el binario correcto: 1v1 estandar, v13 contra v5, 60 bloques, 14 821 nodos.
+
+| | v5 | v13 |
+|---|---|---|
+| puesto medio | 1.500 | 1.575 |
+| duelos ganados | 60 de 120 | 51 de 120 |
+| turnos vividos | 274.7 | 305.6 |
+
+Diferencia **+0.075** (del lado malo), IC95 [-0.015, +0.165]: NO CONCLUYENTE y probablemente
+peor. **v13 no entra**; su royale ya no hace falta, porque falla el criterio del 1v1.
+
+La leccion es de instrumento: la sonda previa -24 partidas con **3 000 nodos**- habia dado
+1.375, a favor. Con el presupuesto real el signo se da la vuelta. Una sonda con 5 veces
+menos nodos juega otro juego: sirve para descartar lo que rompe algo, no para elegir
+candidata.
