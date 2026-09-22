@@ -19,6 +19,7 @@ target_compile_definitions(unit_tests PRIVATE
   BSR_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
   BSR_CONFIG_DIR="${CMAKE_SOURCE_DIR}/snake/config"
   BSR_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus"
+  BSR_FIXTURES_REALES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures-reales"
 )
 
 # Los tests [.pending] quedan registrados y visibles, pero no corren por defecto.

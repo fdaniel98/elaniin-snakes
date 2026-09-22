@@ -4,7 +4,7 @@ read_when: "antes de tocar un peso de default.json a mano, o de cambiar el afina
 authority: derived
 source: training-room/afina.py y docs/experimentos.md
 last_verified: 2026-09-20
-size_bytes: 6137
+size_bytes: 6153
 ---
 
 # ADR-0036 — Afinado por SPSA {#adr-0036}
@@ -50,7 +50,7 @@ Tres detalles que no son accesorios:
   evaluaciones de una misma iteracion comparten bloques: ahi los numeros comunes son
   correctos y son lo que hace preciso el gradiente. Entre iteraciones, no. La primera
   version las compartia todas y el afinador se aprendio la muestra
-  (ver docs/experimentos.md#s-afinado-control).
+  (ver docs/experimentos-afinado.md#s-afinado-control).
 
 **Lo que NO se afina**, y no por olvido: `*.version`, `max_depth`, `max_rivals`,
 `death_value`, `win_value`, `reserve_us`, `budget_nodes` y todo `time`. No son pesos de
@@ -101,7 +101,7 @@ contra la base **con un campo distinto de las dos ramas** -> si gana, A/B por HT
 **ACEPTADA. Primera corrida: SOBREAJUSTE, y el metodo corregido.**
 
 80 iteraciones, 5 120 partidas, 106 minutos. Parecia bajar el puesto medio de 2.46 a 2.29;
-en semillas frescas saco 2.4688, o sea nada (ver docs/experimentos.md#s-afinado-control).
+en semillas frescas saco 2.4688, o sea nada (ver docs/experimentos-afinado.md#s-afinado-control).
 La mejora entera era memoria de las 32 partidas con las que se afino.
 
 ## D-0367 Lo que se corrigio {#d-0367}

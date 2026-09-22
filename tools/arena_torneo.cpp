@@ -3,6 +3,7 @@
 ///
 ///     arena_torneo --a <config> [--b <config>] --campo <config> --bloques N
 ///                  [--semilla-base S] [--hilos T] [--nodos N]
+///                  [--serpientes 2..4] [--mapa royale|standard]
 ///
 /// `--hilos` por defecto deja DOS nucleos libres: estas corridas duran horas y la maquina
 /// tiene que poder usarse mientras tanto.
@@ -102,6 +103,17 @@ int main(int argc, char** argv) {
     const auto semilla_base =
         static_cast<std::uint64_t>(std::atoll(arg(argc, argv, "--semilla-base", "1").c_str()));
     const int nodos = std::atoi(arg(argc, argv, "--nodos", "2000").c_str());
+    // El desempate del torneo es un 1v1 ESTANDAR, no royale: dos snakes y sin hazards.
+    // Todo lo medido antes era royale de cuatro. ver docs/experimentos.md#s-desesperacion
+    const int serpientes = std::atoi(arg(argc, argv, "--serpientes", "4").c_str());
+    const std::string mapa = arg(argc, argv, "--mapa", "royale");
+    if (serpientes < 2 || serpientes > arena::max_contendientes ||
+        (mapa != "royale" && mapa != "standard")) {
+        std::fprintf(stderr,
+                     "--serpientes va de 2 a %d y --mapa es royale o standard\n",
+                     arena::max_contendientes);
+        return 2;
+    }
     // Por defecto se dejan DOS nucleos libres. Una corrida de afinado dura horas, y una
     // maquina con todos los nucleos al 100% no se puede usar para nada mientras tanto.
     // Es ademas la misma convencion que el orquestador aplica a los contenedores del zoo
@@ -132,9 +144,9 @@ int main(int argc, char** argv) {
     pc.search.budget_nodes = nodos;
 
     std::vector<Encargo> encargos;
-    encargos.reserve(static_cast<std::size_t>(bloques) * arena::max_contendientes * 2);
+    encargos.reserve(static_cast<std::size_t>(bloques) * static_cast<std::size_t>(serpientes) * 2);
     for (int b = 0; b < bloques; ++b) {
-        for (int asiento = 0; asiento < arena::max_contendientes; ++asiento) {
+        for (int asiento = 0; asiento < serpientes; ++asiento) {
             encargos.push_back({b, semilla_base + static_cast<std::uint64_t>(b), asiento, 'a'});
             if (hay_b) {
                 encargos.push_back({b, semilla_base + static_cast<std::uint64_t>(b), asiento, 'b'});
@@ -161,12 +173,12 @@ int main(int argc, char** argv) {
                 return;
             }
             const Encargo& e = encargos[i];
-            std::vector<snake::Params> mesa(arena::max_contendientes, pc);
+            std::vector<snake::Params> mesa(static_cast<std::size_t>(serpientes), pc);
             mesa[static_cast<std::size_t>(e.asiento)] = e.rama == 'a' ? pa : pb;
 
             arena::ArenaConfig cfg;
             cfg.seed = e.semilla;
-            cfg.rules.map_is_royale = true;
+            cfg.rules.map_is_royale = mapa == "royale";
             const arena::Partida r = arena::play(cfg, mesa);
 
             const arena::Resultado& nuestro = r.snakes[static_cast<std::size_t>(e.asiento)];

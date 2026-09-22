@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 10842
+size_bytes: 11978
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -188,6 +188,25 @@ comido por los hazards. Puede que lo que decida ahi no sea la tactica sino la sa
 que se llega, en cuyo caso la evaluacion del duelo llega tarde a una partida que ya estaba
 perdida en el turno 100. La tasa de duelos ganados, segmentada por salud de entrada, lo
 separa.
+
+### S-DESESPERACION Hipotesis: una raiz perdida no se obedece {#s-desesperacion}
+
+**Hipotesis falsable:** cuando la busqueda devuelve puntuacion de muerte en la raiz,
+decidir con v0 -espacio real, zona de cabeza- en vez de con la rama que muere mas tarde
+sube la tasa de duelos ganados y no cambia nada fuera de esas posiciones. Motivo medido:
+ver docs/experimentos.md#s-desesperacion
+
+**Que se mide:** `snake/config/v11-desesperacion.json`, v5 con `search.despair_version` 1
+y nada mas. Dos tests lo acotan: en la posicion real del turno 241 v5 elige el bolsillo y
+v11 no; y en posiciones donde la busqueda no se rinde, v11 decide identico a v5.
+
+**Donde se mide:** en los DOS formatos del torneo. Royale de cuatro, que es la fase
+principal, y **1v1 estandar**, que es el desempate: `arena_ab.py --serpientes 2 --mapa
+standard`. Y contra snork Tree por HTTP, que fue 1o en la arena de duelos.
+
+**Por que podria fallar:** a veces la rendicion es cierta y v0 no la salva; y v0 no mira
+hacia delante, asi que puede elegir una casilla con espacio que el rival cierra en dos
+turnos. Si la tasa de duelos ganados no sube, la hipotesis cae.
 
 ## S-V4 Paralelismo {#s-v4}
 

@@ -38,7 +38,7 @@ Entre iteraciones, NO. La primera version usaba los mismos 8 bloques para las 16
 evaluaciones y el afinador se los aprendio: bajaba a 2.22 en esos 32 partidas y sacaba
 2.47 -o sea nada- en semillas frescas. Numeros comunes es lo correcto para COMPARAR dos
 alternativas fijas y es una trampa para OPTIMIZAR, porque el optimizador puede explotar
-una muestra que no cambia. ver docs/experimentos.md#s-afinado-r
+una muestra que no cambia. ver docs/experimentos-afinado.md#s-afinado-r
 
 ## Y una evaluacion de control que el script no puede saltarse
 

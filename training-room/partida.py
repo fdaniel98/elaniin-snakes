@@ -146,11 +146,22 @@ def main():
     ap.add_argument("--timeout", type=int, default=500)
     ap.add_argument("--ancho", type=int, default=11)
     ap.add_argument("--alto", type=int, default=11)
+    ap.add_argument("--volcar", type=int, metavar="TURNO",
+                    help="escribe en stdout el request de /move de ese turno, visto por "
+                         "nuestra snake, y sale: sirve para convertir una posicion real en "
+                         "fixture")
     args = ap.parse_args()
 
     frames = carga(args.frames)
     if not frames:
         sys.exit("sin frames")
+    if args.volcar is not None:
+        fr = next((f for f in frames if f["Turn"] == args.volcar), None)
+        nos = fr and next((s for s in vivas(fr) if s["Name"] == args.nuestra), None)
+        if not nos:
+            sys.exit(f"sin turno {args.volcar} con {args.nuestra} viva")
+        print(json.dumps(a_request(fr, nos, args), indent=1))
+        return
     huecos = [t for t in range(frames[0]["Turn"], frames[-1]["Turn"] + 1)
               if t not in {f["Turn"] for f in frames}]
     print(f"turnos {frames[0]['Turn']}..{frames[-1]['Turn']}"

@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 24551
+size_bytes: 22209
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -28,6 +28,8 @@ metrica primaria unica (diferencia pareada de puesto medio), `training-room/comp
 | v6 turnos | salud medida en turnos de vida | +0.058 | NO ENTRA |
 | v7 tercer rival | simular al 3er rival (ARENA, self-play) | +0.083 | NO CONCLUYENTE |
 | v8 afinado | SPSA sobre 14 pesos (ARENA, self-play) | -0.03 en control | NO ENTRA (sobreajuste) |
+| v9 cobrar | `prefer_shorter` 8 -> 40 (ARENA) | 0.000 | termino muerto |
+| v10 duelo | evaluacion propia del 1v1 (ARENA) | -0.017 | NO CONCLUYENTE |
 
 ### S-SUPERVIVENCIA Por que v5 pierde las que pierde {#s-supervivencia}
 
@@ -312,90 +314,9 @@ con el campo.
 Para un A/B de verdad el campo tiene que ser distinto de las dos ramas. El candidato
 natural es `v4-hojas`, que es fuerte -perdio con v5 por 0.69- y no es ninguna de las dos.
 
-### S-AFINADO-R Resultado del afinado: hay señal, y no es la que imprimio el script {#s-afinado-r}
+### S-AFINADO-R Resultado del afinado: movido {#s-afinado-r}
 
-80 iteraciones de SPSA, 5 120 partidas, 1 000 nodos, 106 minutos
-(ver docs/decisions/ADR-0036-afinado-por-spsa.md). El script imprimio **2.109** como mejor
-puesto medio contra el 2.500 exacto del campo. **Ese numero esta sesgado y no se publica
-como resultado**: es el MINIMO de 80 evaluaciones ruidosas, y el minimo de 80 sorteos cae
-varios errores tipicos por debajo de la media aunque no hubiera mejorado nada.
-
-Lo que si mide algo es la trayectoria, porque promedia:
-
-| iteraciones | puesto medio |
-|---|---:|
-| 1-10 | 2.470 |
-| 11-20 | 2.459 |
-| 21-30 | 2.364 |
-| 31-40 | 2.302 |
-| 41-50 | 2.295 |
-| 51-60 | 2.298 |
-| 61-70 | 2.310 |
-| 71-80 | **2.263** |
-
-Media de las 20 primeras **2.4645**, de las 20 ultimas **2.2867**. Parecia una mejora de
--0.21, a casi ocho errores tipicos. **No lo era.**
-
-El punto de llegada es estable: el mejor visto, el ultimo y el promedio de las 20 ultimas
-iteraciones coinciden **dentro de +-0.05 por parametro**. No hay que elegir entre ellos.
-
-**Lo que aprendio, que tiene sentido y no parece ruido:**
-
-| parametro | v5 | v8 | lectura |
-|---|---:|---:|---|
-| `head.avoid_equal_or_longer` | 80 | **69** | menos miedo a las cabezas iguales o mayores |
-| `head.prefer_shorter` | 8 | **9.5** | y mas ganas de ir a por las menores |
-| `length.advantage_weight` | 60 | **72.9** | la longitud pesa aun mas de lo que pesaba |
-| `length.hunt_weight` | 10 | **11.4** | y se persigue mas |
-| `territory.hazard_value_pct` | 50 | **38** | el territorio dentro del hazard vale menos |
-| `food.weight` | 6 | **5.6** | menos comida por comer |
-| `food.seek_below_in_hazard` | 75 | **86** | pero comer MUCHO antes dentro del hazard |
-
-Las dos ultimas juntas son lo interesante: el afinador no conoce el concepto de "turnos de
-vida" que v6 intento meter a mano (ver docs/experimentos.md#s-supervivencia-r), y aun asi
-llego solo a que dentro del hazard hay que comer antes. La hipotesis de v6 no era falsa;
-estaba implementada en el sitio equivocado.
-
-### El control lo tumba {#s-afinado-control}
-
-Medido en semillas que el afinado no jugo nunca:
-
-| donde se mide | partidas | v8 | v5 | mejora |
-|---|---:|---:|---:|---:|
-| semillas DEL AFINADO (base 1000) | 32 | **2.2188** | 2.5000 | -0.28 |
-| semillas FRESCAS (base 50000) | 80 | **2.4688** | 2.5000 | **-0.03** |
-
-Con 20 bloques el error tipico ronda 0.116, asi que 2.4688 es **indistinguible de 2.5**.
-La mejora entera era memoria de 32 partidas concretas. **v8 NO entra.**
-
-**La causa es una decision mia, y estaba escrita como si fuera una virtud.** El afinador
-usaba los MISMOS 8 bloques en las 160 evaluaciones. Numeros aleatorios comunes son lo
-correcto para **comparar** dos alternativas fijas -reducen la varianza de la diferencia- y
-son una trampa para **optimizar**, porque el optimizador puede explotar una muestra que no
-cambia nunca. Eso es exactamente lo que hizo: los pesos que encontro son buenos en esas 32
-partidas y en ninguna otra.
-
-Arreglado en `afina.py`, y en dos sitios:
-
-1. **Las semillas rotan entre iteraciones.** Dentro de una iteracion las dos evaluaciones
-   siguen compartiendolas -ahi los numeros comunes son correctos y no dejan nada que
-   memorizar-, pero cada iteracion juega bloques propios.
-2. **Evaluacion de control obligatoria al terminar**, en semillas que ninguna iteracion
-   toco, y **ese** es el numero que se publica. Si no baja de 2.5, el script lo dice:
-   `NO MEJORA: el control no baja de 2.5`.
-
-Lo que costo saberlo: cuatro minutos. Por eso el paso de verificacion existe antes del
-gauntlet y no despues.
-
-**Un resultado colateral que si es bueno:** las 80 partidas de control dieron **2.4688
-exacto** en la maquina de referencia y en el contenedor de desarrollo, que son maquinas
-distintas con la mitad de nucleos una que la otra. Es la primera comprobacion de extremo a
-extremo de que la arena es reproducible entre maquinas, que era una promesa del diseño
-(ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0301) y hasta ahora solo una
-promesa.
-
-`snake/config/v8-afinado.json` se conserva como la evidencia del sobreajuste, no como
-candidata.
+Vive en ver docs/experimentos-afinado.md#s-afinado-r (sobreajuste de SPSA y su control).
 
 ### S-DUELO Donde se decide la partida, y nadie lo habia mirado {#s-duelo}
 
@@ -518,3 +439,28 @@ para ver 0.05 harian falta del orden de cien bloques.
 **Balance de la serie contra v5:** v6, v7, v8, v9 y v10, cinco candidatas, ninguna entra.
 v9 era un termino muerto; las otras cuatro tienen efectos compatibles con cero y acotados
 por debajo de ~0.2. Lo que se mueve a este tamaño de muestra ya se movio en v5.
+
+### S-DESESPERACION Un duelo real del torneo: la busqueda se rinde y se mete en un bolsillo {#s-desesperacion}
+
+Primera partida REAL analizada, `dee2b0c8` del torneo: **1v1 estandar** -no royale-,
+Makarov (la nuestra) contra Chimuelo, 245 turnos. Frames del motor oficial pasados por
+`training-room/partida.py`; el cerebro de este arbol repite 98 de los 100 primeros
+movimientos, asi que lo que se ve es lo que se jugo.
+
+- Hasta el turno ~100 ibamos parejos o por delante en territorio, pero el rival crecia mas
+  (14 contra 11 en el 90, 24 contra 19 en el 230).
+- Entre el 228 y el 237 el rival levanta un muro por la columna x=6 y nos deja la franja
+  derecha, que ocupa buena parte de nuestro propio cuerpo.
+- **Desde el turno 238 la busqueda da la partida por perdida**: puntuacion de raiz
+  -100000 a -100210, con 76 casillas alcanzables. Bajo el supuesto paranoico, el rival mas
+  largo puede adivinar cada casilla a la que vamos y ganar el cabezazo.
+- A partir de ahi solo elige la muerte mas lenta. En el 241, con cuerpo 20 y **66 casillas
+  alcanzables**, elige `right`: un bolsillo de 3. Muere en el 245 contra su cuello, que en
+  el tablero se ve como «choca consigo misma».
+
+La causa no es un bug ni un timeout: latencias de 168 ms hasta el final. Es el modelo. Con
+movimientos simultaneos, «perdida» significa que el rival *podria* adivinar; la busqueda
+lo trata como certeza y prefiere una muerte segura en 4 turnos a una apuesta con 66
+casillas por delante.
+
+Hipotesis derivada: ver docs/strategy.md#s-desesperacion

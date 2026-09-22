@@ -1299,3 +1299,69 @@ TEST_CASE("duelo: encendido cambia la evaluacion del 1v1 y no rompe la legalidad
     INFO("posiciones de duelo en que la evaluacion cambio: " << distintos << " de 30");
     REQUIRE(distintos > 0);
 }
+
+// ---------------------------------------------------------------------------------
+// Posiciones REALES del torneo. ver docs/experimentos.md#s-desesperacion
+// ---------------------------------------------------------------------------------
+
+namespace {
+
+engine::State11 estado_real(const char* nombre) {
+    std::ifstream f(std::string(BSR_FIXTURES_REALES_DIR) + "/" + nombre);
+    const json doc = json::parse(f, nullptr, false);
+    REQUIRE_FALSE(doc.is_discarded());
+    engine::State11 s;
+    REQUIRE(snake::parse_state(doc, s));
+    return s;
+}
+
+snake::Params params_torneo(int despair) {
+    snake::Params p = snake::load_params(std::string(BSR_CONFIG_DIR) + "/default.json");
+    p.search.budget_nodes = 20000; // determinista: la misma decision en cualquier maquina
+    p.search.despair_version = despair;
+    return p;
+}
+
+} // namespace
+
+TEST_CASE("desesperacion: el duelo real dee2b0c8 reproduce el bolsillo y v11 no entra",
+          "[brain][desesperacion][real]") {
+    // Turno 241: cabeza en (9,10), cuerpo 20, 66 casillas alcanzables. `right` lleva a un
+    // bolsillo de 3 casillas y es lo que hizo la snake desplegada. El primer REQUIRE
+    // prueba que el fixture captura el fallo; sin el, el segundo pasaria por nada.
+    const engine::State11 s = estado_real("dee2b0c8-t241.json");
+    const auto lejos = snake::Deadline(snake::Deadline::Clock::now() + std::chrono::hours(1));
+
+    const snake::Move v5 = snake::decide(s, lejos, params_torneo(0));
+    INFO("v5 elige " << static_cast<int>(v5.direction) << " con puntuacion " << v5.score);
+    REQUIRE(v5.direction == engine::Direction::right);
+    REQUIRE(v5.score <= 0.5 * params_torneo(0).search.death_value);
+
+    const snake::Move v11 = snake::decide(s, lejos, params_torneo(1));
+    REQUIRE(v11.direction != engine::Direction::right);
+    REQUIRE(engine::mask_has(engine::legal_moves(s, s.you), v11.direction));
+}
+
+TEST_CASE("desesperacion: si la busqueda no se rinde, v11 decide igual que v5",
+          "[brain][desesperacion]") {
+    // El cambio solo actua con la raiz en puntuacion de muerte. En cualquier otra posicion
+    // tiene que ser invisible: mismo movimiento hasta el bit, sobre partidas de verdad.
+    engine::Rng rng(20260922);
+    const auto lejos = snake::Deadline(snake::Deadline::Clock::now() + std::chrono::hours(1));
+    int comparadas = 0;
+    for (int caso = 0; caso < 20; ++caso) {
+        const engine::State11 s =
+            engine::start_board<11, 11, 4>(2 + static_cast<int>(rng.next() % 3),
+                                           engine::Ruleset{},
+                                           100 + static_cast<std::uint64_t>(rng.next() % 1000));
+        const snake::Move a = snake::decide(s, lejos, params_torneo(0));
+        if (a.score <= 0.5 * params_torneo(0).search.death_value) {
+            continue;
+        }
+        const snake::Move b = snake::decide(s, lejos, params_torneo(1));
+        REQUIRE(a.direction == b.direction);
+        REQUIRE(a.score == b.score);
+        ++comparadas;
+    }
+    REQUIRE(comparadas > 0);
+}

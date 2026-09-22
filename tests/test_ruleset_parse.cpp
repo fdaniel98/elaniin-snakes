@@ -142,6 +142,7 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
     REQUIRE(from_json.survival.seek_below_turns == defaults.survival.seek_below_turns);
     REQUIRE(from_json.survival.critical_turns == defaults.survival.critical_turns);
     REQUIRE(from_json.survival.panic_weight == defaults.survival.panic_weight);
+    REQUIRE(from_json.search.despair_version == defaults.search.despair_version);
     REQUIRE(from_json.duel.version == defaults.duel.version);
     REQUIRE(from_json.duel.prefer_shorter == defaults.duel.prefer_shorter);
     REQUIRE(from_json.duel.pressure_weight == defaults.duel.pressure_weight);
@@ -157,7 +158,7 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
       "hazard": ["weight", "low_health_multiplier"],
       "territory": ["version", "weight", "contested_weight", "hazard_value_pct"],
       "search": ["version", "max_depth", "max_rivals", "death_value", "win_value",
-                 "survival_bonus", "reserve_us", "budget_nodes"],
+                 "survival_bonus", "reserve_us", "budget_nodes", "despair_version"],
       "duel": ["version", "prefer_shorter", "pressure_weight"],
       "length": ["version", "advantage_weight", "target_lead", "hunt_weight"],
       "survival": ["version", "safe_turns", "weight", "seek_below_turns",

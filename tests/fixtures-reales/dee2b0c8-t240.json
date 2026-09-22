@@ -1,0 +1,353 @@
+{
+ "game": {
+  "id": "replay",
+  "timeout": 500,
+  "source": "replay",
+  "map": "standard",
+  "ruleset": {
+   "name": "standard",
+   "version": "replay",
+   "settings": {
+    "foodSpawnChance": 15,
+    "minimumFood": 1,
+    "hazardDamagePerTurn": 14,
+    "royale": {
+     "shrinkEveryNTurns": 25
+    }
+   }
+  }
+ },
+ "turn": 240,
+ "board": {
+  "width": 11,
+  "height": 11,
+  "food": [
+   {
+    "x": 1,
+    "y": 0
+   },
+   {
+    "x": 1,
+    "y": 1
+   },
+   {
+    "x": 3,
+    "y": 0
+   },
+   {
+    "x": 9,
+    "y": 10
+   },
+   {
+    "x": 3,
+    "y": 7
+   },
+   {
+    "x": 5,
+    "y": 9
+   },
+   {
+    "x": 6,
+    "y": 9
+   }
+  ],
+  "hazards": [],
+  "snakes": [
+   {
+    "id": "gs_DKfhhyhV33tg7dqX4QgTrkrW",
+    "name": "Makarov",
+    "health": 88,
+    "body": [
+     {
+      "x": 9,
+      "y": 9
+     },
+     {
+      "x": 9,
+      "y": 8
+     },
+     {
+      "x": 9,
+      "y": 7
+     },
+     {
+      "x": 10,
+      "y": 7
+     },
+     {
+      "x": 10,
+      "y": 6
+     },
+     {
+      "x": 10,
+      "y": 5
+     },
+     {
+      "x": 10,
+      "y": 4
+     },
+     {
+      "x": 10,
+      "y": 3
+     },
+     {
+      "x": 10,
+      "y": 2
+     },
+     {
+      "x": 10,
+      "y": 1
+     },
+     {
+      "x": 10,
+      "y": 0
+     },
+     {
+      "x": 9,
+      "y": 0
+     },
+     {
+      "x": 8,
+      "y": 0
+     },
+     {
+      "x": 8,
+      "y": 1
+     },
+     {
+      "x": 7,
+      "y": 1
+     },
+     {
+      "x": 7,
+      "y": 2
+     },
+     {
+      "x": 8,
+      "y": 2
+     },
+     {
+      "x": 9,
+      "y": 2
+     },
+     {
+      "x": 9,
+      "y": 3
+     }
+    ],
+    "head": {
+     "x": 9,
+     "y": 9
+    },
+    "length": 19,
+    "latency": "168",
+    "shout": "",
+    "squad": ""
+   },
+   {
+    "id": "gs_CSFG4mYmtdq6D8VSwv9vwKhQ",
+    "name": "Chimuelo",
+    "health": 61,
+    "body": [
+     {
+      "x": 8,
+      "y": 8
+     },
+     {
+      "x": 8,
+      "y": 7
+     },
+     {
+      "x": 7,
+      "y": 7
+     },
+     {
+      "x": 7,
+      "y": 6
+     },
+     {
+      "x": 6,
+      "y": 6
+     },
+     {
+      "x": 6,
+      "y": 5
+     },
+     {
+      "x": 6,
+      "y": 4
+     },
+     {
+      "x": 6,
+      "y": 3
+     },
+     {
+      "x": 6,
+      "y": 2
+     },
+     {
+      "x": 6,
+      "y": 1
+     },
+     {
+      "x": 6,
+      "y": 0
+     },
+     {
+      "x": 5,
+      "y": 0
+     },
+     {
+      "x": 4,
+      "y": 0
+     },
+     {
+      "x": 4,
+      "y": 1
+     },
+     {
+      "x": 5,
+      "y": 1
+     },
+     {
+      "x": 5,
+      "y": 2
+     },
+     {
+      "x": 4,
+      "y": 2
+     },
+     {
+      "x": 4,
+      "y": 3
+     },
+     {
+      "x": 4,
+      "y": 4
+     },
+     {
+      "x": 3,
+      "y": 4
+     },
+     {
+      "x": 3,
+      "y": 5
+     },
+     {
+      "x": 4,
+      "y": 5
+     },
+     {
+      "x": 5,
+      "y": 5
+     },
+     {
+      "x": 5,
+      "y": 6
+     }
+    ],
+    "head": {
+     "x": 8,
+     "y": 8
+    },
+    "length": 24,
+    "latency": "16",
+    "shout": "",
+    "squad": ""
+   }
+  ]
+ },
+ "you": {
+  "id": "gs_DKfhhyhV33tg7dqX4QgTrkrW",
+  "name": "Makarov",
+  "health": 88,
+  "body": [
+   {
+    "x": 9,
+    "y": 9
+   },
+   {
+    "x": 9,
+    "y": 8
+   },
+   {
+    "x": 9,
+    "y": 7
+   },
+   {
+    "x": 10,
+    "y": 7
+   },
+   {
+    "x": 10,
+    "y": 6
+   },
+   {
+    "x": 10,
+    "y": 5
+   },
+   {
+    "x": 10,
+    "y": 4
+   },
+   {
+    "x": 10,
+    "y": 3
+   },
+   {
+    "x": 10,
+    "y": 2
+   },
+   {
+    "x": 10,
+    "y": 1
+   },
+   {
+    "x": 10,
+    "y": 0
+   },
+   {
+    "x": 9,
+    "y": 0
+   },
+   {
+    "x": 8,
+    "y": 0
+   },
+   {
+    "x": 8,
+    "y": 1
+   },
+   {
+    "x": 7,
+    "y": 1
+   },
+   {
+    "x": 7,
+    "y": 2
+   },
+   {
+    "x": 8,
+    "y": 2
+   },
+   {
+    "x": 9,
+    "y": 2
+   },
+   {
+    "x": 9,
+    "y": 3
+   }
+  ],
+  "head": {
+   "x": 9,
+   "y": 9
+  },
+  "length": 19,
+  "latency": "168",
+  "shout": "",
+  "squad": ""
+ },
+ "_name": "dee2b0c8-t240",
+ "_comment": "Posicion REAL del torneo (partida dee2b0c8, 1v1 estandar, Makarov contra Chimuelo, que es 5 mas larga). Desde el turno 238 la busqueda paranoica da la partida por perdida (-100000) y solo retrasa la muerte: en el 241 se mete en un bolsillo de 3 casillas con un cuerpo de 20 teniendo 66 alcanzables. ver docs/experimentos.md#s-desesperacion"
+}

@@ -180,6 +180,8 @@ Params parse_params(const json& doc) {
         read_double(search, "survival_bonus", params.search.survival_bonus);
     params.search.reserve_us = read_plain_int(search, "reserve_us", params.search.reserve_us);
     params.search.budget_nodes = read_plain_int(search, "budget_nodes", params.search.budget_nodes);
+    params.search.despair_version =
+        read_plain_int(search, "despair_version", params.search.despair_version);
 
     const json& duel = child(doc, "duel");
     params.duel.version = read_plain_int(duel, "version", params.duel.version);

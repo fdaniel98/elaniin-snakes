@@ -228,6 +228,15 @@ struct SearchParams {
     /// comparable entre commits que cambian el coste del nodo.
     /// ver docs/decisions/ADR-0030-presupuesto-por-nodos.md
     std::int32_t budget_nodes = 0;
+    /// [v11] Que hacer cuando la busqueda da la partida por PERDIDA (puntuacion de
+    /// muerte en la raiz). 0 = obedecerla: juega la rama que muere mas tarde bajo el
+    /// supuesto paranoico. 1 = no fiarse y decidir con v0 -espacio, zona de cabeza-.
+    ///
+    /// Con movimientos simultaneos, "perdida" casi nunca es cierta: suele significar que
+    /// el rival PODRIA adivinar a que casilla vamos. Obedecerla metio a la snake en un
+    /// bolsillo de 3 casillas con cuerpo 20 teniendo 66 libres, en un duelo real del
+    /// torneo. ver docs/experimentos.md#s-desesperacion
+    std::int32_t despair_version = 0;
 };
 
 struct Params {

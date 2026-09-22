@@ -104,6 +104,9 @@ def main():
                          "que cambian el coste del nodo (ADR-0030)")
     ap.add_argument("--hilos", type=int, default=0,
                     help="0 = el default de arena_torneo, que deja dos nucleos libres")
+    ap.add_argument("--serpientes", type=int, default=4,
+                    help="snakes por partida; 2 es el duelo del desempate")
+    ap.add_argument("--mapa", default="royale", choices=["royale", "standard"])
     ap.add_argument("--out", required=True)
     ap.add_argument("--binario", default=str(RAIZ / "build/release/bin/arena_torneo"))
     args = ap.parse_args()
@@ -142,7 +145,8 @@ def main():
 
     cmd = [args.binario, "--a", args.a, "--b", args.b, "--campo", args.campo,
            "--bloques", str(args.bloques), "--semilla-base", str(args.semilla_base),
-           "--nodos", str(args.nodos)]
+           "--nodos", str(args.nodos),
+           "--serpientes", str(args.serpientes), "--mapa", args.mapa]
     if args.hilos > 0:
         cmd += ["--hilos", str(args.hilos)]
 
