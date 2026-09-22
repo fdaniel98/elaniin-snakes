@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 23530
+size_bytes: 23534
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -479,13 +479,14 @@ bloques, 14 821 nodos, maquina de referencia.
 Diferencia pareada **-0.0083**, IC95 **[-0.037, +0.020]**: NO CONCLUYENTE, y con un
 intervalo tan estrecho que acota el efecto a casi cero. v11 **no entra**.
 
-Lo que si dice, y es util: las muertes «contra si misma» se convierten en cabezazos. Contra
-un rival que busca -v5-, la partida que la busqueda da por perdida suele estarlo de verdad;
-salir del bolsillo solo cambia la forma de morir. Mismo patron que v6 y v10: la causa de
-muerte es un sintoma.
+Las muertes «contra si misma» se convierten en cabezazos: contra un rival que busca, la
+partida que la busqueda da por perdida suele estarlo. La causa de muerte es un sintoma.
 
 **Donde se decide entonces**, con una sonda de 8 duelos v5 contra v5: el perdedor se rinde
 siempre **sin ir por delante en longitud** (diferencia al rendirse: -5, -1 x6, 0 x2) y a
 los 100 turnos ya iba por detras en 6 de 8. Coincide con la partida real, donde ibamos 5
 por detras. En un duelo, ser mas corto regala el cabezazo, y el supuesto paranoico lo
 convierte en derrota segura. La palanca es llegar al final por delante, no la tactica final.
+
+**Royale** (15 bloques contra `v4-hojas`): **0.000**, IC95 [-0.075, +0.075]. Neutra en los
+dos formatos: **v11 cerrada**.
