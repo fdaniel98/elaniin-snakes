@@ -189,6 +189,23 @@ struct DuelParams {
     /// ver docs/strategy.md#s-territorio-duelo
     std::int32_t territory_version = 0;
     double territory_scale = 2.0;
+    /// [v14] Trampa umbralada en el duelo. 0 = apagado.
+    ///
+    /// `worst_case_space` se rechazo en royale por dispararse en el 92.9% de los estados
+    /// (ver docs/experimentos.md#s-cuellos-r); esta es su forma UMBRALADA: un rival vivo,
+    /// region ya justa, y penalizacion solo si cerrar UNA casilla nos deja por debajo de
+    /// nuestra longitud -la condicion de morir encerrado, no la de que exista un cuello-.
+    /// ver docs/strategy.md#s-trampa-duelo
+    std::int32_t trap_version = 0;
+    /// Puntos de penalizacion cuando el peor cuello nos deja sin sitio, proporcional a
+    /// cuanto falta: `trap_weight * (longitud - peor) / longitud`.
+    double trap_weight = 60.0;
+    /// Solo se mira la trampa si `espacio < trap_trigger_ratio * longitud`. Es el umbral
+    /// que evita que la señal se encienda en tablero abierto -y el que paga el coste-.
+    double trap_trigger_ratio = 2.0;
+    /// Candidatas a cuello que se prueban por hoja. Mas bajo que las 24 de v0 porque aqui
+    /// se paga en cada hoja del arbol, no una vez por turno.
+    std::int32_t trap_max_cuellos = 8;
 };
 
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md

@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 11050
+size_bytes: 10961
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -151,22 +151,9 @@ Con una sola rival viva, `duel.version` 1 (prefer_shorter 40 y gradiente de pres
 
 ### S-DESESPERACION Hipotesis: una raiz perdida no se obedece {#s-desesperacion}
 
-**Hipotesis falsable:** cuando la busqueda devuelve puntuacion de muerte en la raiz,
-decidir con v0 -espacio real, zona de cabeza- en vez de con la rama que muere mas tarde
-sube la tasa de duelos ganados y no cambia nada fuera de esas posiciones. Motivo medido:
-ver docs/experimentos.md#s-desesperacion
-
-**Que se mide:** `snake/config/v11-desesperacion.json`, v5 con `search.despair_version` 1
-y nada mas. Dos tests lo acotan: en la posicion real del turno 241 v5 elige el bolsillo y
-v11 no; y en posiciones donde la busqueda no se rinde, v11 decide identico a v5.
-
-**Donde se mide:** en los DOS formatos del torneo. Royale de cuatro, que es la fase
-principal, y **1v1 estandar**, que es el desempate: `arena_ab.py --serpientes 2 --mapa
-standard`. Y contra snork Tree por HTTP, que fue 1o en la arena de duelos.
-
-**Por que podria fallar:** a veces la rendicion es cierta y v0 no la salva; y v0 no mira
-hacia delante, asi que puede elegir una casilla con espacio que el rival cierra en dos
-turnos. Si la tasa de duelos ganados no sube, la hipotesis cae.
+Cuando la busqueda devuelve puntuacion de muerte en la raiz, decidir con v0 en vez de con
+la rama que muere mas tarde. **Cerrada: neutra** en los dos formatos del torneo; codigo
+conservado y apagado en `search.despair_version` (ver docs/experimentos.md#s-desesperacion-r).
 
 ### S-LONGITUD-DUELO Hipotesis: en el duelo, cazar longitud {#s-longitud-duelo}
 
@@ -177,19 +164,31 @@ territorio, que es lo que hizo perder el duelo real. No se le gasta un A/B compl
 
 ### S-TERRITORIO-DUELO Hipotesis: en el duelo gana quien corta el tablero {#s-territorio-duelo}
 
-**Hipotesis falsable:** con una sola rival viva, multiplicar `territory.weight` por 2 gana
-mas duelos que v5. La longitud es consecuencia: quien tiene mas tablero llega antes a la
-comida. En la partida real el rival no gano comiendo, gano levantando un muro por x=6.
+v13: con una sola rival viva, `territory.weight` por 2. **Medida en 1v1 real: +0.075, IC95
+[-0.015, +0.165]**, o sea peor que v5 sin llegar al delta. No entra; codigo conservado y
+apagado en `duel.territory_version` (ver docs/experimentos-instrumento.md#s-territorio-duelo-r2).
 
-**Sonda previa** (misma que v12): territorio x2 dio **1.375**, x0.5 dio 1.542. Es una
-sonda de 24 partidas con 3 000 nodos; decide si merece el A/B, no si entra.
+### S-TRAMPA-DUELO Hipotesis: la sala con una sola puerta {#s-trampa-duelo}
 
-**Que se mide:** `snake/config/v13-territorio-duelo.json`, v5 con `duel.territory_version`
-1. Con la version a 0 un test exige arbol identico. En 1v1 estandar y en royale, porque la
-fase final de royale tambien es un duelo.
+**Hipotesis falsable:** con una sola rival viva, penalizar el movimiento cuya region se
+queda por debajo de nuestra longitud al cerrarse UNA casilla gana mas duelos que v5,
+medido contra snork-tree.
 
-**Por que podria fallar:** el Voronoi premia llegar antes, no poder quedarse; con el cuerpo
-mas corto, una region grande que no se puede defender vale menos de lo que puntua.
+**De donde sale el numero:** de 32 derrotas contra snork-tree, **22** acabaron sin ninguna
+casilla libre y 8 con la unica salida pegada a su cabeza; desde el ultimo turno con
+territorio >= longitud sobrevivimos una mediana de **13 turnos**.
+
+**Que la diferencia de S-CUELLOS:** aquella se rechazo por dispararse en el 92.9% de los
+estados (ver docs/experimentos.md#s-cuellos-r), que dejo escrito que faltaba probarla
+umbralada. Aqui hay tres umbrales: un solo rival vivo, region ya justa
+(`espacio < trap_trigger_ratio * longitud`) y penalizacion solo si el peor cuello deja
+menos casillas que nuestra longitud.
+
+**Que se mide:** `snake/config/v14-trampa-duelo.json`, v5 con `duel.trap_version` 1. Con la
+version a 0 un test exige arbol identico, y otro exige que en tablero abierto no se pague.
+
+**Por que podria fallar:** el coste. Cada hoja que cruza el umbral paga hasta
+`trap_max_cuellos` flood fills, y menos nodos puede costar mas de lo que aporta la señal.
 
 ## S-V4 Paralelismo {#s-v4}
 

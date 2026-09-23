@@ -196,6 +196,12 @@ Params parse_params(const json& doc) {
     params.duel.territory_version =
         read_plain_int(duel, "territory_version", params.duel.territory_version);
     params.duel.territory_scale = read_double(duel, "territory_scale", params.duel.territory_scale);
+    params.duel.trap_version = read_plain_int(duel, "trap_version", params.duel.trap_version);
+    params.duel.trap_weight = read_double(duel, "trap_weight", params.duel.trap_weight);
+    params.duel.trap_trigger_ratio =
+        read_double(duel, "trap_trigger_ratio", params.duel.trap_trigger_ratio);
+    params.duel.trap_max_cuellos =
+        read_plain_int(duel, "trap_max_cuellos", params.duel.trap_max_cuellos);
 
     const json& length = child(doc, "length");
     params.length.version = read_plain_int(length, "version", params.length.version);
@@ -251,7 +257,11 @@ std::vector<std::string> unknown_keys(const std::string& path) {
           "length_weight",
           "hunt_weight",
           "territory_version",
-          "territory_scale"}},
+          "territory_scale",
+          "trap_version",
+          "trap_weight",
+          "trap_trigger_ratio",
+          "trap_max_cuellos"}},
         {"length", {"version", "advantage_weight", "target_lead", "hunt_weight"}},
         {"survival",
          {"version", "safe_turns", "weight", "seek_below_turns", "critical_turns", "panic_weight"}},

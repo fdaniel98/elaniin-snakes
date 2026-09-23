@@ -340,6 +340,29 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
         score -= p.space.weight;
     }
 
+    // 1b. [v14] Trampa umbralada, solo en el duelo. El flood fill de arriba ve el hueco de
+    //     AHORA; esto ve la sala con una sola puerta, que es como se muere encerrado 15
+    //     turnos despues de entrar. Se paga solo donde puede decidir algo: un rival vivo y
+    //     una region que ya viene justa. En tablero abierto no se calcula nada.
+    //     ver docs/strategy.md#s-trampa-duelo
+    if (p.duel.trap_version >= 1 && mi_largo > 0 &&
+        static_cast<double>(espacio) < p.duel.trap_trigger_ratio * static_cast<double>(mi_largo)) {
+        int rivales_vivos = 0;
+        for (int i = 0; i < s.count(); ++i) {
+            rivales_vivos += (i != static_cast<int>(us) &&
+                              engine::is_alive(s.snakes[static_cast<unsigned>(i)].status))
+                                 ? 1
+                                 : 0;
+        }
+        if (rivales_vivos == 1) {
+            const int peor = eval::worst_case_space(libres, yo.head(), p.duel.trap_max_cuellos);
+            if (peor < mi_largo) {
+                score -= p.duel.trap_weight * static_cast<double>(mi_largo - peor) /
+                         static_cast<double>(mi_largo);
+            }
+        }
+    }
+
     // 2. Longitud relativa y rivales vivos. Menos rivales vivos es mejor puesto, y el
     //    puesto es lo unico que puntua el torneo.
     int vivos = 0;

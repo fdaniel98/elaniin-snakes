@@ -1451,3 +1451,87 @@ TEST_CASE("territorio en duelo: encendido cambia el 1v1 y no rompe la legalidad"
     }
     REQUIRE(distintos > 0);
 }
+
+TEST_CASE("trampa en duelo: con trap_version=0 el arbol no se entera", "[search][duelo]") {
+    engine::Rng rng(20260927);
+    const snake::Params base = params_con_nodos(20000);
+    snake::Params absurdo = base;
+    absurdo.duel.trap_weight = 9999.0;
+    absurdo.duel.trap_trigger_ratio = 99.0;
+    REQUIRE(base.duel.trap_version == 0);
+    for (int caso = 0; caso < 15; ++caso) {
+        for (const int serpientes : {2, 4}) {
+            const engine::State11 s = engine::start_board<11, 11, 4>(
+                serpientes, engine::Ruleset{}, 300 + static_cast<std::uint64_t>(rng.next() % 500));
+            const snake::SearchResult a = snake::search(s, inalcanzable(), base);
+            const snake::SearchResult b = snake::search(s, inalcanzable(), absurdo);
+            INFO("caso " << caso << " serpientes " << serpientes);
+            REQUIRE(a.best == b.best);
+            REQUIRE(a.score == b.score);
+            REQUIRE(a.nodes == b.nodes);
+        }
+    }
+}
+
+TEST_CASE("trampa en duelo: en tablero abierto no se enciende ni se paga", "[search][duelo]") {
+    // El umbral es la mitad de la idea: en royale los cuellos se rechazaron por dispararse
+    // en el 92.9% de los estados (ver docs/experimentos.md#s-cuellos-r). Con el tablero
+    // recien abierto la cuenta ni se hace, y eso tiene que verse en los nodos.
+    engine::Rng rng(20260928);
+    const snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.duel.trap_version = 1;
+    encendido.duel.trap_weight = 9999.0;
+    for (int caso = 0; caso < 10; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 1200 + static_cast<std::uint64_t>(rng.next() % 900));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        INFO("caso " << caso);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.score == b.score);
+    }
+}
+
+TEST_CASE("trampa en duelo: en el duelo real dee2b0c8 cambia la puntuacion del bolsillo",
+          "[search][duelo][real]") {
+    // Turno 241 del duelo que perdimos en el torneo: 2 serpientes, cuerpo 20, y `right`
+    // lleva a un bolsillo. Es la clase de posicion para la que se escribio el termino.
+    int cambios = 0;
+    for (const char* nombre :
+         {"dee2b0c8-t238.json", "dee2b0c8-t239.json", "dee2b0c8-t240.json", "dee2b0c8-t241.json"}) {
+        const engine::State11 s = estado_real(nombre);
+        snake::Params apagado = params_torneo(0);
+        apagado.search.budget_nodes = 20000;
+        snake::Params encendido = apagado;
+        encendido.duel.trap_version = 1;
+        encendido.duel.trap_weight = 400.0;
+        encendido.duel.trap_trigger_ratio = 99.0; // fuerza la cuenta en esta posicion
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        INFO(nombre << " apagado score " << a.score << " mov " << static_cast<int>(a.best)
+                    << " | encendido score " << b.score << " mov " << static_cast<int>(b.best));
+        cambios += (a.score != b.score || a.best != b.best) ? 1 : 0;
+        const engine::MoveMask legal = engine::legal_moves(s, s.you);
+        REQUIRE(engine::mask_has(legal, b.best));
+    }
+    REQUIRE(cambios > 0);
+}
+
+TEST_CASE("trampa en duelo: con cuatro serpientes vivas no se aplica", "[search][duelo]") {
+    engine::Rng rng(20260929);
+    const snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.duel.trap_version = 1;
+    encendido.duel.trap_weight = 9999.0;
+    encendido.duel.trap_trigger_ratio = 99.0;
+    for (int caso = 0; caso < 15; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            4, engine::Ruleset{}, 2000 + static_cast<std::uint64_t>(rng.next() % 500));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        INFO("caso " << caso);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.score == b.score);
+    }
+}
