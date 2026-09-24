@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 15211
+size_bytes: 14982
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -231,19 +231,16 @@ hacia el centro, y v15 enseño que jugar el centro no es lo que hace ganar.
 config. v12, v13, v14 y v15 salieron todas del lado malo y v17 no aplica en standard;
 apilar cosas que restan resta mas.
 
-**Lo que si tiene base:** casi ninguno de esos candidatos se midio en el formato que se
-juega. v6 y v13 se midieron en royale (ver docs/strategy.md#s-formato) y v14, v15 y v16
-contra snork Tree, que resulto ser el rival que nos saca una distancia enorme mientras al
-resto del campo le ganamos (ver docs/experimentos-duelo.md#s-campo-duelo). Son seis
-algoritmos escritos, probados y apagados, juzgados en el juego equivocado.
+**Lo que si tiene base:** casi ninguno se midio donde se juega. v6 y v13 en royale
+(ver docs/strategy.md#s-formato), y v14, v15 y v16 contra snork Tree, el unico rival del
+campo que nos saca distancia (ver docs/experimentos-duelo.md#s-campo-duelo).
 
 **Procedimiento, en tres pasos y en este orden:**
 
 1. **Tamiz** (`training-room/barrido.py`): cada candidato contra v5 en la arena, standard
-   de cuatro, mismo numero de bloques y mismo presupuesto por nodos. Es self-play, barato y
-   reproducible: sirve para DESCARTAR, no para aceptar. `exp-sin-longitud.json` va en la
-   lista como control: se sabe que sale PEOR (ver docs/experimentos.md#s-formato-r), asi
-   que si sale plano, el tamiz no esta midiendo.
+   de cuatro, mismos bloques y mismo presupuesto por nodos. Self-play: sirve para
+   DESCARTAR, no para aceptar. `exp-sin-longitud.json` va de control -se sabe que sale PEOR
+   (ver docs/experimentos.md#s-formato-r)-, asi que si sale plano es el tamiz el que falla.
 2. **Torneo** contra `gauntlet-v2` de lo que sobreviva. El veredicto sale de ahi, porque un
    campo de copias de uno mismo no dice como se juega contra otros motores.
 3. **Combinar solo lo que gano, y volver a medir.** Dos terminos que ganan por separado no
