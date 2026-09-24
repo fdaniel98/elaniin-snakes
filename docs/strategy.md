@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 10961
+size_bytes: 10460
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -170,25 +170,15 @@ apagado en `duel.territory_version` (ver docs/experimentos-instrumento.md#s-terr
 
 ### S-TRAMPA-DUELO Hipotesis: la sala con una sola puerta {#s-trampa-duelo}
 
-**Hipotesis falsable:** con una sola rival viva, penalizar el movimiento cuya region se
-queda por debajo de nuestra longitud al cerrarse UNA casilla gana mas duelos que v5,
-medido contra snork-tree.
+v14: con una sola rival viva y la region ya justa, penalizar si cerrar UNA casilla nos deja
+por debajo de nuestra longitud. Salio de que 22 de 32 derrotas contra snork-tree acabaron
+sin ninguna casilla libre. **Medida contra snork-tree, 40 bloques: +0.075 (lado malo), IC95
+[-0.054, +0.204]. No entra**; codigo conservado y apagado en `duel.trap_version`
+(ver docs/experimentos.md#s-trampa-duelo-r).
 
-**De donde sale el numero:** de 32 derrotas contra snork-tree, **22** acabaron sin ninguna
-casilla libre y 8 con la unica salida pegada a su cabeza; desde el ultimo turno con
-territorio >= longitud sobrevivimos una mediana de **13 turnos**.
-
-**Que la diferencia de S-CUELLOS:** aquella se rechazo por dispararse en el 92.9% de los
-estados (ver docs/experimentos.md#s-cuellos-r), que dejo escrito que faltaba probarla
-umbralada. Aqui hay tres umbrales: un solo rival vivo, region ya justa
-(`espacio < trap_trigger_ratio * longitud`) y penalizacion solo si el peor cuello deja
-menos casillas que nuestra longitud.
-
-**Que se mide:** `snake/config/v14-trampa-duelo.json`, v5 con `duel.trap_version` 1. Con la
-version a 0 un test exige arbol identico, y otro exige que en tablero abierto no se pague.
-
-**Por que podria fallar:** el coste. Cada hoja que cruza el umbral paga hasta
-`trap_max_cuellos` flood fills, y menos nodos puede costar mas de lo que aporta la señal.
+El diagnostico sigue vivo y el remedio no: morimos encerrados, pero penalizar el cuello en
+las hojas no lo evita. Lo que queda por probar es la version de RAIZ -una vez por turno,
+sobre los movimientos candidatos- que cuesta 1/miles de lo que cuesta en las hojas.
 
 ## S-V4 Paralelismo {#s-v4}
 

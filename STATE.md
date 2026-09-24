@@ -6,12 +6,13 @@ Fase: 4 (Arena in-process + A/B) — EN CURSO. La 3 quedo COMPLETA.
 Gate: PASS 14/14 en la de referencia (2026-09-19, 2f06c27); la fase 4 aun sin gate completo.
 Loop: fase 3 CLOSED en `.loop/3/`; la 4 abre cuando este el driver de A/B.
 Snake activa: **v5** (busqueda + territorio en hojas + control de longitud). Gano su A/B
-contra v4 por -0.6917 y contra v0 por -1.0583: 26 primeros de 60 y ningun cuarto
-(ver docs/experimentos.md#s-longitud-r). v0 sigue entero en `v0-baseline.json`. v6 se
-midio y no entra (ver docs/experimentos.md#s-supervivencia-r): apagada en `survival.version`.
-Desplegada en Cloud Run `us-east1` y registrada. Partida real: 0 timeouts, maximo 207 ms de
-500 (ver docs/performance.md#p-09). Margenes ya medidos, no inventados
-(ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376).
+contra v4 por -0.6917 y contra v0 por -1.0583 (ver docs/experimentos.md#s-longitud-r); v0
+sigue entero en `v0-baseline.json` y v6 no entra (ver docs/experimentos.md#s-supervivencia-r).
+Desplegada en Cloud Run `us-east1`: 0 timeouts, maximo 207 ms de 500
+(ver docs/performance.md#p-09) con margenes medidos
+(ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376). Contra el rival EXTERNO
+`snork-tree` (1v1 estandar, 240 partidas) v5 gana ~26% de forma estable; v14 y el techo de
+computo a 300 ms se midieron ahi y ninguno entra (ver docs/experimentos.md#s-trampa-duelo-r).
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -82,5 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Redesplegar con `network_margin_ms` 80 y comprobar que `GET /` dice
-`v5-longitud-150ms-m80`; despues, una partida real y `scripts/latencias-jsonl.py`.
+Decidir si se prueba la trampa de RAIZ (una vez por turno, no en cada hoja) contra
+snork-tree, o si el duelo se deja como esta y se vuelve al royale de cuatro
+(ver docs/strategy.md#s-trampa-duelo).

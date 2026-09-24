@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 22196
+size_bytes: 22453
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -343,43 +343,19 @@ midio entero y ninguna entro; lo vivo es ver docs/strategy.md#s-trampa-duelo.
 
 ### S-COBRAR-R Resultado: el termino esta muerto, no es ruido {#s-cobrar-r}
 
-A/B de arena en la maquina de referencia: v5 contra v9 (`head.prefer_shorter` 8 -> 40),
-campo `v4-hojas`, 15 bloques, 14 821 nodos (los 150 ms del despliegue alli).
-
-| | v5 | v9 |
-|---|---|---|
-| puesto medio | 1.742 | 1.742 |
-| diferencia por bloque | | **0.000 en los 15** |
-| turnos vividos | 200.2 | 200.2 |
-| causas | identicas | identicas |
-
-`compara.py` dijo NO CONCLUYENTE con IC95 [0, 0], y eso era enganoso: **las dos ramas
-jugaron las mismas 60 partidas**, movimiento a movimiento. Con semillas comunes y
-presupuesto por nodos, eso solo pasa si el cambio no alcanzo ni una decision.
-
-Lo confirma una sonda sobre 612 posiciones de self-play (1 500 nodos): con
-`prefer_shorter` a 8, a 40 y a **400**, la **puntuacion de la raiz** es identica en las 612,
-incluidas las 41 (6.7%) con un rival mas corto a distancia 3 o menos.
+A/B de arena, v5 contra v9 (`head.prefer_shorter` 8 -> 40), 15 bloques, 14 821 nodos:
+**las dos ramas jugaron las mismas 60 partidas**, movimiento a movimiento (1.742 las dos,
+causas y turnos identicos). Una sonda sobre 612 posiciones con `prefer_shorter` a 8, 40 y
+400 da la misma puntuacion de raiz en las 612.
 
 **Por que, y es lo que hay que recordar:** el termino premia terminar con la cabeza pegada
-a la de un rival mas corto. En la busqueda paranoica ese rival es un **minimizador**:
-entre sus respuestas elige la que nos da menos puntuacion, y apartarse siempre es una de
-ellas. El premio solo sobreviviria en una hoja donde el rival no tenga a donde ir, y eso
-casi no existe. El termino simetrico, `avoid_equal_or_longer`, si esta vivo -al rival le
-conviene acercarse- asi que la asimetria de 80 contra 8 no la pone el peso: **la pone el
-modelo paranoico**, que por construccion nunca deja cobrar la zona de cabeza.
+a un rival mas corto, pero en la busqueda paranoica ese rival es un **minimizador** y
+apartarse siempre esta entre sus respuestas. El simetrico `avoid_equal_or_longer` si vive
+-al rival le conviene acercarse-, asi que la asimetria no la pone el peso, la pone el
+modelo. Cobrar la ventaja no es premiar el contacto, es **quitarle sitio** al rival.
 
-Consecuencias:
-
-- **v9 no entra**, y mas bloques no la moverian.
-- La mitad `duel.prefer_shorter` de v10 es igual de inerte; lo que puede estar vivo en v10
-  es el **gradiente de presion**, que puntua la distancia y no solo el contacto: el rival
-  puede alejarse, pero no a cualquier distancia. El test del duelo ya encontro posiciones
-  donde la evaluacion cambia.
-- Cobrar la ventaja no es premiar el contacto, es **quitarle sitio** al rival: eso si lo ve
-  un minimizador.
-- `compara.py` ahora marca **RAMAS IDENTICAS** cuando el puesto de cada asiento coincide en
-  todos los bloques, para que un termino muerto no vuelva a leerse como ruido.
+**v9 no entra** y mas bloques no la moverian. `compara.py` marca ahora **RAMAS IDENTICAS**
+para que un termino muerto no vuelva a leerse como ruido.
 
 ### S-DUELO-R Resultado: NO CONCLUYENTE, y el tamaño del efecto ya esta acotado {#s-duelo-r}
 
@@ -464,3 +440,32 @@ convierte en derrota segura. La palanca es llegar al final por delante, no la ta
 
 **Royale** (15 bloques contra `v4-hojas`): **0.000**, IC95 [-0.075, +0.075]. Neutra en los
 dos formatos: **v11 cerrada**.
+
+### S-TRAMPA-DUELO-R Resultado: la trampa umbralada no entra, y el duelo sigue abierto {#s-trampa-duelo-r}
+
+Primer A/B contra un rival EXTERNO: 1v1 estandar por HTTP con el arbitro oficial contra
+`snork-tree`, 40 bloques (80 partidas) por rama, pinning de CPU para las dos.
+
+| | v5 | v14 |
+|---|---|---|
+| puesto medio | 1.738 | 1.812 |
+| duelos ganados | 21 de 80 | 15 de 80 |
+| turnos vividos | 381.8 | 347.2 |
+| movimientos >= 350 ms | 13 de 30 546 | 32 de 27 779 |
+
+Diferencia **+0.075** (del lado malo), IC95 [-0.054, +0.204]: NO CONCLUYENTE y apuntando a
+peor, igual que v13. **v14 no entra**; codigo conservado y apagado en `duel.trap_version`.
+
+Dos cosas que el numero no dice y los logs si:
+
+- **No es el coste medio.** p50 y p99 son identicos a v5 (148 y 156 ms): el umbral hace su
+  trabajo y en la inmensa mayoria de las hojas no se calcula nada. Lo que crece son los
+  **picos**: 26 movimientos tocaron el techo de 500 ms contra 9 de v5. Pero solo 8 de las
+  65 derrotas tuvieron algun timeout, asi que los timeouts no explican las 6 derrotas de
+  mas.
+- **La linea base es solida.** Tres corridas de v5 contra snork-tree dieron 1.750, 1.738 y
+  1.800 de puesto medio: perdemos el duelo contra snork Tree de forma estable, ~26% de
+  victorias. El diagnostico de las derrotas (22 de 32 encerrados, mediana de 13 turnos
+  desde el ultimo turno con territorio >= longitud) sigue en pie; lo que falla es el
+  remedio, no el diagnostico.
+
