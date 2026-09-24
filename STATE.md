@@ -43,12 +43,13 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 
 ## Bloqueado / pendiente de decision humana
 
+- [ ] **La doc apunta a Royale y el torneo es standard** (ver docs/strategy.md#s-formato):
+      decidir si se reescribe el formato objetivo o se declara que juega los dos y el campo
+      que decide es standard.
 - [ ] **El fixture `02-spawn-turno2-cola-apilada.json` afirma algo falso:** prohibe `down`
-      diciendo que bajar es mortal, y no lo es -el rival apunta hacia abajo y no puede
-      subir por la columna 5-. La busqueda lo ve y baja. Decidir si se corrige.
-- [ ] **Cuarta snake del campo:** `TheApX/battlesnake-hungry` (MIT, C++). Aprobar un
-      repositorio es confirmacion humana (ver zoo/README.md); sin ella `gauntlet-v1` se
-      queda con tres snakes del mismo motor y mide menos de lo que parece.
+      diciendo que bajar es mortal, y no lo es. Decidir si se corrige.
+- [ ] **Cuarta snake del campo:** `TheApX/battlesnake-hungry` (MIT, C++). Sin aprobarla,
+      `gauntlet-v1` se queda con tres snakes del mismo motor.
 - [ ] **Lineas base en la de referencia:** `./scripts/bench.sh` y `sonda_arena` en WSL2;
       ver docs/performance.md#p-06 y ver docs/performance.md#p-08 son de otra maquina.
 
@@ -82,7 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Re-medir los candidatos aparcados (v14, v15) contra el CAMPO de cuatro rivales del zoo y
-no solo contra snork-tree: v5 gana el 54-100% contra los otros tres y el 25% contra Tree,
-asi que los seis veredictos del duelo se tomaron contra el rival equivocado
-(ver docs/experimentos-duelo.md#s-campo-duelo).
+Re-medir v5 contra `exp-sin-longitud.json` en **standard** de cuatro, en la arena: el
+torneo es standard y no royale (ver docs/strategy.md#s-formato), asi que la unica mejora
+grande del proyecto se midio en el formato equivocado.

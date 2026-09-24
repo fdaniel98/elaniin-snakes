@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 11859
+size_bytes: 13131
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -90,6 +90,28 @@ vez de como espacio alcanzable a secas; el crudo se conserva para la guarda de Â
 mi cuerpoÂ». **Cuesta 1.2 niveles** (12.03 -> 10.89 con 4 vivas, 200 ms), profundidad que ya
 se midio que no vale nada. **Medida: MEJORA** y esta en v5
 (ver docs/experimentos.md#s-hojas-r).
+
+### S-FORMATO El torneo es STANDARD, no royale {#s-formato}
+
+Verificado en la partida real del torneo (`tests/fixtures-reales/dee2b0c8-*.json`):
+`ruleset.name` y `map` son **standard** y el tablero no trae un solo hazard. El proyecto se
+escribio entero apuntando a Royale, y eso invalida de raiz varias cosas:
+
+- **v17 no puede entrar:** sin hazard no hay shrink que anticipar
+  (ver docs/strategy.md#s-shrink).
+- **El diagnostico de royale describe otro juego:** las 27 muertes por salud de 34 y la
+  brecha de territorio del turno 100 son de un tablero que se encoge
+  (ver docs/experimentos.md#s-shrink-r).
+- **v5 gano su A/B en royale.** El control de longitud -la unica mejora grande del
+  proyecto, -0.6917 contra v4- se midio donde el tablero se encoge y obliga a crecer. En
+  standard ese coste es otro, asi que la superioridad de v5 sobre v4 **no esta medida en el
+  formato que se juega**. Se re-mide con `snake/config/exp-sin-longitud.json`, que es
+  default con `length.version` a 0 y nada mas.
+- **Lo que si vale:** los duelos contra el zoo se jugaron en standard 1v1
+  (ver docs/experimentos-duelo.md#s-campo-duelo).
+
+Royale sigue soportado y el cerebro lee la variante del request, asi que esto no es un
+cambio de codigo: es un cambio de que campo decide.
 
 ## S-V2 Busqueda multijugador {#s-v2}
 
