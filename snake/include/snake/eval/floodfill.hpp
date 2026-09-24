@@ -57,6 +57,35 @@ template <int W, int H>
     return result;
 }
 
+/// La REGION alcanzable desde `start`, como bitboard (incluye `start`).
+///
+/// `flood` devuelve cuantas casillas hay; esto devuelve cuales. Hace falta para dos
+/// preguntas que el conteo no responde: si nuestra cola cae dentro de la region -y
+/// entonces se puede dar vueltas detras de ella indefinidamente- y si la region del rival
+/// toca la nuestra -y entonces el duelo todavia es un juego y no dos solitarios-.
+/// ver docs/strategy.md#s-supervivencia-duelo
+template <int W, int H>
+[[nodiscard]] engine::Bitboard<W, H> region(const engine::Bitboard<W, H>& free_cells,
+                                            int start) noexcept {
+    using Board = engine::Bitboard<W, H>;
+    Board vista;
+    if (start < 0 || !free_cells.test(start)) {
+        return vista;
+    }
+    Board frontier;
+    frontier.set(start);
+    vista = frontier;
+    for (int turn = 1; turn <= W * H; ++turn) {
+        const Board next = (frontier.expand() & free_cells).without(vista);
+        if (next.none()) {
+            break;
+        }
+        vista |= next;
+        frontier = next;
+    }
+    return vista;
+}
+
 /// Espacio que queda en el PEOR caso si una sola casilla se cierra.
 ///
 /// El flood fill dice cuanto hueco hay ahora. Esto dice cuanto quedaria si el rival

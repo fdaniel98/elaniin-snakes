@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 10460
+size_bytes: 9846
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -38,30 +38,11 @@ Resultado medido: ver docs/experimentos.md#s-v1r
 
 ### S-CUELLOS Hipotesis: no entrar donde solo hay una puerta {#s-cuellos}
 
-**Hipotesis falsable:** si 132 de 178 muertes nuestras no tenian ninguna salida ese turno,
-no morimos por elegir mal el turno que morimos: entramos en regiones que el rival cierra
-despues. Penalizar el movimiento cuyo espacio se desploma al tapar UNA casilla deberia
-subir el puesto medio contra `gauntlet-v1`.
-
-**Que se mide:** `snake/config/cuellos.json`, que es v0 con `space.worst_case_weight` a
-150 y `territory.version` en **0**. Una sola variable. `v2.json` -cuellos MAS el territorio
-de v1- no se mide todavia a proposito: v1 ya se rechazo (ver docs/experimentos.md#s-v1r) y
-medir los dos juntos no diria cual de los dos hizo que.
-
-**Protocolo:** 60 partidas, `--seed-base 1`, o sea las semillas 1..15 con rotacion de los
-4 asientos. Son los MISMOS 15 bloques que las primeras 60 partidas de `torneo-v1`, asi que
-la comparacion es pareada por bloque (ver docs/results/torneo-v1/). Metrica primaria
-unica: diferencia pareada de puesto medio por bloque. Lo demas es descriptivo y va sin
-p-valores.
-
-**Lo que este tamaño puede y no puede ver:** 15 bloques solo resuelven un efecto grande.
-La medicion de v1 enseño que 0.05 de puesto medio pide cientos de bloques; este run no
-pretende resolver 0.05, pretende ver si los cuellos mueven la aguja de forma visible. Un
-resultado dentro del ruido **no** significa que la idea sea mala, significa que no cabe en
-el presupuesto de tiempo de esta semana y que la decision se toma con busqueda, no con mas
-partidas de heuristica.
-
-Resultado medido: ver docs/experimentos.md#s-cuellos-r
+Penalizar el movimiento cuyo espacio se desploma al taparse UNA casilla. **Medida y
+rechazada en royale:** el detector se dispara en el 92.9% de los estados, asi que entra
+como ruido sumado al espacio (ver docs/experimentos.md#s-cuellos-r). Apagada en
+`space.worst_case_weight`; su forma umbralada se midio como v14 y tampoco entra
+(ver docs/strategy.md#s-trampa-duelo).
 
 ### S-BUSQ Busqueda paranoica: la primera vez que miramos hacia delante {#s-busq}
 
@@ -99,30 +80,16 @@ Resultado medido: ver docs/experimentos.md#s-busq-r
 
 ### S-HOJAS Hipotesis: la evaluacion buena va en las hojas {#s-hojas}
 
-Cuatro experimentos dibujan este cuadro, y solo queda una celda:
-
-| | evaluacion de v0 | evaluacion con territorio |
-|---|---|---|
-| **sin busqueda** | 2.767 (linea base) | v1 y cuellos: **no ayuda** |
-| **con busqueda** | -0.28: **si ayuda** | **esto** |
-
-La celda vacia es exactamente lo que el rechazo de v1 predijo: «cuando exista busqueda, una
+Cuatro experimentos dibujan un cuadro con una sola celda vacia: la evaluacion con
+territorio no ayuda sin busqueda (v1 y cuellos), la busqueda ayuda con la evaluacion de v0
+(-0.28), y falta el cruce. Es lo que predijo el rechazo de v1: «cuando exista busqueda, una
 evaluacion mejor en las HOJAS si deberia notarse» (ver docs/experimentos.md#s-v1r).
 
-**Que es:** `evaluate()` mide el espacio como TERRITORIO -Voronoi por BFS simultaneo, las
-casillas que alcanzamos antes que los rivales- en vez de como espacio alcanzable a secas.
-El espacio crudo se conserva para la guarda de «no cabe ni mi cuerpo», que es una condicion
-sobre casillas fisicas y no sobre quien llega antes.
-
-**Lo que cuesta, medido:** 1.2 niveles de profundidad (12.03 -> 10.89 con 4 vivas, 200 ms).
-Es un buen cambio precisamente por el hallazgo de arriba: se paga con profundidad que se
-midio que no vale nada.
-
-**Hipotesis falsable:** el territorio en las hojas sube el puesto medio contra
-`gauntlet-v1` por encima del delta de 0.10, medido contra la busqueda SIN territorio -no
-contra v0-, porque lo que se prueba es la evaluacion, no la busqueda.
-
-**Estado: SIN MEDIR.** Se enciende con `snake/config/v4-hojas.json`.
+**Que es:** `evaluate()` mide el espacio como TERRITORIO -Voronoi por BFS simultaneo- en
+vez de como espacio alcanzable a secas; el crudo se conserva para la guarda de «no cabe ni
+mi cuerpo». **Cuesta 1.2 niveles** (12.03 -> 10.89 con 4 vivas, 200 ms), profundidad que ya
+se midio que no vale nada. **Medida: MEJORA** y esta en v5
+(ver docs/experimentos.md#s-hojas-r).
 
 ## S-V2 Busqueda multijugador {#s-v2}
 
@@ -179,6 +146,26 @@ sin ninguna casilla libre. **Medida contra snork-tree, 40 bloques: +0.075 (lado 
 El diagnostico sigue vivo y el remedio no: morimos encerrados, pero penalizar el cuello en
 las hojas no lo evita. Lo que queda por probar es la version de RAIZ -una vez por turno,
 sobre los movimientos candidatos- que cuesta 1/miles de lo que cuesta en las hojas.
+
+### S-SUPERVIVENCIA-DUELO Hipotesis: poder quedarse, no llegar antes {#s-supervivencia-duelo}
+
+**Hipotesis falsable:** con una sola rival viva, medir TURNOS QUE AGUANTO en vez de
+casillas que alcanzo gana mas duelos que v5 contra snork-tree. El Voronoi premia llegar
+antes y no distingue una region abierta de 40 casillas de un callejon de 40. Dos cosas que
+si la distinguen y hoy no miramos:
+
+1. **Cola dentro de la region:** si es alcanzable se puede girar detras de ella
+   indefinidamente -el tail-chasing de los turnos altos- y la region deja de tener fondo.
+2. **Regiones separadas:** si las dos regiones ya no se tocan, el duelo son dos solitarios
+   y gana quien aguante mas turnos; ahi el valor es una cuenta con salud y comida, no una
+   heuristica.
+
+**Que se mide:** `snake/config/v15-supervivencia-duelo.json`, v5 con
+`duel.survival_version` 1; dos tests exigen arbol identico con la version a 0 y con cuatro
+vivas.
+
+**Por que podria fallar:** la cuenta supone que cada region se recorre entera, y una region
+estrecha con la cola dentro no se recorre entera: puede premiar encierros comodos.
 
 ## S-V4 Paralelismo {#s-v4}
 

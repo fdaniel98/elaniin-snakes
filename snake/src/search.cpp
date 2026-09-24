@@ -340,6 +340,55 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
         score -= p.space.weight;
     }
 
+    // 1a. [v15] Supervivencia en vez de superficie, solo con un rival vivo.
+    //
+    //     El Voronoi premia LLEGAR antes; esto mide poder QUEDARSE. Dos preguntas que el
+    //     conteo de casillas no responde:
+    //       - si nuestra cola cae dentro de la region alcanzable, se puede girar detras de
+    //         ella indefinidamente (el tail-chasing de los finales), y la region deja de
+    //         tener fondo;
+    //       - si las dos regiones ya no se tocan, el duelo son dos solitarios y gana quien
+    //         aguante mas turnos: eso es una cuenta, no una heuristica.
+    //     ver docs/strategy.md#s-supervivencia-duelo
+    if (p.duel.survival_version >= 1) {
+        int rival = -1;
+        int vivos_rival = 0;
+        for (int i = 0; i < s.count(); ++i) {
+            if (i != static_cast<int>(us) &&
+                engine::is_alive(s.snakes[static_cast<unsigned>(i)].status)) {
+                ++vivos_rival;
+                rival = i;
+            }
+        }
+        if (vivos_rival == 1) {
+            const auto& otro = s.snakes[static_cast<unsigned>(rival)];
+            Board libres_rival = Board::full().without(blocked);
+            if (otro.tail_is_stacked()) {
+                libres_rival.set(otro.tail());
+            }
+            libres_rival.set(otro.head());
+            const Board mia = eval::region(libres, yo.head());
+            const Board suya = eval::region(libres_rival, otro.head());
+            const bool cola_dentro = mia.test(yo.tail());
+            if ((mia & suya).none()) {
+                // Regiones separadas: el resultado ya no depende de lo que haga el rival.
+                // Turnos que aguanta cada una: con la cola dentro se vive de la salud -y de
+                // la comida que haya en la region-; sin ella, de las casillas que quedan.
+                const auto aguanta = [&](const Board& r, const State::Snake& sn) {
+                    const int comida = (r & s.food).count();
+                    const int por_salud = static_cast<int>(sn.health) + comida * 100;
+                    return r.test(sn.tail()) ? por_salud : std::min(r.count(), por_salud);
+                };
+                const int mios = aguanta(mia, yo);
+                const int suyos = aguanta(suya, otro);
+                score += p.duel.survival_weight * static_cast<double>(mios - suyos) /
+                         static_cast<double>(State::cells);
+            } else if (cola_dentro) {
+                score += p.duel.tail_loop_weight;
+            }
+        }
+    }
+
     // 1b. [v14] Trampa umbralada, solo en el duelo. El flood fill de arriba ve el hueco de
     //     AHORA; esto ve la sala con una sola puerta, que es como se muere encerrado 15
     //     turnos despues de entrar. Se paga solo donde puede decidir algo: un rival vivo y

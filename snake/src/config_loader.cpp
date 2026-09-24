@@ -202,6 +202,11 @@ Params parse_params(const json& doc) {
         read_double(duel, "trap_trigger_ratio", params.duel.trap_trigger_ratio);
     params.duel.trap_max_cuellos =
         read_plain_int(duel, "trap_max_cuellos", params.duel.trap_max_cuellos);
+    params.duel.survival_version =
+        read_plain_int(duel, "survival_version", params.duel.survival_version);
+    params.duel.survival_weight = read_double(duel, "survival_weight", params.duel.survival_weight);
+    params.duel.tail_loop_weight =
+        read_double(duel, "tail_loop_weight", params.duel.tail_loop_weight);
 
     const json& length = child(doc, "length");
     params.length.version = read_plain_int(length, "version", params.length.version);
@@ -261,7 +266,10 @@ std::vector<std::string> unknown_keys(const std::string& path) {
           "trap_version",
           "trap_weight",
           "trap_trigger_ratio",
-          "trap_max_cuellos"}},
+          "trap_max_cuellos",
+          "survival_version",
+          "survival_weight",
+          "tail_loop_weight"}},
         {"length", {"version", "advantage_weight", "target_lead", "hunt_weight"}},
         {"survival",
          {"version", "safe_turns", "weight", "seek_below_turns", "critical_turns", "panic_weight"}},

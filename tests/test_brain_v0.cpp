@@ -1535,3 +1535,65 @@ TEST_CASE("trampa en duelo: con cuatro serpientes vivas no se aplica", "[search]
         REQUIRE(a.score == b.score);
     }
 }
+
+TEST_CASE("supervivencia en duelo: con survival_version=0 el arbol no se entera",
+          "[search][duelo]") {
+    engine::Rng rng(20260930);
+    const snake::Params base = params_con_nodos(20000);
+    snake::Params absurdo = base;
+    absurdo.duel.survival_weight = 9999.0;
+    absurdo.duel.tail_loop_weight = 9999.0;
+    REQUIRE(base.duel.survival_version == 0);
+    for (int caso = 0; caso < 15; ++caso) {
+        for (const int serpientes : {2, 4}) {
+            const engine::State11 s = engine::start_board<11, 11, 4>(
+                serpientes, engine::Ruleset{}, 600 + static_cast<std::uint64_t>(rng.next() % 500));
+            const snake::SearchResult a = snake::search(s, inalcanzable(), base);
+            const snake::SearchResult b = snake::search(s, inalcanzable(), absurdo);
+            INFO("caso " << caso << " serpientes " << serpientes);
+            REQUIRE(a.best == b.best);
+            REQUIRE(a.score == b.score);
+            REQUIRE(a.nodes == b.nodes);
+        }
+    }
+}
+
+TEST_CASE("supervivencia en duelo: encendida cambia el 1v1 y no rompe la legalidad",
+          "[search][duelo]") {
+    engine::Rng rng(20260931);
+    const snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.duel.survival_version = 1;
+    int distintos = 0;
+    for (int caso = 0; caso < 30; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 1500 + static_cast<std::uint64_t>(rng.next() % 900));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        distintos += (a.score != b.score || a.best != b.best) ? 1 : 0;
+        const engine::MoveMask legal = engine::legal_moves(s, s.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, b.best));
+        }
+    }
+    INFO("posiciones de duelo en que cambio: " << distintos << " de 30");
+    REQUIRE(distintos > 0);
+}
+
+TEST_CASE("supervivencia en duelo: con cuatro vivas no se aplica", "[search][duelo]") {
+    engine::Rng rng(20260932);
+    const snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.duel.survival_version = 1;
+    encendido.duel.survival_weight = 9999.0;
+    encendido.duel.tail_loop_weight = 9999.0;
+    for (int caso = 0; caso < 15; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            4, engine::Ruleset{}, 2500 + static_cast<std::uint64_t>(rng.next() % 500));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        INFO("caso " << caso);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.score == b.score);
+    }
+}

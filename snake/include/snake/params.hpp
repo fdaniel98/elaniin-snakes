@@ -206,6 +206,24 @@ struct DuelParams {
     /// Candidatas a cuello que se prueban por hoja. Mas bajo que las 24 de v0 porque aqui
     /// se paga en cada hoja del arbol, no una vez por turno.
     std::int32_t trap_max_cuellos = 8;
+    /// [v15] Supervivencia en vez de superficie, con un solo rival vivo. 0 = apagado.
+    ///
+    /// Dos cosas que el territorio Voronoi no distingue y deciden el duelo:
+    ///   1. una region con la COLA dentro se recorre indefinidamente -es el tail-chasing
+    ///      que juegan las snakes fuertes en turnos altos-, y una sin cola se acaba;
+    ///   2. cuando las dos regiones alcanzables ya no se tocan, el duelo deja de ser un
+    ///      juego y son dos solitarios: gana quien aguanta mas turnos, y eso es una cuenta,
+    ///      no una heuristica.
+    ///
+    /// Medido: 22 de 32 derrotas contra snork-tree acabaron sin ninguna casilla libre.
+    /// ver docs/strategy.md#s-supervivencia-duelo
+    std::int32_t survival_version = 0;
+    /// Puntos por turno de ventaja en el final ya separado, donde el resultado esta
+    /// decidido y conviene que domine a todo lo demas menos a la muerte.
+    double survival_weight = 300.0;
+    /// Puntos por tener la cola dentro de la region propia mientras las dos regiones
+    /// todavia se tocan. Es la version continua de lo mismo.
+    double tail_loop_weight = 80.0;
 };
 
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md
