@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 11941
+size_bytes: 13303
 ---
 
 # Experimentos del duelo
@@ -228,3 +228,31 @@ convierte en derrota segura. La palanca es llegar al final por delante, no la ta
 
 **Royale** (15 bloques contra `v4-hojas`): **0.000**, IC95 [-0.075, +0.075]. Neutra en los
 dos formatos: **v11 cerrada**.
+
+### S-CAMPO-DUELO Resultado: no somos malos en duelos, somos malos contra snork Tree {#s-campo-duelo}
+
+v5 en 1v1 estandar por HTTP contra los cuatro rivales del zoo, 20 bloques cada uno
+(40 partidas), pinning de CPU:
+
+| rival | duelos ganados | sin las partidas con timeout del rival |
+|---|---:|---:|
+| `jaxhodg` | 100% (40 de 40) | 100% |
+| `hovering-hobbs` | 60% | **56%** |
+| `snork-flood` | 52% | **54%** |
+| `snork-tree` | 26% (de 80) | **25%** |
+
+**Los seis experimentos del duelo se midieron contra el unico rival que nos saca una
+distancia grande.** Contra los otros tres v5 esta entre el 54% y el 100%, y
+`hovering-hobbs` -que en royale de cuatro nos gana el 64% (ver docs/experimentos-duelo.md#s-duelo)-
+en el 1v1 puro pierde.
+
+Consecuencias, y la primera es de metodo:
+
+1. Un candidato que mejore contra el campo real puede salir NO CONCLUYENTE contra Tree si
+   la distancia con Tree es demasiado grande para un termino suelto. Todo A/B de duelo a
+   partir de aqui se mide contra un **campo de cuatro**, no contra una snake.
+2. Los veredictos de v12 a v16 siguen siendo validos como lo que son -no mejoran contra
+   Tree- y dejan de valer como «no mejoran el duelo».
+3. Tree es un arbol minimax con su propia evaluacion; Flood es la misma base con un cerebro
+   de flood fill y contra el vamos parejos. La distancia no es "snork", es el arbol.
+

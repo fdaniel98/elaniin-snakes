@@ -10,9 +10,9 @@ contra v4 por -0.6917 y contra v0 por -1.0583 (ver docs/experimentos.md#s-longit
 sigue entero en `v0-baseline.json` y v6 no entra (ver docs/experimentos.md#s-supervivencia-r).
 Desplegada en Cloud Run `us-east1`: 0 timeouts, maximo 207 ms de 500
 (ver docs/performance.md#p-09) con margenes medidos
-(ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376). Contra el rival EXTERNO
-`snork-tree` (1v1 estandar, 240 partidas) v5 gana ~26% de forma estable; v14 y el techo de
-computo a 300 ms se midieron ahi y ninguno entra (ver docs/experimentos-duelo.md#s-trampa-duelo-r).
+(ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376). En 1v1 contra el zoo gana el 100%
+a `jaxhodg`, 56% a `hovering-hobbs`, 54% a `snork-flood` y **25% a `snork-tree`**
+(ver docs/experimentos-duelo.md#s-campo-duelo).
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -82,6 +82,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Decidir con que se sigue tras seis intentos medidos en el duelo sin ninguno dentro
-(ver docs/experimentos-duelo.md#exp-duelo): consolidar v5 para el torneo, o ampliar el
-campo de rivales para saber si snork-tree es un rival especialmente malo para nosotros.
+Re-medir los candidatos aparcados (v14, v15) contra el CAMPO de cuatro rivales del zoo y
+no solo contra snork-tree: v5 gana el 54-100% contra los otros tres y el 25% contra Tree,
+asi que los seis veredictos del duelo se tomaron contra el rival equivocado
+(ver docs/experimentos-duelo.md#s-campo-duelo).
