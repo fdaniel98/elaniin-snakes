@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 15810
+size_bytes: 15834
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -238,43 +238,19 @@ una evaluacion mediocre encuentra lineas mediocres con mas conviccion.
 
 ### S-SUPERVIVENCIA-R Resultado: NO ENTRA, y el error estaba en el diagnostico {#s-supervivencia-r}
 
-60 partidas, 15 bloques pareados **contra v5**:
+60 partidas en royale, 15 bloques pareados contra v5: puesto medio 1.708 contra **1.767**,
+diferencia **+0.0583**, IC95 [-0.1970, +0.3136]. NO CONCLUYENTE y del lado malo. v6 queda
+apagada en `survival.version`.
 
-| | v5 | v6 |
-|---|---|---|
-| puesto medio | **1.708** | 1.767 |
-| turnos vividos | **199.0** | 193.7 |
-| 1o / 2o / 3o / 4o | 26 / 24 / 10 / 0 | 28 / 18 / 14 / 0 |
+**El mecanismo funciono y el resultado no se movio.** Medir la salud en turnos de vida bajo
+las muertes por falta de vida de 27 a 19 -justo lo que ADR-0028 predijo- pero las otras
+subieron de 6 a 12.
 
-Diferencia pareada **+0.0583**, IC95 **[-0.1970, +0.3136]**, delta util 0.1:
-**NO CONCLUYENTE**, y del lado malo. v6 **no entra**; `default.json` se queda en v5.
-
-**El mecanismo funciono y el resultado no se movio.** Las causas del final, mismas 60
-partidas, `./build/release/bin/causas --nuestra <slug>`:
-
-| causa | v5 | v6 |
-|---|---|---|
-| sobrevivio (gano) | 26 | **28** |
-| hazard con poca salud | 15 | **9** |
-| hambre | 12 | **10** |
-| sin salida (encerrada) | 3 | 5 |
-| otra / eleccion | 3 | 7 |
-| zona de cabeza mas larga | 1 | 1 |
-
-Medir la salud en turnos de vida hizo exactamente lo que ADR-0028 predijo: las muertes por
-falta de vida bajaron de 27 a 19. Pero las otras subieron de 6 a 12, y el puesto medio
-empeoro. Lo que se gano saliendo antes del hazard se perdio en el sitio al que se salio.
-
-**La leccion, y es la que hay que recordar antes de proponer la siguiente heuristica:** en
-un juego de cuatro, la causa de muerte es un **sintoma de la posicion, no una palanca
-independiente**. Atacar la causa mas frecuente redistribuye las muertes sin mover el
-puesto, porque la snake no muere de hambre: muere de estar en el sitio donde solo quedaba
-comer mal. El riesgo estaba escrito antes de medir, en
-ver docs/decisions/ADR-0028-turnos-de-supervivencia.md#adr-0028-riesgo, asi que esto es el
-experimento saliendo negativo, no una explicacion inventada despues.
-
-El codigo de v6 se queda en el arbol tras `survival.version`, en 0 por defecto: cuesta cero
-y la hipotesis puede volver a probarse cuando el campo sea otro.
+**La leccion, que es la que hay que recordar antes de la siguiente heuristica:** en un juego
+de cuatro la causa de muerte es un **sintoma de la posicion, no una palanca**. Atacar la
+causa mas frecuente redistribuye las muertes sin mover el puesto: la snake no muere de
+hambre, muere de estar donde solo quedaba comer mal. El riesgo estaba escrito antes de
+medir, en ver docs/decisions/ADR-0028-turnos-de-supervivencia.md#adr-0028-riesgo.
 
 ### S-TERCER-RIVAL-R Resultado en arena: NO CONCLUYENTE, y medio experimento tirado {#s-tercer-rival-r}
 
@@ -299,32 +275,17 @@ Vive en ver docs/experimentos-afinado.md#s-afinado-r (sobreajuste de SPSA y su c
 
 ### S-SHRINK Diagnostico de royale: se muere de salud, y la brecha se abre en el turno 100 {#s-shrink-r}
 
-Las 60 partidas de `torneo-v5-longitud`, por fase y por causa.
+**Vale para royale, que NO es el formato del torneo** (ver docs/strategy.md#s-formato); se
+conserva por si algun dia se juega. Las 60 partidas de `torneo-v5-longitud`: de 34
+derrotas, **27 por salud** -hambre o hazard- y 7 por colision, muriendo dentro del hazard
+en 16. Desde el ultimo turno en que la comida seguia alcanzable sobrevivimos una mediana de
+**10 turnos**, con salud mediana 40 y casos de salud 88 con comida a coste 1: comida barata
+que no se cogio porque `food.seek_below` es 50.
 
-**Como perdemos** (34 derrotas): **27 por salud** -hambre o hazard- y 7 por colision. En 16
-de las 34 moriamos DENTRO del hazard, con el hazard cubriendo entre el 40% y el 78%.
-
-**Cuando dejamos de poder comer:** desde el ultimo turno en que la comida seguia alcanzable
-con la salud que teniamos, sobrevivimos una mediana de **10 turnos** (max 24). En ese
-ultimo turno viable la salud mediana era 40 y el margen (salud menos coste del camino) 14,
-pero hay casos con salud 88 y comida a coste 1, o salud 94 a coste 7: comida barata que no
-se cogio porque `food.seek_below` es 50 y no teniamos hambre.
-
-**Y la comida NO es la palanca.** Comida dentro de la region de Voronoi propia, turnos
->= 100: 1.98 en las ganadas contra 1.94 en las perdidas, y en las perdidas 1.94 nuestra
-contra 2.47 del que gano. Lo que separa ganar de perder es el AREA:
-
-| cuota de territorio | ganadas | perdidas | reparto justo |
-|---|---:|---:|---:|
-| turnos 0-60 | 0.308 | 0.308 | 0.260 |
-| turnos 60-100 | 0.364 | 0.362 | 0.307 |
-| turnos 100-140 | **0.420** | **0.351** | 0.364 |
-| turnos 140-180 | 0.483 | 0.408 | 0.416 |
-| turnos 180+ | 0.564 | 0.446 | 0.490 |
-
-**Hasta el turno 100 jugamos identico en las que ganamos y en las que perdemos.** La brecha
-se abre exactamente cuando el shrink empieza a pesar, y en las perdidas caemos por debajo
-del reparto justo. De ahi sale ver docs/strategy.md#s-shrink.
+**La comida en la region propia no distingue nada** (1.98 en las ganadas contra 1.94 en las
+perdidas); lo que distingue es el AREA, y la cuota de territorio es identica en ganadas y
+perdidas hasta el turno 100 (0.308) y se separa justo despues (0.420 contra 0.351), que es
+cuando el shrink pesa. De ahi salio ver docs/strategy.md#s-shrink.
 
 ### S-FORMATO-R El control de longitud tambien gana en standard {#s-formato-r}
 
@@ -347,4 +308,40 @@ muertes, self-play): **cabezazo 22, cuerpo propio 14, hambre 14, cuerpo rival 1*
 royale el cuerpo propio casi no aparecia, y es justo la causa que costo el duelo del
 torneo. Es self-play, asi que describe como nos matamos entre copias nuestras, no como nos
 mata el campo: eso lo dira `gauntlet-v2`.
+
+### S-STANDARD-R Linea base contra el campo real, en standard {#s-standard-r}
+
+Torneo HTTP con el arbitro oficial contra `gauntlet-v2` (standard 11x11, cuatro
+composiciones, tres motores distintos), 63 partidas de las 200 -corte electrico-, config
+desplegado v5.
+
+| | |
+|---|---:|
+| puesto medio | **1.817** |
+| primeros | 28 de 63 (44%) |
+| turnos vividos | 340.8 |
+
+**Todo depende de una snake.** Ganan: nosotros 28, `snork-tree` 28, `hovering-hobbs` 7;
+`devious-devin` y `jaxhodg` no ganan ninguna.
+
+| composicion | n | puesto medio |
+|---|---:|---:|
+| hovering-hobbs, jaxhodg, **snork-tree** | 16 | 2.219 |
+| devious-devin, hovering-hobbs, **snork-tree** | 16 | 2.000 |
+| devious-devin, jaxhodg, **snork-tree** | 16 | 1.875 |
+| devious-devin, hovering-hobbs, jaxhodg | 15 | **1.133** |
+
+Sin Tree en la mesa somos primeros casi siempre. Los asientos salen parejos (1.625 a
+1.938), asi que la rotacion esta anulando el sesgo de silla.
+
+**Como perdemos** (35 derrotas): **22 encerrados**, 10 con la unica salida pegada a una
+cabeza, **3 de hambre**. En royale eran 27 de 34 por salud
+(ver docs/experimentos.md#s-shrink-r): el diagnostico de royale no transfiere NADA.
+
+**Donde perdemos:** 20 de 35 morimos ya en el 1v1 final, 13 con tres vivas y 2 con cuatro.
+Y cuando morimos en 1v1 el rival era `snork-tree` 15 veces y `hovering-hobbs` 5.
+
+La consecuencia para el roadmap: el duelo no es "el desempate", es donde se pierde el
+torneo de cuatro, y el rival que hay que resolver es Tree
+(ver docs/experimentos-duelo.md#s-campo-duelo).
 

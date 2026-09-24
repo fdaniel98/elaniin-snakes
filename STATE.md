@@ -83,6 +83,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Congelar `gauntlet-v2` (`./scripts/congelar-gauntlet.sh`) y correr su torneo de 200
-partidas en **standard**, que es el formato real (ver docs/strategy.md#s-formato). El
-control de longitud ya esta re-medido y aguanta (ver docs/experimentos.md#s-formato-r).
+Correr el barrido de candidatos en standard (`training-room/barrido.py`,
+ver docs/strategy.md#s-barrido). La linea base contra el campo real ya esta:
+1.817 de puesto medio y 28 primeros de 63, con 22 de las 35 derrotas por encierro y 20 en
+el 1v1 final (ver docs/experimentos.md#s-standard-r).
