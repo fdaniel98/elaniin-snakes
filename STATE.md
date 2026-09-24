@@ -83,7 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Congelar `gauntlet-v2` en la maquina de referencia (`./scripts/congelar-gauntlet.sh`) y
-correr el torneo de 200 partidas en **standard** contra el, que es el formato del torneo
-(ver docs/strategy.md#s-formato). El control de longitud ya esta re-medido y aguanta
-(ver docs/experimentos.md#s-formato-r).
+Congelar `gauntlet-v2` (`./scripts/congelar-gauntlet.sh`) y correr su torneo de 200
+partidas en **standard**, que es el formato real (ver docs/strategy.md#s-formato). El
+control de longitud ya esta re-medido y aguanta (ver docs/experimentos.md#s-formato-r).
