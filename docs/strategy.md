@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 9846
+size_bytes: 9428
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -149,23 +149,14 @@ sobre los movimientos candidatos- que cuesta 1/miles de lo que cuesta en las hoj
 
 ### S-SUPERVIVENCIA-DUELO Hipotesis: poder quedarse, no llegar antes {#s-supervivencia-duelo}
 
-**Hipotesis falsable:** con una sola rival viva, medir TURNOS QUE AGUANTO en vez de
-casillas que alcanzo gana mas duelos que v5 contra snork-tree. El Voronoi premia llegar
-antes y no distingue una region abierta de 40 casillas de un callejon de 40. Dos cosas que
-si la distinguen y hoy no miramos:
+v15: con un rival vivo, contar turnos que aguanto -cola dentro de la region, y comparacion
+exacta de supervivencia cuando las dos regiones ya no se tocan- en vez de casillas que
+alcanzo. **Medida contra snork-tree, 40 bloques: +0.050 (lado malo), IC95 [-0.094, +0.194].
+No entra**; apagada en `duel.survival_version`.
 
-1. **Cola dentro de la region:** si es alcanzable se puede girar detras de ella
-   indefinidamente -el tail-chasing de los turnos altos- y la region deja de tener fondo.
-2. **Regiones separadas:** si las dos regiones ya no se tocan, el duelo son dos solitarios
-   y gana quien aguante mas turnos; ahi el valor es una cuenta con salud y comida, no una
-   heuristica.
-
-**Que se mide:** `snake/config/v15-supervivencia-duelo.json`, v5 con
-`duel.survival_version` 1; dos tests exigen arbol identico con la version a 0 y con cuatro
-vivas.
-
-**Por que podria fallar:** la cuenta supone que cada region se recorre entera, y una region
-estrecha con la cola dentro no se recorre entera: puede premiar encierros comodos.
+Lo que dejo medido vale mas que el veredicto: v15 reprodujo el comportamiento de las snakes
+fuertes -cola a <= 2 pasos el 25% de los turnos tardios, como snork- y perdio igual. La
+correlacion de los replays no era causa (ver docs/experimentos.md#s-supervivencia-duelo-r).
 
 ## S-V4 Paralelismo {#s-v4}
 

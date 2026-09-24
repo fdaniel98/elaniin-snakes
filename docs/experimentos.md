@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 22453
+size_bytes: 22843
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -278,41 +278,20 @@ y la hipotesis puede volver a probarse cuando el campo sea otro.
 
 ### S-TERCER-RIVAL-R Resultado en arena: NO CONCLUYENTE, y medio experimento tirado {#s-tercer-rival-r}
 
-Primera medicion hecha en la arena. **Es self-play**: las otras tres sillas eran v5, no el
-gauntlet (ver docs/decisions/ADR-0031-que-mide-la-arena.md#d-0311). 15 bloques, 19 761
-nodos por movimiento -el equivalente a 200 ms en la maquina de referencia-, 44 minutos.
+Primera medicion en la arena, **self-play** (ver docs/decisions/ADR-0031-que-mide-la-arena.md#d-0311),
+15 bloques, 19 761 nodos. v5 2.500 contra v7 2.583: diferencia **+0.0833**, IC95
+[-0.2179, +0.3845], NO CONCLUYENTE y del lado malo.
 
-| | v5 | v7 |
-|---|---|---|
-| puesto medio | **2.500** | 2.583 |
-| turnos vividos | **162.6** | 157.6 |
-| gano la partida | **15** | 12 |
-| murio en cabezazo | 10 | **7** |
+**El mecanismo hizo lo suyo y no basto, otra vez:** simular al tercer rival bajo los
+cabezazos de 10 a 7 -para lo que existe- y gano menos partidas. El riesgo estaba escrito
+antes de medir (ver docs/decisions/ADR-0034-el-tercer-rival.md#d-0343): con tres rivales
+simulados el modelo paranoico supone que los tres se coordinan contra nosotros.
 
-Diferencia pareada **+0.0833** contra v7, IC95 [-0.2179, +0.3845]: **NO CONCLUYENTE**, y
-del lado malo. No llega para gastarle un torneo de 2-3 horas contra el gauntlet.
-
-**El mecanismo hizo lo suyo y no basto, otra vez.** Simular al tercer rival redujo las
-muertes por cabezazo de 10 a 7 -que es exactamente para lo que existe- y aun asi gano
-menos partidas. El riesgo estaba escrito antes de medir en
-ver docs/decisions/ADR-0034-el-tercer-rival.md#d-0343: con tres rivales simulados el modelo
-paranoico supone que las **tres** serpientes se coordinan contra nosotros, y eso encoge lo
-que la busqueda considera jugable.
-
-**Y un error de diseño mio que costo la mitad de la corrida.** La rama B era v5 y el campo
-tambien: con los cuatro contendientes iguales, las cuatro partidas de un bloque son **la
-misma partida** -solo cambia a que silla llamamos nuestra-, asi que los puestos son 1, 2,
-3 y 4 y la media sale **2.500 exacta en los quince bloques**. Se ve en los turnos: 306,
-306, 306, 306.
-
-No aporto nada sobre fuerza y consumio 60 de las 120 partidas. Lo unico que salva ese
-gasto es que resulto ser una comprobacion muy fuerte del arnes, aunque no la planee: la
-partida es invariante a que silla marcamos, los puestos suman 10 siempre y la rotacion de
-asientos no mete sesgo. `arena_ab.py` ahora avisa antes de empezar cuando una rama coincide
-con el campo.
-
-Para un A/B de verdad el campo tiene que ser distinto de las dos ramas. El candidato
-natural es `v4-hojas`, que es fuerte -perdio con v5 por 0.69- y no es ninguna de las dos.
+**Y un error de diseño que costo media corrida:** rama B y campo eran los dos v5, asi que
+las cuatro partidas de un bloque son la MISMA partida y la media sale 2.500 exacta en los
+quince bloques. Sirvio de comprobacion del arnes -la partida es invariante a que silla
+marcamos y los puestos suman 10-, y `arena_ab.py` ahora avisa cuando una rama coincide con
+el campo.
 
 ### S-AFINADO-R Resultado del afinado: movido {#s-afinado-r}
 
@@ -468,4 +447,36 @@ Dos cosas que el numero no dice y los logs si:
   victorias. El diagnostico de las derrotas (22 de 32 encerrados, mediana de 13 turnos
   desde el ultimo turno con territorio >= longitud) sigue en pie; lo que falla es el
   remedio, no el diagnostico.
+
+### S-SUPERVIVENCIA-DUELO-R Resultado: copiamos el comportamiento del que gana y seguimos perdiendo {#s-supervivencia-duelo-r}
+
+1v1 estandar por HTTP contra `snork-tree`, 40 bloques por rama, pinning de CPU.
+
+| | v5 | v15 |
+|---|---|---|
+| puesto medio | 1.738 | 1.788 |
+| duelos ganados | 21 de 80 | 17 de 80 |
+| turnos vividos | 381.8 | 337.7 |
+| timeouts del RIVAL | 11 | 27 |
+
+Diferencia **+0.050** (lado malo), IC95 [-0.094, +0.194]: NO CONCLUYENTE, y con el campo
+mas enfermo a nuestro favor. **v15 no entra**; apagada en `duel.survival_version`.
+
+**Lo que hay que recordar no es el veredicto, es esto.** v15 SI cambio el comportamiento en
+la direccion buscada, medido sobre los turnos >= 250:
+
+| turnos >= 250 | v5 | v15 | snork |
+|---|---|---|---|
+| turnos con la cola a <= 2 pasos | 16% | **25%** | 23% |
+| cola alcanzable | 79% | **87%** | — |
+| espacio medio | 49.8 | **52.9** | — |
+| regiones ya separadas | 42% | **28%** | — |
+
+Reprodujimos el tail-chasing de las snakes fuertes y perdimos igual, con partidas **mas
+cortas**. La correlacion de los replays -el que gana se pega a su cola y juega el centro- no
+era causa: es lo que puede hacer el que ya va ganando.
+
+**Lo que queda en pie:** si sobrevivimos mejor dentro de nuestra region y aun asi morimos
+antes, el duelo se pierde mientras las dos regiones TODAVIA se tocan, que es donde se
+decide el reparto. Eso no lo arregla un termino de evaluacion.
 
