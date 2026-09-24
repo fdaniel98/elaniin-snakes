@@ -731,11 +731,17 @@ def cmd_match(args):
                          "-t", str(partida["timeout_ms"]), "-r", str(p["semilla"]),
                          *argumentos, "-o", str(jsonl)],
                         cwd=RAIZ, stdout=subprocess.DEVNULL, stderr=errores).returncode
+                # Solo las que JUGARON esta partida. Con varias composiciones estan
+                # levantadas las cinco snakes de la union, pero el log del arbitro solo
+                # trae las cuatro de esta: pasarle las cinco hacia que `guarda` avisara de
+                # un id que falta por cada rival que no jugaba, en cada partida.
+                urls_partida = {slug: urls_w[slug] for slug in orden}
                 with candado:
                     if rc != 0:
                         fallos += 1
-                    guarda(db, gauntlet, p, jsonl, reflog, rc, urls_w, orden, topo, commit,
-                           nuestro_hash, img_nuestra, gauntlet["imagenes"], nuestro_slug)
+                    guarda(db, gauntlet, p, jsonl, reflog, rc, urls_partida, orden, topo,
+                           commit, nuestro_hash, img_nuestra, gauntlet["imagenes"],
+                           nuestro_slug)
                     # Commit por partida, no al final: lo que ya se jugo no se pierde
                     # porque la 190 falle.
                     db.commit()
