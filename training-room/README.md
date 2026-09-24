@@ -38,6 +38,18 @@ Saca puesto medio por rival, en que fase salimos, como morimos, y los numeros de
 del duelo (distancia a la cola, al centro y espacio) comparados con los del rival que
 seguia vivo. `partida.py` sigue siendo el que mira UNA partida turno a turno.
 
+## Barrido de candidatos (`barrido.py`)
+
+Pasa los candidatos aparcados por el mismo tamiz, en standard, contra v5:
+
+```bash
+python3 training-room/barrido.py --bloques 15 --hilos 6 --out docs/results/barrido-standard
+```
+
+Tabla con puesto medio e IC95 por candidato; el neutro con cuatro iguales es 2.500 y menos
+es mejor. Es self-play con presupuesto por nodos: descarta, no acepta. Lo que sobreviva se
+lleva su torneo contra `gauntlet-v2`. ver docs/strategy.md#s-barrido
+
 ## Comandos previstos
 
 ```bash
