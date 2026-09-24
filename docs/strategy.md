@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 14982
+size_bytes: 13855
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -199,31 +199,15 @@ vivas-, o sea que la trampa que nos mata (~13 turnos antes) cae dentro del horiz
 este juego casi no hay transposiciones, porque el cuerpo ES el historial de movimientos
 (ver docs/experimentos-duelo.md#s-tabla-duelo-r).
 
-### S-SHRINK Hipotesis: la busqueda planifica sobre un tablero que va a cambiar {#s-shrink}
+### S-SHRINK Hipotesis: anticipar el proximo shrink {#s-shrink}
 
-**Hipotesis falsable:** penalizar las casillas que el proximo shrink puede convertir en
-hazard sube el puesto medio en royale de cuatro por encima del delta de 0.10.
-
-**El mecanismo, que no es una correlacion:** `royale_hazards()` vive en el motor pero solo
-lo usa la arena para generar partidas. La busqueda ve el hazard **congelado**, asi que
-planifica sobre un rectangulo que se encoge cada `shrinkEveryNTurns` y que ella cree fijo.
-Peor: al bajar por el arbol el turno cruza la frontera del shrink y el tablero sigue sin
-crecer, asi que las hojas de mas alla puntuan un tablero que ya no existe.
-
-**Lo que dicen los datos** (60 partidas de v5, ver docs/experimentos.md#s-shrink-r): 27 de
-34 derrotas son por salud, no por colision; y la cuota de territorio es IDENTICA en las
-ganadas y las perdidas hasta el turno 100 (0.308 y 0.308) y se separa justo despues
-(0.420 contra 0.351), que es cuando el hazard ya se comio parte del tablero.
-
-**Que se mide:** `snake/config/v17-shrink.json`, v5 con `hazard.shrink_version` 1. El lado
-del proximo shrink NO es conocible en partida real -el payload no trae la semilla-, asi que
-se penaliza el riesgo repartido: 1/4 por cada borde del rectangulo seguro en el que este la
-cabeza, escalado por lo cerca que esta el shrink y por si la salud aguanta el hazard.
-
-**Por que podria fallar:** es la tercera vez que atacamos las muertes por salud (v6 y el
-diagnostico de v15 fueron las otras), y las dos veces el mecanismo funciono y el puesto no
-se movio: la causa de muerte es un sintoma de la posicion. Ademas la penalizacion empuja
-hacia el centro, y v15 enseño que jugar el centro no es lo que hace ganar.
+v17: penalizar las casillas que el proximo shrink puede convertir en hazard, con el riesgo
+repartido entre los cuatro bordes (el lado no es conocible: el payload no trae la semilla).
+El mecanismo es real -`royale_hazards()` solo lo usa la arena, asi que la busqueda ve el
+hazard congelado- y el diagnostico tambien
+(ver docs/experimentos.md#s-shrink-r). **Pero el torneo es standard y ahi no hay hazard**,
+asi que v17 no puede entrar (ver docs/strategy.md#s-formato). Queda apagada en
+`hazard.shrink_version`, util solo si algun dia se juega royale.
 
 ### S-BARRIDO La snake mas fuerte en standard se construye tamizando, no apilando {#s-barrido}
 
