@@ -22,6 +22,22 @@ python3 training-room/compara.py --a docs/results/duelo-snork-v5 --b docs/result
 Cada semilla son 2 partidas (asientos rotados). Por reloj, no por nodos: no es
 reproducible bit a bit, asi que un veredicto necesita bastantes bloques.
 
+## Partidas reales del leaderboard (`liga.py`)
+
+El leaderboard es el unico sitio donde juegan rivales que no elegimos nosotros. No sirve
+para dar veredictos -ni el campo ni las semillas son nuestros- pero si para saber contra
+quien perdemos y por que:
+
+```bash
+printf '%s\n' https://play.battlesnake.com/game/<id> ... > partidas.txt
+./scripts/bajar-partidas.sh partidas.txt          # frames del motor, 100 turnos por pagina
+python3 training-room/liga.py matches/liga --nuestra <nombre de nuestra snake>
+```
+
+Saca puesto medio por rival, en que fase salimos, como morimos, y los numeros del final
+del duelo (distancia a la cola, al centro y espacio) comparados con los del rival que
+seguia vivo. `partida.py` sigue siendo el que mira UNA partida turno a turno.
+
 ## Comandos previstos
 
 ```bash
