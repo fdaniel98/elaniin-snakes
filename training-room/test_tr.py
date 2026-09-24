@@ -689,6 +689,30 @@ d4 = json.loads(_compara(a4, b4).stdout)
 comprueba(d4["bloques_pareados"] == 3,
           "con 10 bloques en A y 3 en B solo se parean 3, no se promedia sobre 10")
 
+# ---------------------------------------------------------------------------
+# Plan del torneo: los dos defectos que costaron una corrida de 200 partidas.
+# ---------------------------------------------------------------------------
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tr  # noqa: E402
+
+COMPS = [["a", "b", "c"], ["a", "d", "b"], ["d", "c", "a"], ["a", "b", "d"]]
+
+plan = tr.plan_de(COMPS, 4, 16, 1)
+por_comp = {}
+for p in plan:
+    por_comp.setdefault(tuple(p["comp"]), set()).add(p["asiento"])
+comprueba(all(len(v) == 4 for v in por_comp.values()),
+          "cada composicion juega en los CUATRO asientos, no siempre en el mismo")
+comprueba(len({p["semilla"] for p in plan}) == 4 and
+          all(len({q["asiento"] for q in plan if q["semilla"] == s}) == 4
+              for s in {p["semilla"] for p in plan}),
+          "un bloque es una semilla con sus cuatro rotaciones")
+
+comprueba(sorted(tr.slugs_de(COMPS)) == ["a", "b", "c", "d"],
+          "se levantan los rivales de TODAS las composiciones, no los de la primera")
+comprueba(tr.slugs_de([["x", "y", "z"]]) == ["x", "y", "z"],
+          "con una sola composicion la union es ella misma")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")

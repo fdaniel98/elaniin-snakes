@@ -521,6 +521,36 @@ def abre_db(ruta):
     return db
 
 
+def slugs_de(composiciones):
+    """Union de los rivales de TODAS las composiciones, en orden estable.
+
+    Es lo que hay que levantar: con una sola composicion coincidia con ella, y por eso el
+    codigo viejo se quedo con `composiciones[0]` hasta que gauntlet-v2 trajo cuatro."""
+    union = []
+    for comp in composiciones:
+        for slug in comp:
+            if slug not in union:
+                union.append(slug)
+    return union
+
+
+def plan_de(composiciones, jugadores, games, seed_base):
+    """Que composicion, que asiento y que semilla le toca a cada partida.
+
+    La composicion cambia por BLOQUE y los asientos rotan dentro de el. Con
+    `composiciones[g % len(composiciones)]` y tantas composiciones como asientos, la
+    composicion y el asiento avanzaban a la vez y quedaban confundidas: la composicion 0
+    jugaba siempre en el asiento 0."""
+    plan = []
+    for g in range(games):
+        bloque = g // jugadores
+        plan.append({"id": f"g{g:05d}",
+                     "comp": composiciones[bloque % len(composiciones)],
+                     "asiento": g % jugadores,
+                     "semilla": seed_base + bloque})
+    return plan
+
+
 # --------------------------------------------------------------- match
 def cmd_match(args):
     gauntlet = json.loads(Path(args.gauntlet).read_text())
@@ -531,6 +561,13 @@ def cmd_match(args):
     cpus = recursos["cpus"]
 
     jugadores = 1 + len(composiciones[0])
+    # Contenedores que hay que levantar por juego: la UNION de todas las composiciones mas
+    # la nuestra, no los de la primera. Con gauntlet-v1 -una sola composicion- coincidian,
+    # y por eso `slugs = composiciones[0]` aguanto hasta que gauntlet-v2 trajo cuatro: el
+    # hilo se caia con KeyError sobre el rival que no tenia contenedor, y las partidas de
+    # esa composicion se contaban como jugadas sin haberse jugado.
+    slugs_union = slugs_de(composiciones)
+    contenedores = 1 + len(slugs_union)
     paralelo = max(1, args.paralelo)
     # En serie se reservan dos nucleos para el arbitro y el sistema, que es lo que hace
     # comparables las latencias. En paralelo esa reserva no cabe, y por eso la corrida
@@ -538,7 +575,7 @@ def cmd_match(args):
     # Los puestos siguen valiendo: nuestra snake responde en 1 ms y los rivales gastan 400,
     # asi que quien gana no lo decide el reparto de CPU. ver docs/strategy.md#s-v1
     reserva = 2 if paralelo == 1 else 0
-    cpusets, motivo_no_cabe = reparte_nucleos(jugadores * paralelo, cpus,
+    cpusets, motivo_no_cabe = reparte_nucleos(contenedores * paralelo, cpus,
                                               fatal=not args.dry_run, reserva=reserva)
     if paralelo > 1:
         print(f"PARALELO {paralelo}: esta corrida mide FUERZA, no latencia.")
@@ -586,18 +623,9 @@ def cmd_match(args):
     print(f"config:        {ruta_config} (hash {nuestro_hash})")
     print(f"jugamos como: {nuestro_slug}")
 
-    plan = []
-    for g in range(args.games):
-        # Rotacion de asientos: la unidad de analisis es el bloque (una semilla por todas
-        # las rotaciones), no la partida. Sin rotar, el asiento se confunde con la snake.
-        asiento = g % jugadores
-        semilla = args.seed_base + (g // jugadores)
-        # La composicion cambia por BLOQUE, no por partida. Con `g % len(composiciones)` y
-        # tantas composiciones como asientos -que es gauntlet-v2- la composicion y el
-        # asiento avanzan a la vez: la composicion 0 jugaria siempre en el asiento 0 y las
-        # dos variables quedarian confundidas. Se vio en el --dry-run, no en produccion.
-        comp = composiciones[(g // jugadores) % len(composiciones)]
-        plan.append({"id": f"g{g:05d}", "comp": comp, "asiento": asiento, "semilla": semilla})
+    # La unidad de analisis es el bloque -una semilla con todas las rotaciones de asiento-,
+    # no la partida. ver plan_de()
+    plan = plan_de(composiciones, jugadores, args.games, args.seed_base)
 
     if args.dry_run:
         print("\n-- plan (primeras 8 partidas) --")
@@ -622,7 +650,7 @@ def cmd_match(args):
     #
     # Con --paralelo N se levantan N juegos completos, cada uno con su sufijo, sus puertos
     # y sus nucleos: dos partidas compartiendo contenedor se robarian el cerebro.
-    slugs = composiciones[0]
+    slugs = slugs_union
     suites = []
     libera_nuestros_contenedores(docker)
     try:
@@ -633,11 +661,11 @@ def cmd_match(args):
             corre([docker, "rm", "-f", f"tr-ours{sufijo}"])
             urls[nuestro_slug] = arranca_la_nuestra(
                 docker, img_nuestra, puerto_base, cpus,
-                cpusets[w * jugadores], recursos["memoria"], seco=False, sufijo=sufijo)
+                cpusets[w * contenedores], recursos["memoria"], seco=False, sufijo=sufijo)
             for i, slug in enumerate(slugs):
                 r = corre([str(RAIZ / "scripts/zoo.sh"), "up", slug,
                            "--port", str(puerto_base + 1 + i), "--cpus", str(cpus),
-                           "--cpuset", cpusets[w * jugadores + i + 1],
+                           "--cpuset", cpusets[w * contenedores + i + 1],
                            "--memory", recursos["memoria"], "--sufijo", sufijo],
                           cwd=RAIZ)
                 if r.returncode != 0:
@@ -647,7 +675,8 @@ def cmd_match(args):
                 if not espera(url):
                     muere(f"{slug}{sufijo} no respondio en {url}")
             suites.append({"sufijo": sufijo, "urls": urls})
-        print(f"OK   {paralelo * jugadores} snakes responden en {paralelo} juego(s)")
+        print(f"OK   {paralelo * contenedores} snakes responden en {paralelo} juego(s); "
+              f"{jugadores} juegan cada partida")
 
         cli = arbitro()
         ya_jugadas = {fila[0] for fila in db.execute(
@@ -665,7 +694,19 @@ def cmd_match(args):
         cola = list(pendientes)
         hechas = 0
 
+        # Un hilo que revienta se llevaba por delante su parte de la cola en silencio: el
+        # resumen decia "jugadas 200 partidas" contando las que nadie jugo. Ahora la
+        # excepcion se guarda y el resumen falla con ella delante.
+        reventones = []
+
         def trabaja(suite):
+            try:
+                trabaja_real(suite)
+            except Exception as e:  # noqa: BLE001 - se reporta, no se traga
+                with candado:
+                    reventones.append(f"{type(e).__name__}: {e}")
+
+        def trabaja_real(suite):
             nonlocal fallos, hechas
             while True:
                 with candado:
@@ -717,9 +758,14 @@ def cmd_match(args):
                   cwd=RAIZ)
 
     minutos = (time.time() - empezado) / 60
-    print(f"jugadas {len(plan)} partidas en {minutos:.1f} min "
-          f"({len(plan) / max(minutos, 1e-9):.1f} partidas/min)")
+    print(f"jugadas {hechas} de {len(plan)} partidas en {minutos:.1f} min "
+          f"({hechas / max(minutos, 1e-9):.1f} partidas/min)")
     print(f"resultados en {salida}/torneo.sqlite")
+    if reventones:
+        for r in reventones:
+            print(f"FAIL un hilo del torneo murio: {r}", file=sys.stderr)
+        print(f"FAIL la corrida NO esta completa: {hechas} de {len(plan)}", file=sys.stderr)
+        return 1
     if fallos:
         print(f"FAIL {fallos} partidas con el arbitro en error", file=sys.stderr)
         return 1
