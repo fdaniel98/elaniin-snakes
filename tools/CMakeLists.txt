@@ -12,6 +12,9 @@ target_include_directories(causas PRIVATE "${CMAKE_SOURCE_DIR}/tests")
 add_executable(sonda_cuellos sonda_cuellos.cpp)
 target_link_libraries(sonda_cuellos PRIVATE engine snake_brain bsr_warnings)
 
+add_executable(sonda_tt sonda_tt.cpp)
+target_link_libraries(sonda_tt PRIVATE engine snake_brain bsr_warnings)
+
 add_executable(sonda_busqueda sonda_busqueda.cpp)
 # `snake_brain` ya expone nlohmann como PUBLIC, asi que no se busca otra vez aqui.
 target_link_libraries(sonda_busqueda PRIVATE engine snake_brain bsr_warnings)

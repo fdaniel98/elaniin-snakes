@@ -154,7 +154,7 @@ struct LengthParams {
 /// a ser correcto, y la ventaja de longitud deja de ser estrategica para ser tactica.
 ///
 /// Medido: 50 de 60 partidas de v5 llegan al duelo y lo ganamos al 54%; los 24 segundos
-/// puestos son los 24 en un 1v1. ver docs/experimentos.md#s-duelo
+/// puestos son los 24 en un 1v1. ver docs/experimentos-duelo.md#s-duelo
 struct DuelParams {
     /// 0 = apagado. Con 0 el arbol devuelve EXACTAMENTE los mismos movimientos que sin
     /// este codigo, y hay un test que lo comprueba en vez de prometerlo.
@@ -174,7 +174,7 @@ struct DuelParams {
     ///
     /// Medido: en duelos v5 contra v5 el perdedor se rinde siempre sin ir por delante en
     /// longitud, y a los 100 turnos ya iba por detras en 6 de 8. En el duelo real del
-    /// torneo ibamos 5 por detras. ver docs/experimentos.md#s-desesperacion-r
+    /// torneo ibamos 5 por detras. ver docs/experimentos-duelo.md#s-desesperacion-r
     std::int32_t length_version = 0;
     /// Puntos por segmento de ventaja dentro del duelo. v5 da 20 (60 / target_lead 3).
     double length_weight = 40.0;
@@ -228,6 +228,22 @@ struct DuelParams {
 
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md
 struct SearchParams {
+    /// [v16] Tabla de transposicion + el mejor movimiento de la tabla primero. 0 = apagado
+    /// y el arbol es exactamente el de v5.
+    ///
+    /// Por que aqui y no en otro termino de evaluacion: v12 a v15 movieron la evaluacion y
+    /// ninguna entro, y en v15 el comportamiento SI cambio como se buscaba. Lo que queda
+    /// es calcular mejor, no puntuar mejor. En el duelo el arbol transpone mucho -dos
+    /// ordenes de los mismos movimientos llevan al mismo tablero-, asi que la tabla ahorra
+    /// subarboles enteros en vez de recortarlos.
+    /// ver docs/strategy.md#s-tabla-duelo
+    std::int32_t tt_version = 0;
+    /// Tamaño de la tabla, en bits de indice: 16 son 65 536 entradas (~2 MB).
+    std::int32_t tt_bits = 16;
+    /// [v16] Como se ordenan los movimientos en cada nodo. 0 = flood fill por direccion
+    /// (v5). 1 = barato: casillas libres alrededor del destino, sin flood fill. El flood
+    /// fill ordena mejor pero se paga en CADA nodo y para CADA serpiente simulada.
+    std::int32_t order_version = 0;
     /// 0 = decision de un turno (v0). 1 = busqueda con profundizacion iterativa.
     ///
     /// Por defecto 1: la busqueda gana su A/B contra v0 en las tres mediciones que se le
@@ -292,7 +308,7 @@ struct SearchParams {
     /// Con movimientos simultaneos, "perdida" casi nunca es cierta: suele significar que
     /// el rival PODRIA adivinar a que casilla vamos. Obedecerla metio a la snake en un
     /// bolsillo de 3 casillas con cuerpo 20 teniendo 66 libres, en un duelo real del
-    /// torneo. ver docs/experimentos.md#s-desesperacion
+    /// torneo. ver docs/experimentos-duelo.md#s-desesperacion
     std::int32_t despair_version = 0;
 };
 

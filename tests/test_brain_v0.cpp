@@ -1301,7 +1301,7 @@ TEST_CASE("duelo: encendido cambia la evaluacion del 1v1 y no rompe la legalidad
 }
 
 // ---------------------------------------------------------------------------------
-// Posiciones REALES del torneo. ver docs/experimentos.md#s-desesperacion
+// Posiciones REALES del torneo. ver docs/experimentos-duelo.md#s-desesperacion
 // ---------------------------------------------------------------------------------
 
 namespace {
@@ -1595,5 +1595,42 @@ TEST_CASE("supervivencia en duelo: con cuatro vivas no se aplica", "[search][due
         INFO("caso " << caso);
         REQUIRE(a.best == b.best);
         REQUIRE(a.score == b.score);
+    }
+}
+
+TEST_CASE("tabla de transposicion: no rompe la legalidad y es determinista", "[search][tabla]") {
+    engine::Rng rng(20260933);
+    snake::Params con_tabla = params_con_nodos(20000);
+    con_tabla.search.tt_version = 1;
+    for (int caso = 0; caso < 20; ++caso) {
+        for (const int serpientes : {2, 4}) {
+            const engine::State11 s = engine::start_board<11, 11, 4>(
+                serpientes, engine::Ruleset{}, 3000 + static_cast<std::uint64_t>(rng.next() % 900));
+            const snake::SearchResult a = snake::search(s, inalcanzable(), con_tabla);
+            const snake::SearchResult b = snake::search(s, inalcanzable(), con_tabla);
+            INFO("caso " << caso << " serpientes " << serpientes);
+            // Determinista: la tabla se sella por busqueda, asi que dos llamadas seguidas
+            // sobre el mismo estado dan lo mismo aunque la tabla venga caliente.
+            REQUIRE(a.best == b.best);
+            REQUIRE(a.score == b.score);
+            const engine::MoveMask legal = engine::legal_moves(s, s.you);
+            if (legal != engine::move_mask_none) {
+                REQUIRE(engine::mask_has(legal, a.best));
+            }
+        }
+    }
+}
+
+TEST_CASE("tabla de transposicion: apagada por defecto y sin efecto", "[search][tabla]") {
+    const snake::Params base = params_con_nodos(20000);
+    REQUIRE(base.search.tt_version == 0);
+    REQUIRE(base.search.order_version == 0);
+    engine::Rng rng(20260934);
+    for (int caso = 0; caso < 10; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 4000 + static_cast<std::uint64_t>(rng.next() % 500));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), base);
+        INFO("caso " << caso);
+        REQUIRE(a.tt_hits == 0);
     }
 }

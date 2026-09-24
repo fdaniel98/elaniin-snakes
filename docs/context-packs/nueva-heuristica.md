@@ -3,7 +3,7 @@ title: "Pack: añadir o cambiar una heuristica"
 read_when: "antes de tocar la evaluacion del cerebro o de lanzar un A/B"
 authority: derived
 last_verified: 2026-09-15
-size_bytes: 2335
+size_bytes: 2516
 ---
 
 
@@ -19,6 +19,9 @@ size_bytes: 2335
 <!-- END:pack-load -->
 
 Fuera de la lista a proposito, y por que:
+
+- `docs/experimentos-duelo.md` (12 KB): solo si lo que tocas afecta al final de dos. Ahi
+  estan los seis intentos medidos y por que ninguno entro; leerlo antes ahorra el septimo.
 
 - `snake/src/search.cpp` (creciendo con cada version): lo que se lee para añadir una
   heuristica es **`evaluate()`**, no el motor de busqueda que ocupa el resto del fichero.

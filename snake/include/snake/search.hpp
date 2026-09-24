@@ -41,6 +41,9 @@ struct SearchResult {
     /// ordenacion estatica.
     int depth{0};
     long long nodes{0};
+    /// [v16] Veces que la tabla de transposicion ahorro un subarbol entero. 0 si esta
+    /// apagada. ver docs/strategy.md#s-tabla-duelo
+    long long tt_hits{0};
     /// Rivales que se simularon de verdad (los lejanos van con movimiento fijo).
     int rivals_simulated{0};
     /// Ultima profundidad en la que el mejor movimiento CAMBIO. Si es 2 y `depth` es 8,

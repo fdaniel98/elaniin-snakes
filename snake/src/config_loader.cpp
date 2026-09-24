@@ -175,6 +175,10 @@ Params parse_params(const json& doc) {
 
     const json& search = child(doc, "search");
     params.search.version = read_plain_int(search, "version", params.search.version);
+    params.search.tt_version = read_plain_int(search, "tt_version", params.search.tt_version);
+    params.search.tt_bits = read_plain_int(search, "tt_bits", params.search.tt_bits);
+    params.search.order_version =
+        read_plain_int(search, "order_version", params.search.order_version);
     params.search.max_depth = read_plain_int(search, "max_depth", params.search.max_depth);
     params.search.max_rivals = read_plain_int(search, "max_rivals", params.search.max_rivals);
     params.search.death_value = read_double(search, "death_value", params.search.death_value);
@@ -253,7 +257,10 @@ std::vector<std::string> unknown_keys(const std::string& path) {
           "survival_bonus",
           "reserve_us",
           "budget_nodes",
-          "despair_version"}},
+          "despair_version",
+          "tt_version",
+          "tt_bits",
+          "order_version"}},
         {"duel",
          {"version",
           "prefer_shorter",

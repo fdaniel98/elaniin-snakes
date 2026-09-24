@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
         static_cast<std::uint64_t>(std::atoll(arg(argc, argv, "--semilla-base", "1").c_str()));
     const int nodos = std::atoi(arg(argc, argv, "--nodos", "2000").c_str());
     // El desempate del torneo es un 1v1 ESTANDAR, no royale: dos snakes y sin hazards.
-    // Todo lo medido antes era royale de cuatro. ver docs/experimentos.md#s-desesperacion
+    // Todo lo medido antes era royale de cuatro. ver docs/experimentos-duelo.md#s-desesperacion
     const int serpientes = std::atoi(arg(argc, argv, "--serpientes", "4").c_str());
     const std::string mapa = arg(argc, argv, "--mapa", "royale");
     if (serpientes < 2 || serpientes > arena::max_contendientes ||

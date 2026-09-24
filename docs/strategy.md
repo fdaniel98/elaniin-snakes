@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 9428
+size_bytes: 10116
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -110,17 +110,17 @@ raiz.
 
 ### S-COBRAR Hipotesis: la ventaja de longitud no se cobra {#s-cobrar}
 
-Subir `head.prefer_shorter` de 8 a 40 debia subir los duelos ganados. **Cerrada:** era un termino muerto bajo busqueda paranoica (ver docs/experimentos.md#s-cobrar-r).
+Subir `head.prefer_shorter` de 8 a 40 debia subir los duelos ganados. **Cerrada:** era un termino muerto bajo busqueda paranoica (ver docs/experimentos-duelo.md#s-cobrar-r).
 
 ### S-DUELO Hipotesis: el final de dos necesita su propia evaluacion {#s-duelo}
 
-Con una sola rival viva, `duel.version` 1 (prefer_shorter 40 y gradiente de presion) debia ganar su A/B sin tocar la fase de cuatro. **Cerrada:** NO CONCLUYENTE, efecto acotado en [-0.16, +0.13] (ver docs/experimentos.md#s-duelo-r).
+Con una sola rival viva, `duel.version` 1 (prefer_shorter 40 y gradiente de presion) debia ganar su A/B sin tocar la fase de cuatro. **Cerrada:** NO CONCLUYENTE, efecto acotado en [-0.16, +0.13] (ver docs/experimentos-duelo.md#s-duelo-r).
 
 ### S-DESESPERACION Hipotesis: una raiz perdida no se obedece {#s-desesperacion}
 
 Cuando la busqueda devuelve puntuacion de muerte en la raiz, decidir con v0 en vez de con
 la rama que muere mas tarde. **Cerrada: neutra** en los dos formatos del torneo; codigo
-conservado y apagado en `search.despair_version` (ver docs/experimentos.md#s-desesperacion-r).
+conservado y apagado en `search.despair_version` (ver docs/experimentos-duelo.md#s-desesperacion-r).
 
 ### S-LONGITUD-DUELO Hipotesis: en el duelo, cazar longitud {#s-longitud-duelo}
 
@@ -141,7 +141,7 @@ v14: con una sola rival viva y la region ya justa, penalizar si cerrar UNA casil
 por debajo de nuestra longitud. Salio de que 22 de 32 derrotas contra snork-tree acabaron
 sin ninguna casilla libre. **Medida contra snork-tree, 40 bloques: +0.075 (lado malo), IC95
 [-0.054, +0.204]. No entra**; codigo conservado y apagado en `duel.trap_version`
-(ver docs/experimentos.md#s-trampa-duelo-r).
+(ver docs/experimentos-duelo.md#s-trampa-duelo-r).
 
 El diagnostico sigue vivo y el remedio no: morimos encerrados, pero penalizar el cuello en
 las hojas no lo evita. Lo que queda por probar es la version de RAIZ -una vez por turno,
@@ -156,7 +156,18 @@ No entra**; apagada en `duel.survival_version`.
 
 Lo que dejo medido vale mas que el veredicto: v15 reprodujo el comportamiento de las snakes
 fuertes -cola a <= 2 pasos el 25% de los turnos tardios, como snork- y perdio igual. La
-correlacion de los replays no era causa (ver docs/experimentos.md#s-supervivencia-duelo-r).
+correlacion de los replays no era causa (ver docs/experimentos-duelo.md#s-supervivencia-duelo-r).
+
+### S-TABLA-DUELO Hipotesis: en el duelo hace falta calcular mas, no puntuar mejor {#s-tabla-duelo}
+
+v16: tabla de transposicion con sello por busqueda y el mejor movimiento de la tabla
+primero, mas una ordenacion barata opcional. **Medida con `bin/sonda_tt`: +0.2 niveles y
++-5% de nodos. No entra**, apagada en `search.tt_version`.
+
+Lo que dejo medido: en el duelo ya buscamos **17 niveles** -no los 6.2 de royale con cuatro
+vivas-, o sea que la trampa que nos mata (~13 turnos antes) cae dentro del horizonte. Y en
+este juego casi no hay transposiciones, porque el cuerpo ES el historial de movimientos
+(ver docs/experimentos-duelo.md#s-tabla-duelo-r).
 
 ## S-V4 Paralelismo {#s-v4}
 

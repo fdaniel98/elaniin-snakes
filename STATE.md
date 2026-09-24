@@ -12,7 +12,7 @@ Desplegada en Cloud Run `us-east1`: 0 timeouts, maximo 207 ms de 500
 (ver docs/performance.md#p-09) con margenes medidos
 (ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376). Contra el rival EXTERNO
 `snork-tree` (1v1 estandar, 240 partidas) v5 gana ~26% de forma estable; v14 y el techo de
-computo a 300 ms se midieron ahi y ninguno entra (ver docs/experimentos.md#s-trampa-duelo-r).
+computo a 300 ms se midieron ahi y ninguno entra (ver docs/experimentos-duelo.md#s-trampa-duelo-r).
 
 <!-- BEGIN:perf-snapshot -->
 | metrica | valor | commit | fecha |
@@ -55,17 +55,16 @@ decide ver docs/decisions/ADR-0008-ambito-del-loop.md#d-0071.
 ## Hallazgos abiertos del loop
 
 - [ ] Los tests de reloj de 5 ms no son deterministas en la de referencia: cargada dio
-      9 ms y 2 violaciones de 10 000; descargada pasan sin calentar
+      9 ms y 2 violaciones de 10 000
       (ver docs/decisions/ADR-0021-arranque-en-frio.md#adr-0021-abierto).
 - [ ] El transporte se come casi todo el presupuesto: maximo del arbitro 169 ms contra
       0.388 del codigo, y 8 timeouts en 23 831 movimientos. Importa al recalibrar el
       margen de red de la fase 7 (ver docs/performance.md#p-07).
-- [ ] El servidor es agotable con 64 conexiones a medio abrir: una peticion legitima
-      espera al read timeout de 2 s. Acotado; en la fase 7 hay un balanceador delante.
+- [ ] El servidor es agotable con 64 conexiones a medio abrir. Acotado; en la fase 7 hay
+      un balanceador delante.
 - [ ] Dos convenciones propias que la fuente no define: el desempate promediado de
       `placements()` y la secuencia de lados del shrink
-      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091). La arena no reproduce una
-      partida oficial casilla a casilla.
+      (ver docs/decisions/ADR-0010-rng-del-shrink.md#d-0091).
 - [ ] `cold_start_ms_max` sigue sin veneno propio en `gate-selftest.sh`. Deuda declarada
       en docs/decisions/ADR-0009-entorno-y-arranque-en-frio.md#d-0083.
 - [ ] Las causas de muerte de los RIVALES son ambiguas (349 de 600): no tenemos su
@@ -83,6 +82,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Decidir si se prueba la trampa de RAIZ (una vez por turno, no en cada hoja) contra
-snork-tree, o si el duelo se deja como esta y se vuelve al royale de cuatro
-(ver docs/strategy.md#s-trampa-duelo).
+Decidir con que se sigue tras seis intentos medidos en el duelo sin ninguno dentro
+(ver docs/experimentos-duelo.md#exp-duelo): consolidar v5 para el torneo, o ampliar el
+campo de rivales para saber si snork-tree es un rival especialmente malo para nosotros.

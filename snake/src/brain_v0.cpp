@@ -426,7 +426,7 @@ Move decide(const State& state, Deadline deadline, const Params& params) noexcep
                 // rendicion: bajo el supuesto paranoico todas las ramas mueren y solo se
                 // elige la que tarda mas. Con movimientos simultaneos eso casi nunca es
                 // cierto -el rival tiene que adivinar-, asi que se decide con v0, que mira
-                // el espacio de verdad. ver docs/experimentos.md#s-desesperacion
+                // el espacio de verdad. ver docs/experimentos-duelo.md#s-desesperacion
                 const bool rendida = params.search.despair_version >= 1 &&
                                      r.score <= 0.5 * params.search.death_value;
                 if (!rendida && engine::mask_has(engine::legal_moves(state, state.you), r.best)) {

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <utility>
+#include <vector>
 
 #include <engine/rules.hpp>
 
@@ -76,7 +77,8 @@ template <typename T> void ordena_desc(T* v, int n) noexcept {
 /// alfa-beta el orden es la diferencia entre cortar el 90% del arbol y no cortar nada.
 int ordered_moves(const State& s,
                   SnakeId id,
-                  std::array<Direction, engine::direction_count>& out) noexcept {
+                  std::array<Direction, engine::direction_count>& out,
+                  int order_version = 0) noexcept {
     const engine::MoveMask legal = engine::legal_moves(s, id);
     const Board blocked = blocked_cells(s);
     const Board free_cells = Board::full().without(blocked);
@@ -93,10 +95,19 @@ int ordered_moves(const State& s,
         if (!Board::in_bounds(next)) {
             continue;
         }
-        Board alcanzable = free_cells;
         const int celda = Board::index_of(next);
-        alcanzable.set(celda);
-        con_peso[static_cast<unsigned>(n)] = {eval::flood(alcanzable, celda).cells, dir};
+        if (order_version >= 1) {
+            // [v16] Barato: cuantas salidas tiene el destino. Ordena peor que el flood
+            // fill, pero el flood fill se paga en cada nodo y para cada serpiente.
+            Board una;
+            una.set(celda);
+            const int salidas = (una.expand().without(una) & free_cells).count();
+            con_peso[static_cast<unsigned>(n)] = {salidas, dir};
+        } else {
+            Board alcanzable = free_cells;
+            alcanzable.set(celda);
+            con_peso[static_cast<unsigned>(n)] = {eval::flood(alcanzable, celda).cells, dir};
+        }
         ++n;
     }
     // Sin ninguna legal se devuelven las geometricamente posibles: `apply` acepta la
@@ -121,6 +132,73 @@ int ordered_moves(const State& s,
     return n;
 }
 
+// ---------------------------------------------------------------------------------
+// [v16] Tabla de transposicion. ver docs/strategy.md#s-tabla-duelo
+// ---------------------------------------------------------------------------------
+
+/// Mezclador de 64 bits (splitmix64). Propio y determinista: la clave tiene que salir
+/// igual en cualquier maquina o dos corridas de la arena dejarian de ser comparables.
+constexpr std::uint64_t mezcla(std::uint64_t x) noexcept {
+    x += 0x9E3779B97F4A7C15ULL;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EBULL;
+    return x ^ (x >> 31);
+}
+
+/// Clave del estado. Entran las cosas de las que depende el valor de la posicion: quien
+/// ocupa que, donde esta cada cabeza, cuanto mide y cuanta salud le queda, la comida y los
+/// hazards. NO entra el turno: dos turnos distintos con el mismo tablero valen lo mismo, y
+/// esa es justamente la transposicion que se quiere aprovechar.
+std::uint64_t clave(const State& s) noexcept {
+    std::uint64_t h = mezcla(static_cast<std::uint64_t>(s.you) + 1);
+    for (int i = 0; i < s.count(); ++i) {
+        const auto& sn = s.snakes[static_cast<unsigned>(i)];
+        const std::uint64_t vivo = engine::is_alive(sn.status) ? 1U : 0U;
+        h ^= mezcla(static_cast<std::uint64_t>(sn.head()) * 131U +
+                    static_cast<std::uint64_t>(sn.length) * 17U +
+                    static_cast<std::uint64_t>(sn.health) * 7U + vivo +
+                    static_cast<std::uint64_t>(i) * 1000003U);
+        // La cola tambien: dos posiciones con el mismo cuerpo pero distinta orientacion no
+        // son la misma posicion.
+        h ^= mezcla(static_cast<std::uint64_t>(sn.tail()) * 31U +
+                    static_cast<std::uint64_t>(i) * 7919U + 3U);
+    }
+    for (int w = 0; w < Board::word_count; ++w) {
+        h ^= mezcla(s.bodies.word(w) + static_cast<std::uint64_t>(w) * 11U);
+        h ^= mezcla(s.food.word(w) * 3U + static_cast<std::uint64_t>(w) * 13U + 1U);
+        h ^= mezcla(s.hazards.word(w) * 5U + static_cast<std::uint64_t>(w) * 17U + 2U);
+    }
+    return h;
+}
+
+enum class Limite : std::uint8_t { exacto, inferior, superior };
+
+struct Entrada {
+    std::uint64_t key{0};
+    double valor{0.0};
+    std::uint32_t sello{0};
+    std::int16_t depth{-1};
+    Limite limite{Limite::exacto};
+    Direction mejor{Direction::up};
+    bool con_mejor{false};
+};
+
+/// Una sola tabla por hilo, reservada una vez y reutilizada. No se asigna memoria dentro
+/// de la busqueda: el `sello` invalida las entradas viejas sin tener que borrarlas.
+/// ver docs/invariants.md#inv-03
+constexpr int k_tt_bits_max = 22;
+
+std::vector<Entrada>& tabla_de(int bits) noexcept {
+    static thread_local std::vector<Entrada> tabla;
+    static thread_local int bits_actuales = -1;
+    const int b = std::clamp(bits, 10, k_tt_bits_max);
+    if (b != bits_actuales) {
+        tabla.assign(static_cast<std::size_t>(1) << static_cast<unsigned>(b), Entrada{});
+        bits_actuales = b;
+    }
+    return tabla;
+}
+
 struct Contexto {
     const Params* params{nullptr};
     Deadline deadline{Deadline::Clock::now()};
@@ -137,6 +215,11 @@ struct Contexto {
     bool corto_el_reloj{false};
     std::array<SnakeId, k_max_snakes> rivales{};
     int n_rivales{0};
+    /// [v16] Tabla de transposicion, nula si `search.tt_version` esta a 0.
+    Entrada* tt{nullptr};
+    std::size_t tt_mask{0};
+    std::uint32_t sello{0};
+    long long tt_hits{0};
 };
 
 /// `true` cuando toca abandonar, por nodos o por reloj.
@@ -210,8 +293,8 @@ double peor_respuesta(const State& s,
     long long combinaciones = 1;
     for (int r = 0; r < ctx.n_rivales; ++r) {
         const SnakeId id = ctx.rivales[static_cast<unsigned>(r)];
-        cuantas[static_cast<unsigned>(r)] =
-            ordered_moves(s, id, opciones[static_cast<unsigned>(r)]);
+        cuantas[static_cast<unsigned>(r)] = ordered_moves(
+            s, id, opciones[static_cast<unsigned>(r)], ctx.params->search.order_version);
         combinaciones *= cuantas[static_cast<unsigned>(r)];
     }
 
@@ -269,15 +352,75 @@ double negamax(State s, int depth, double alpha, double beta, Contexto& ctx) noe
         return evaluate(s, ctx.us, *ctx.params);
     }
 
+    // [v16] Sonda de la tabla. Una entrada guardada con profundidad >= la pedida vale:
+    // fue el resultado de un subarbol al menos tan profundo como el que tocaba mirar.
+    const std::uint64_t key = ctx.tt != nullptr ? clave(s) : 0;
+    Entrada* slot = nullptr;
+    bool hay_mejor = false;
+    Direction mejor_tt = Direction::up;
+    if (ctx.tt != nullptr) {
+        slot = &ctx.tt[key & ctx.tt_mask];
+        if (slot->sello == ctx.sello && slot->key == key) {
+            if (slot->con_mejor) {
+                hay_mejor = true;
+                mejor_tt = slot->mejor;
+            }
+            if (slot->depth >= static_cast<std::int16_t>(depth)) {
+                ++ctx.tt_hits;
+                if (slot->limite == Limite::exacto) {
+                    return slot->valor;
+                }
+                if (slot->limite == Limite::inferior && slot->valor >= beta) {
+                    return slot->valor;
+                }
+                if (slot->limite == Limite::superior && slot->valor <= alpha) {
+                    return slot->valor;
+                }
+            }
+        }
+    }
+
+    const double alpha_inicial = alpha;
     std::array<Direction, engine::direction_count> mios{};
-    const int n = ordered_moves(s, ctx.us, mios);
+    int n = ordered_moves(s, ctx.us, mios, ctx.params->search.order_version);
+    // El mejor movimiento que la tabla ya conoce se prueba PRIMERO: es lo que hace que la
+    // poda corte arriba en vez de abajo.
+    if (hay_mejor) {
+        for (int i = 1; i < n; ++i) {
+            if (mios[static_cast<unsigned>(i)] == mejor_tt) {
+                std::swap(mios[0], mios[static_cast<unsigned>(i)]);
+                break;
+            }
+        }
+    }
     double mejor = -std::numeric_limits<double>::infinity();
+    Direction mejor_dir = mios[0];
     for (int i = 0; i < n; ++i) {
         const double v = peor_respuesta(s, mios[static_cast<unsigned>(i)], depth, alpha, beta, ctx);
-        mejor = std::max(mejor, v);
+        if (v > mejor) {
+            mejor = v;
+            mejor_dir = mios[static_cast<unsigned>(i)];
+        }
         alpha = std::max(alpha, mejor);
         if (alpha >= beta || sin_presupuesto(ctx)) {
             break;
+        }
+    }
+    // Un subarbol cortado por falta de presupuesto no se guarda: su valor no es el valor
+    // de la posicion, es lo que dio tiempo a mirar.
+    if (slot != nullptr && !ctx.agotado) {
+        const Limite lim = mejor <= alpha_inicial ? Limite::superior
+                           : mejor >= beta        ? Limite::inferior
+                                                  : Limite::exacto;
+        if (slot->sello != ctx.sello || slot->key != key ||
+            slot->depth <= static_cast<std::int16_t>(depth)) {
+            slot->key = key;
+            slot->valor = mejor;
+            slot->sello = ctx.sello;
+            slot->depth = static_cast<std::int16_t>(depth);
+            slot->limite = lim;
+            slot->mejor = mejor_dir;
+            slot->con_mejor = true;
         }
     }
     return mejor;
@@ -590,6 +733,15 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
     ctx.deadline = interno;
     ctx.us = state.you;
     ctx.budget_nodes = params.search.budget_nodes;
+    if (params.search.tt_version >= 1) {
+        auto& tabla = tabla_de(params.search.tt_bits);
+        ctx.tt = tabla.data();
+        ctx.tt_mask = tabla.size() - 1;
+        // Un sello por busqueda invalida lo de la jugada anterior sin borrar 2 MB: el
+        // tablero cambio y un valor de hace un turno ya no describe esta posicion.
+        static thread_local std::uint32_t sello_global = 0;
+        ctx.sello = ++sello_global;
+    }
 
     // Los rivales se simulan por cercania: el que esta a dos casillas decide si vivimos,
     // el que esta al otro lado del tablero no. Cada uno simulado multiplica por ~3 el
@@ -619,7 +771,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
     out.rivals_simulated = ctx.n_rivales;
 
     std::array<Direction, engine::direction_count> mios{};
-    const int n_mios = ordered_moves(state, state.you, mios);
+    const int n_mios = ordered_moves(state, state.you, mios, params.search.order_version);
     out.best = mios[0]; // el mejor por ordenacion estatica, por si no da tiempo a nada
 
     for (int depth = 1; depth <= params.search.max_depth; ++depth) {
@@ -664,6 +816,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
         }
     }
     out.nodes = ctx.nodes;
+    out.tt_hits = ctx.tt_hits;
     out.corto_el_reloj = ctx.corto_el_reloj;
     return out;
 }

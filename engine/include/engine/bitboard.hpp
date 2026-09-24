@@ -30,6 +30,12 @@ public:
 
     constexpr Bitboard() noexcept = default;
 
+    /// Palabra `i` del bitboard, para quien necesite el contenido crudo -hoy, la clave
+    /// de la tabla de transposicion-. No expone `words_`: es una copia de una palabra.
+    [[nodiscard]] constexpr Word word(int i) const noexcept {
+        return words_[static_cast<unsigned>(i)];
+    }
+
     [[nodiscard]] static constexpr int index_of(int x, int y) noexcept { return y * W + x; }
 
     [[nodiscard]] static constexpr int index_of(Coord c) noexcept {
