@@ -1,0 +1,45 @@
+{
+  "nombre": "gauntlet-v2",
+  "congelado": "",
+  "comentario": [
+    "Campo de evaluacion para el formato QUE SE JUEGA: standard, no royale. La partida",
+    "real del torneo (tests/fixtures-reales/dee2b0c8-*) trae ruleset y map standard y cero",
+    "hazards; ver docs/strategy.md#s-formato.",
+    "Cambiar cualquier cosa de aqui crea gauntlet-v3 e INVALIDA toda comparacion con",
+    "numeros medidos contra esta version.",
+    "`congelado` y los digests los rellena ./scripts/congelar-gauntlet.sh en la maquina",
+    "que va a correr el torneo: una imagen construida aqui no tiene el mismo id que la",
+    "construida alli, y el orquestador aborta si no coinciden."
+  ],
+  "rivales": [
+    { "slug": "hovering-hobbs", "nombre": "Hovering Hobbs", "estrategia": "Minimax + Flood Fill" },
+    { "slug": "devious-devin",  "nombre": "Devious Devin",  "estrategia": "Paranoid Minimax" },
+    { "slug": "snork-tree",     "nombre": "snork Tree",     "estrategia": "Arbol propio (otro motor)" },
+    { "slug": "jaxhodg",        "nombre": "JaxHodg",        "estrategia": "Heuristica propia (otro motor)" }
+  ],
+  "imagenes": {},
+  "composiciones": [
+    ["hovering-hobbs", "snork-tree", "jaxhodg"],
+    ["hovering-hobbs", "devious-devin", "snork-tree"],
+    ["snork-tree", "jaxhodg", "devious-devin"],
+    ["hovering-hobbs", "jaxhodg", "devious-devin"]
+  ],
+  "limitacion_declarada": [
+    "Tres motores distintos -coreyja/battlesnake-rs, L4r0x/snork y JaxHodg/battlesnake-,",
+    "asi que los errores ya no estan correlacionados como en gauntlet-v1, donde las tres",
+    "snakes salian del mismo binario.",
+    "snork Tree es, con diferencia, la mas fuerte del campo: en 1v1 estandar v5 le gana el",
+    "25% y al resto entre el 54% y el 100% (ver docs/experimentos-duelo.md#s-campo-duelo).",
+    "Sale en tres de las cuatro composiciones a proposito: el torneo real tampoco reparte",
+    "rivales comodos."
+  ],
+  "recursos": {
+    "cpus": 1,
+    "memoria": "512m",
+    "comentario": [
+      "Identicos para todas, la nuestra incluida, con --cpuset-cpus disjuntos: sin pinning",
+      "el p99 lo domina el throttling de la cuota CFS y no el algoritmo."
+    ]
+  },
+  "partida": { "ancho": 11, "alto": 11, "ruleset": "standard", "mapa": "standard", "timeout_ms": 500 }
+}

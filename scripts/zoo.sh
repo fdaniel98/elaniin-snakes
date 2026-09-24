@@ -430,6 +430,7 @@ TOML
 
 # ------------------------------------------------------------------ main
 case "${1:-}" in
+    imagen) shift; [[ -n "${1:-}" ]] || die "uso: zoo.sh imagen <slug>"; imagen_de "$1" ;;
     list) shift; cmd_list "$@" ;;
     build) shift; cmd_build "$@" ;;
     up) shift; cmd_up "$@" ;;

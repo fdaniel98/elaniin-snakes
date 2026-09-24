@@ -588,11 +588,15 @@ def cmd_match(args):
 
     plan = []
     for g in range(args.games):
-        comp = composiciones[g % len(composiciones)]
         # Rotacion de asientos: la unidad de analisis es el bloque (una semilla por todas
         # las rotaciones), no la partida. Sin rotar, el asiento se confunde con la snake.
         asiento = g % jugadores
         semilla = args.seed_base + (g // jugadores)
+        # La composicion cambia por BLOQUE, no por partida. Con `g % len(composiciones)` y
+        # tantas composiciones como asientos -que es gauntlet-v2- la composicion y el
+        # asiento avanzan a la vez: la composicion 0 jugaria siempre en el asiento 0 y las
+        # dos variables quedarian confundidas. Se vio en el --dry-run, no en produccion.
+        comp = composiciones[(g // jugadores) % len(composiciones)]
         plan.append({"id": f"g{g:05d}", "comp": comp, "asiento": asiento, "semilla": semilla})
 
     if args.dry_run:

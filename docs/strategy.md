@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 13131
+size_bytes: 13671
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -111,7 +111,15 @@ escribio entero apuntando a Royale, y eso invalida de raiz varias cosas:
   (ver docs/experimentos-duelo.md#s-campo-duelo).
 
 Royale sigue soportado y el cerebro lee la variante del request, asi que esto no es un
-cambio de codigo: es un cambio de que campo decide.
+cambio de codigo: es un cambio de que campo decide. El campo nuevo es `gauntlet-v2`
+-standard, tres motores distintos, cuatro composiciones-, y se congela en la maquina que
+corre el torneo con `./scripts/congelar-gauntlet.sh`.
+
+**Lo primero re-medido, y sale bien:** apagar el control de longitud en standard de cuatro
+da puesto medio **2.917**, IC95 [2.563, 3.270], contra el 2.500 del neutro (cuatro
+serpientes identicas). El intervalo no cruza el neutro: **el control de longitud de v5
+tambien funciona en standard**, no era un artefacto del hazard
+(ver docs/experimentos.md#s-formato-r).
 
 ## S-V2 Busqueda multijugador {#s-v2}
 

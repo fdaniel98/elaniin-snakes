@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 14756
+size_bytes: 15810
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -325,4 +325,26 @@ contra 2.47 del que gano. Lo que separa ganar de perder es el AREA:
 **Hasta el turno 100 jugamos identico en las que ganamos y en las que perdemos.** La brecha
 se abre exactamente cuando el shrink empieza a pesar, y en las perdidas caemos por debajo
 del reparto justo. De ahi sale ver docs/strategy.md#s-shrink.
+
+### S-FORMATO-R El control de longitud tambien gana en standard {#s-formato-r}
+
+Arena, **standard** de cuatro, 15 bloques (60 partidas), 14 821 nodos.
+`exp-sin-longitud.json` es `default.json` con `length.version` a 0 y nada mas.
+
+| | candidato sin longitud |
+|---|---:|
+| puesto medio | **2.917** |
+| IC95 | [2.563, 3.270] |
+| neutro (4 iguales) | 2.500 |
+| primeros | 9 de 60 |
+
+El intervalo **no cruza el neutro**: apagar el control de longitud cuesta +0.417 de puesto
+medio. La unica mejora grande del proyecto se midio en royale (ver docs/experimentos.md#s-longitud-r)
+y **se sostiene en el formato que de verdad se juega**; `default.json` se queda como esta.
+
+De paso, el reparto de causas en standard de cuatro, que nunca habiamos mirado (51
+muertes, self-play): **cabezazo 22, cuerpo propio 14, hambre 14, cuerpo rival 1**. En
+royale el cuerpo propio casi no aparecia, y es justo la causa que costo el duelo del
+torneo. Es self-play, asi que describe como nos matamos entre copias nuestras, no como nos
+mata el campo: eso lo dira `gauntlet-v2`.
 
