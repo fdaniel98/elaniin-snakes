@@ -1634,3 +1634,76 @@ TEST_CASE("tabla de transposicion: apagada por defecto y sin efecto", "[search][
         REQUIRE(a.tt_hits == 0);
     }
 }
+
+TEST_CASE("shrink: con shrink_version=0 el arbol no se entera", "[search][shrink]") {
+    engine::Rng rng(20260935);
+    snake::Params base = params_con_nodos(20000);
+    base.search.max_rivals = 2;
+    snake::Params absurdo = base;
+    absurdo.hazard.shrink_weight = 9999.0;
+    absurdo.hazard.shrink_lookahead = 99;
+    REQUIRE(base.hazard.shrink_version == 0);
+    for (int caso = 0; caso < 12; ++caso) {
+        engine::Ruleset reglas;
+        reglas.map_is_royale = true;
+        engine::State11 s = engine::start_board<11, 11, 4>(
+            4, reglas, 5000 + static_cast<std::uint64_t>(rng.next() % 500));
+        s.turn = 120; // justo antes de un shrink
+        const snake::SearchResult a = snake::search(s, inalcanzable(), base);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), absurdo);
+        INFO("caso " << caso);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.score == b.score);
+    }
+}
+
+TEST_CASE("shrink: fuera de royale no se aplica nunca", "[search][shrink]") {
+    engine::Rng rng(20260936);
+    snake::Params apagado = params_con_nodos(20000);
+    snake::Params encendido = apagado;
+    encendido.hazard.shrink_version = 1;
+    encendido.hazard.shrink_weight = 9999.0;
+    encendido.hazard.shrink_lookahead = 99;
+    for (int caso = 0; caso < 12; ++caso) {
+        engine::State11 s = engine::start_board<11, 11, 4>(
+            4, engine::Ruleset{}, 6000 + static_cast<std::uint64_t>(rng.next() % 500));
+        s.turn = 120;
+        REQUIRE_FALSE(s.rules.map_is_royale);
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        INFO("caso " << caso);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.score == b.score);
+    }
+}
+
+TEST_CASE("shrink: en royale y con el shrink cerca, cambia la decision", "[search][shrink]") {
+    engine::Rng rng(20260937);
+    snake::Params apagado = params_con_nodos(20000);
+    apagado.search.max_rivals = 2;
+    snake::Params encendido = apagado;
+    encendido.hazard.shrink_version = 1;
+    int distintos = 0;
+    for (int caso = 0; caso < 30; ++caso) {
+        engine::Ruleset reglas;
+        reglas.map_is_royale = true;
+        engine::State11 s = engine::start_board<11, 11, 4>(
+            4, reglas, 7000 + static_cast<std::uint64_t>(rng.next() % 900));
+        // Hazard ya comido por dos lados, y el proximo shrink a dos turnos.
+        for (int y = 0; y < 11; ++y) {
+            s.hazards.set(engine::State11::Board::index_of({0, static_cast<std::int8_t>(y)}));
+            s.hazards.set(engine::State11::Board::index_of({1, static_cast<std::int8_t>(y)}));
+        }
+        s.turn = 23;
+        s.rules = reglas;
+        const snake::SearchResult a = snake::search(s, inalcanzable(), apagado);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), encendido);
+        distintos += (a.score != b.score || a.best != b.best) ? 1 : 0;
+        const engine::MoveMask legal = engine::legal_moves(s, s.you);
+        if (legal != engine::move_mask_none) {
+            REQUIRE(engine::mask_has(legal, b.best));
+        }
+    }
+    INFO("posiciones en que cambio: " << distintos << " de 30");
+    REQUIRE(distintos > 0);
+}

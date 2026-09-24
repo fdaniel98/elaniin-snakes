@@ -81,6 +81,24 @@ struct HazardParams {
     double weight = 20.0;
     /// Multiplicador cuando la salud restante no cubre varios turnos de daño.
     double low_health_multiplier = 4.0;
+    /// [v17] Mirar el PROXIMO shrink. 0 = apagado y el arbol ve el hazard congelado.
+    ///
+    /// `royale_hazards()` existe en el motor pero solo lo usa la arena para generar
+    /// partidas: la busqueda nunca hace crecer el hazard, asi que planifica sobre un
+    /// tablero que va a cambiar. Medido sobre las 60 partidas de v5: hasta el turno 100 la
+    /// cuota de territorio es identica en las ganadas y en las perdidas (0.308 y 0.308), y
+    /// la brecha se abre justo despues -0.420 contra 0.351-, que es cuando el shrink pesa.
+    ///
+    /// El lado del proximo shrink NO es conocible en partida real (el payload no trae la
+    /// semilla), asi que se trata como riesgo: las lineas exteriores del rectangulo seguro
+    /// tienen 1/4 de probabilidad de ser hazard tras el proximo shrink.
+    /// ver docs/strategy.md#s-shrink
+    std::int32_t shrink_version = 0;
+    /// Penalizacion por estar en una linea que el proximo shrink puede convertir en hazard,
+    /// antes de escalarla por la probabilidad y por lo cerca que esta el shrink.
+    double shrink_weight = 60.0;
+    /// Turnos de antelacion con los que empieza a importar. Mas alla de esto, no.
+    std::int32_t shrink_lookahead = 10;
 };
 
 /// Control de territorio (v1): espacio que se alcanza ANTES que el rival, no espacio que

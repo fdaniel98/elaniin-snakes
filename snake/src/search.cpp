@@ -698,6 +698,62 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
                         : (yo.health <= p.food.seek_below ? -p.food.weight * 2.0 : 0.0);
     }
 
+    // 3b. [v17] El proximo shrink. El arbol ve el hazard CONGELADO -`royale_hazards()`
+    //     solo lo usa la arena-, asi que planifica sobre un tablero que va a cambiar cada
+    //     `shrink_every_n_turns`. Aqui no se adivina el lado, que no es conocible en
+    //     partida real: se trata como riesgo repartido entre los cuatro bordes del
+    //     rectangulo seguro. ver docs/strategy.md#s-shrink
+    if (p.hazard.shrink_version >= 1 && s.rules.map_is_royale && s.rules.shrink_every_n_turns > 0) {
+        const int cadencia = s.rules.shrink_every_n_turns;
+        // Distancia al shrink MAS CERCANO, antes o despues. El "despues" importa tanto
+        // como el "antes": al bajar por el arbol el turno cruza la frontera y el tablero
+        // NO crece -`apply()` no toca los hazards-, asi que las hojas de mas alla del
+        // shrink puntuan un rectangulo que ya no existe. Contarlas como en riesgo es la
+        // forma barata de no fiarse de ellas.
+        const int desde = s.turn % cadencia;
+        const int faltan = std::min(cadencia - desde, desde + 1);
+        if (faltan <= p.hazard.shrink_lookahead) {
+            // Limites del rectangulo seguro, leidos del propio tablero: es el complemento
+            // del hazard y no hace falta la semilla para verlo. ver docs/rules.md#r-09
+            int min_x = State::width;
+            int max_x = -1;
+            int min_y = State::height;
+            int max_y = -1;
+            for (int celda = 0; celda < State::cells; ++celda) {
+                if (s.hazards.test(celda)) {
+                    continue;
+                }
+                const auto c = Board::coord_of(celda);
+                min_x = std::min(min_x, static_cast<int>(c.x));
+                max_x = std::max(max_x, static_cast<int>(c.x));
+                min_y = std::min(min_y, static_cast<int>(c.y));
+                max_y = std::max(max_y, static_cast<int>(c.y));
+            }
+            if (max_x >= min_x && max_y >= min_y) {
+                const auto cab = Board::coord_of(yo.head());
+                // Un shrink se come UNA linea de UNO de los cuatro lados: solo la linea
+                // exterior esta en riesgo, y con probabilidad 1/4 por lado.
+                const int en_linea =
+                    (cab.x == min_x) + (cab.x == max_x) + (cab.y == min_y) + (cab.y == max_y);
+                if (en_linea > 0) {
+                    // Cuanto mas cerca el shrink, mas real es el riesgo; y cuanto menos
+                    // salud, mas caro entrar en hazard, que es de lo que se muere:
+                    // 27 de 34 derrotas en royale. ver docs/experimentos.md#s-shrink-r
+                    const double cercania =
+                        1.0 - static_cast<double>(faltan - 1) /
+                                  static_cast<double>(std::max(1, p.hazard.shrink_lookahead));
+                    const int dano = std::max(1, s.rules.hazard_damage_per_turn);
+                    const double turnos_dentro =
+                        static_cast<double>(yo.health) / static_cast<double>(dano + 1);
+                    const double urgencia =
+                        turnos_dentro < 6.0 ? p.hazard.low_health_multiplier : 1.0;
+                    score -= p.hazard.shrink_weight * 0.25 * static_cast<double>(en_linea) *
+                             cercania * urgencia;
+                }
+            }
+        }
+    }
+
     // 4. Hazards. ver docs/rules.md#r-06
     if (s.hazards.test(yo.head())) {
         if (p.survival.version >= 1) {

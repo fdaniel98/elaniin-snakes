@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 13196
+size_bytes: 14756
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -296,3 +296,33 @@ el campo.
 ### S-AFINADO-R Resultado del afinado: movido {#s-afinado-r}
 
 Vive en ver docs/experimentos-afinado.md#s-afinado-r (sobreajuste de SPSA y su control).
+
+### S-SHRINK Diagnostico de royale: se muere de salud, y la brecha se abre en el turno 100 {#s-shrink-r}
+
+Las 60 partidas de `torneo-v5-longitud`, por fase y por causa.
+
+**Como perdemos** (34 derrotas): **27 por salud** -hambre o hazard- y 7 por colision. En 16
+de las 34 moriamos DENTRO del hazard, con el hazard cubriendo entre el 40% y el 78%.
+
+**Cuando dejamos de poder comer:** desde el ultimo turno en que la comida seguia alcanzable
+con la salud que teniamos, sobrevivimos una mediana de **10 turnos** (max 24). En ese
+ultimo turno viable la salud mediana era 40 y el margen (salud menos coste del camino) 14,
+pero hay casos con salud 88 y comida a coste 1, o salud 94 a coste 7: comida barata que no
+se cogio porque `food.seek_below` es 50 y no teniamos hambre.
+
+**Y la comida NO es la palanca.** Comida dentro de la region de Voronoi propia, turnos
+>= 100: 1.98 en las ganadas contra 1.94 en las perdidas, y en las perdidas 1.94 nuestra
+contra 2.47 del que gano. Lo que separa ganar de perder es el AREA:
+
+| cuota de territorio | ganadas | perdidas | reparto justo |
+|---|---:|---:|---:|
+| turnos 0-60 | 0.308 | 0.308 | 0.260 |
+| turnos 60-100 | 0.364 | 0.362 | 0.307 |
+| turnos 100-140 | **0.420** | **0.351** | 0.364 |
+| turnos 140-180 | 0.483 | 0.408 | 0.416 |
+| turnos 180+ | 0.564 | 0.446 | 0.490 |
+
+**Hasta el turno 100 jugamos identico en las que ganamos y en las que perdemos.** La brecha
+se abre exactamente cuando el shrink empieza a pesar, y en las perdidas caemos por debajo
+del reparto justo. De ahi sale ver docs/strategy.md#s-shrink.
+

@@ -164,6 +164,11 @@ Params parse_params(const json& doc) {
     params.hazard.weight = read_double(hazard, "weight", params.hazard.weight);
     params.hazard.low_health_multiplier =
         read_double(hazard, "low_health_multiplier", params.hazard.low_health_multiplier);
+    params.hazard.shrink_version =
+        read_plain_int(hazard, "shrink_version", params.hazard.shrink_version);
+    params.hazard.shrink_weight = read_double(hazard, "shrink_weight", params.hazard.shrink_weight);
+    params.hazard.shrink_lookahead =
+        read_plain_int(hazard, "shrink_lookahead", params.hazard.shrink_lookahead);
 
     const json& territory = child(doc, "territory");
     params.territory.version = read_plain_int(territory, "version", params.territory.version);
@@ -246,7 +251,12 @@ std::vector<std::string> unknown_keys(const std::string& path) {
           "worst_case_weight",
           "worst_case_max_cuellos"}},
         {"head", {"avoid_equal_or_longer", "prefer_shorter"}},
-        {"hazard", {"weight", "low_health_multiplier"}},
+        {"hazard",
+         {"weight",
+          "low_health_multiplier",
+          "shrink_version",
+          "shrink_weight",
+          "shrink_lookahead"}},
         {"territory", {"version", "weight", "contested_weight", "hazard_value_pct"}},
         {"search",
          {"version",
