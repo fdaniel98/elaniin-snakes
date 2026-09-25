@@ -83,7 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr el barrido de candidatos en standard (`training-room/barrido.py`,
-ver docs/strategy.md#s-barrido). La linea base contra el campo real ya esta:
-1.817 de puesto medio y 28 primeros de 63, con 22 de las 35 derrotas por encierro y 20 en
-el 1v1 final (ver docs/experimentos.md#s-standard-r).
+Correr el barrido de candidatos en standard (ver docs/strategy.md#s-barrido). La linea base
+contra el campo real ya esta, con 200 partidas: 1.802 de puesto medio, y 71 de las 112
+derrotas son en el 1v1 (ver docs/experimentos.md#s-standard-r).

@@ -4,7 +4,7 @@ read_when: "antes de proponer una heuristica o una version nueva: aqui esta lo q
 authority: derived
 source: docs/results/torneo-* y training-room/compara.py
 last_verified: 2026-09-19
-size_bytes: 15834
+size_bytes: 15939
 ---
 
 # Experimentos de estrategia, medidos {#exp}
@@ -311,37 +311,29 @@ mata el campo: eso lo dira `gauntlet-v2`.
 
 ### S-STANDARD-R Linea base contra el campo real, en standard {#s-standard-r}
 
-Torneo HTTP con el arbitro oficial contra `gauntlet-v2` (standard 11x11, cuatro
-composiciones, tres motores distintos), 63 partidas de las 200 -corte electrico-, config
-desplegado v5.
+Torneo HTTP contra `gauntlet-v2` (standard, cuatro composiciones, tres motores), **200
+partidas**, config desplegado.
 
-| | |
-|---|---:|
-| puesto medio | **1.817** |
-| primeros | 28 de 63 (44%) |
-| turnos vividos | 340.8 |
+**Puesto medio 1.802**, 88 primeros de 200 (reparto 88 / 71 / 34 / 7). **Ganan:**
+`snork-tree` 91, nosotros 88, `hovering-hobbs` 21; `devious-devin` y `jaxhodg` ninguna.
 
-**Todo depende de una snake.** Ganan: nosotros 28, `snork-tree` 28, `hovering-hobbs` 7;
-`devious-devin` y `jaxhodg` no ganan ninguna.
+Por composicion: las tres **con** `snork-tree` dan 2.077, 1.952 y 1.875 (+-0.25); la que no
+lo lleva da **1.271 +-0.152**, o sea que sin Tree somos primeros casi siempre. Asientos
+parejos (1.74 a 1.94): la rotacion anula el sesgo de silla.
 
-| composicion | n | puesto medio |
-|---|---:|---:|
-| hovering-hobbs, jaxhodg, **snork-tree** | 16 | 2.219 |
-| devious-devin, hovering-hobbs, **snork-tree** | 16 | 2.000 |
-| devious-devin, jaxhodg, **snork-tree** | 16 | 1.875 |
-| devious-devin, hovering-hobbs, jaxhodg | 15 | **1.133** |
+**Como perdemos** (112 derrotas): **78 encerrados**, 23 con la unica salida pegada a una
+cabeza, 9 de hambre, 2 con salida. En royale eran 27 de 34 por salud
+(ver docs/experimentos.md#s-shrink-r): ese diagnostico no transfiere NADA.
 
-Sin Tree en la mesa somos primeros casi siempre. Los asientos salen parejos (1.625 a
-1.938), asi que la rotacion esta anulando el sesgo de silla.
+**Donde perdemos:** **71 de 112 ya en el 1v1**, 33 con tres vivas, 8 con cuatro. En el 1v1
+el rival era `snork-tree` 56 veces y `hovering-hobbs` 15. Mediana del turno de muerte: 331.
 
-**Como perdemos** (35 derrotas): **22 encerrados**, 10 con la unica salida pegada a una
-cabeza, **3 de hambre**. En royale eran 27 de 34 por salud
-(ver docs/experimentos.md#s-shrink-r): el diagnostico de royale no transfiere NADA.
+**Latencias** (p50 / p99 / maximo / timeouts, cinco contenedores a 1 CPU): `snork-tree`
+403 / 416 / **785** / **27**; `devious-devin` 406 / 421 / 501 / 7; `hovering-hobbs`
+362 / 384 / 500 / 3; **nuestra 148 / 153 / 501 / 5**; `jaxhodg` 55 / 87 / 500 / 3. Los
+rivales fuertes gastan ~400 ms y nosotros 148, el techo de `time.max_compute_ms`; subirlo ya
+se midio y no compro nada (ver docs/experimentos-duelo.md#s-trampa-duelo-r).
 
-**Donde perdemos:** 20 de 35 morimos ya en el 1v1 final, 13 con tres vivas y 2 con cuatro.
-Y cuando morimos en 1v1 el rival era `snork-tree` 15 veces y `hovering-hobbs` 5.
-
-La consecuencia para el roadmap: el duelo no es "el desempate", es donde se pierde el
-torneo de cuatro, y el rival que hay que resolver es Tree
+**Consecuencia para el roadmap:** el duelo no es "el desempate", es donde se pierde el
+torneo de cuatro, y el rival a resolver es Tree
 (ver docs/experimentos-duelo.md#s-campo-duelo).
-
