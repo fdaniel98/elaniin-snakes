@@ -66,6 +66,11 @@ def main():
     ap.add_argument("--rival", help="si se da, solo los duelos contra este rival")
     ap.add_argument("--umbral", type=float, default=1.2,
                     help="espacio/longitud por debajo del cual la posicion se considera perdida")
+    ap.add_argument("--antes-de-morir", type=int, metavar="N",
+                    help="en vez del umbral, saca la posicion N turnos ANTES de morir. Sirve "
+                         "para mirar donde la partida todavia estaba abierta: en el punto "
+                         "del derrumbe, snork Tree elige lo mismo que nosotros en 39 de 48 "
+                         "(ver docs/experimentos-duelo.md#s-consulta-r)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -87,6 +92,21 @@ def main():
                       or any(s["name"] == args.rival for s in x["board"]["snakes"]))]
         if len(duelo) < 10:
             continue
+        if args.antes_de_morir is not None:
+            objetivo = duelo[-1]["turn"] - args.antes_de_morir
+            candidato = min(duelo, key=lambda x: abs(x["turn"] - objetivo))
+            if abs(candidato["turn"] - objetivo) > 5:
+                continue  # ese duelo no llego a durar tanto; no se estira
+            destino = salida / f"{ruta.stem}-t{candidato['turn']}.json"
+            doc = a_request(candidato, args.nuestra)
+            doc["_comment"] = (f"Turno {candidato['turn']} de {ruta.stem}: "
+                               f"{args.antes_de_morir} turnos antes de nuestra muerte, con la "
+                               f"partida todavia abierta. Extraida por posiciones.py.")
+            destino.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+            sacadas += 1
+            margenes.append(duelo[-1]["turn"] - candidato["turn"])
+            continue
+
         # Primer turno por debajo del umbral que ya no se recupera.
         candidato = None
         for x in duelo:

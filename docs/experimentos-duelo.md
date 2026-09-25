@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 16982
+size_bytes: 18152
 ---
 
 # Experimentos del duelo
@@ -332,4 +332,28 @@ puntuar mejor en el no implica ser mejor. v18 escapa de mas de esas y pierde mas
 las demas. Un banco hecho con los fallos de A mide "ser distinto de A", no "ser mejor que
 A". Sigue sirviendo como diagnostico -las 41 muertes por cuerpo propio son reales- pero no
 como criterio de aceptacion.
+
+### S-CONSULTA-R Le preguntamos a Tree y elige lo mismo que nosotros {#s-consulta-r}
+
+Las 48 posiciones criticas, mandadas por HTTP a nuestro servidor y al contenedor de
+`snork-tree` **en nuestro asiento y con nuestro cuerpo** (`training-room/consulta.py`). Es
+observacion de comportamiento: no se lee ni se copia su codigo.
+
+| | nuestra | Tree |
+|---|---:|---:|
+| coincide el movimiento | — | **39 de 48** |
+| espacio tras el movimiento | 15.2 | 14.3 |
+| mantiene la cola alcanzable | 27% | 35% |
+| se acerca al rival | 52% | 42% |
+| destino con 3+ salidas | 6% | 4% |
+
+**Coincide en el 81% y sus numeros son los nuestros.** En esas posiciones no hay decision
+buena que se nos escape: estan perdidas para cualquiera. Lo confirma nuestro propio log, que
+en unas veinte de ellas devuelve puntuacion de muerte (-100 000) en milisegundos, porque no
+queda rama que buscar.
+
+**Esto cierra la linea que llevabamos siete candidatos persiguiendo.** No perdemos por jugar
+mal el final apretado: perdemos por LLEGAR a el. La diferencia con Tree esta antes, con el
+tablero todavia abierto, y ahi es donde hay que mirar -`posiciones.py --antes-de-morir N`
+saca esas posiciones-.
 

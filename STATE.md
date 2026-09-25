@@ -83,6 +83,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Decidir el siguiente candidato sabiendo que **sobrevivir no es ganar**: v18 aguanto 44 turnos
-mas y gano un 11% menos (ver docs/experimentos-duelo.md#s-umbral-supervivencia-r). Lo que
-queda sin probar en el final apretado es jugar a ENCERRAR al rival, no a durar.
+Consultar a `snork-tree` las posiciones de 40 y 60 turnos antes de morir
+(`posiciones.py --antes-de-morir`), que es donde la partida todavia esta abierta: en el
+punto del derrumbe elige lo mismo que nosotros en 39 de 48
+(ver docs/experimentos-duelo.md#s-consulta-r), asi que la diferencia esta antes.
