@@ -50,6 +50,24 @@ Tabla con puesto medio e IC95 por candidato; el neutro con cuatro iguales es 2.5
 es mejor. Es self-play con presupuesto por nodos: descarta, no acepta. Lo que sobreviva se
 lleva su torneo contra `gauntlet-v2`. ver docs/strategy.md#s-barrido
 
+## Preguntarle a otra snake (`consulta.py`)
+
+Lo unico que se puede aprender de una snake ajena sin tocar su codigo es lo que HACE. Esto
+le manda las mismas posiciones a varias y compara sus movimientos:
+
+```bash
+./scripts/zoo.sh up snork-tree --port 8121
+PORT=8120 ./build/release/bin/battlesnake-server &
+python3 training-room/consulta.py tests/posiciones-criticas --como v5-longitud \
+    --snake nuestra=http://127.0.0.1:8120 --snake tree=http://127.0.0.1:8121 \
+    --out docs/results/consulta-tree.json
+./scripts/zoo.sh down snork-tree
+```
+
+La tabla describe la casilla que elige cada una: espacio alcanzable despues del movimiento,
+si su cola sigue alcanzable, si se acerca al rival y cuantas salidas tiene el destino. Donde
+coinciden no hay nada que aprender; donde difieren, el JSON da la lista de posiciones.
+
 ## Comandos previstos
 
 ```bash
