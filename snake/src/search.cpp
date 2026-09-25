@@ -740,7 +740,8 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
                 // Un shrink se come UNA linea de UNO de los cuatro lados: solo la linea
                 // exterior esta en riesgo, y con probabilidad 1/4 por lado.
                 const int en_linea =
-                    (cab.x == min_x) + (cab.x == max_x) + (cab.y == min_y) + (cab.y == max_y);
+                    static_cast<int>(cab.x == min_x) + static_cast<int>(cab.x == max_x) +
+                    static_cast<int>(cab.y == min_y) + static_cast<int>(cab.y == max_y);
                 if (en_linea > 0) {
                     // Cuanto mas cerca el shrink, mas real es el riesgo; y cuanto menos
                     // salud, mas caro entrar en hazard, que es de lo que se muere:
