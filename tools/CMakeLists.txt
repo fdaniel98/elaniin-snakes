@@ -12,6 +12,9 @@ target_include_directories(causas PRIVATE "${CMAKE_SOURCE_DIR}/tests")
 add_executable(sonda_cuellos sonda_cuellos.cpp)
 target_link_libraries(sonda_cuellos PRIVATE engine snake_brain bsr_warnings)
 
+add_executable(sonda_posiciones sonda_posiciones.cpp)
+target_link_libraries(sonda_posiciones PRIVATE engine snake_brain bsr_warnings)
+
 add_executable(sonda_tt sonda_tt.cpp)
 target_link_libraries(sonda_tt PRIVATE engine snake_brain bsr_warnings)
 
