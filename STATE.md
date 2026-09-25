@@ -83,7 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-A/B de `v18-umbral16.json` contra `gauntlet-v2` en standard: en el banco de las 48
-posiciones donde la derrota ya era irreversible aguanta 28.2 turnos y sobrevive en 11, contra
-17.8 y 3 de v5, y 41 de esas 48 muertes son contra nuestro propio cuerpo
-(ver docs/experimentos-duelo.md#s-derrumbe).
+Decidir el siguiente candidato sabiendo que **sobrevivir no es ganar**: v18 aguanto 44 turnos
+mas y gano un 11% menos (ver docs/experimentos-duelo.md#s-umbral-supervivencia-r). Lo que
+queda sin probar en el final apretado es jugar a ENCERRAR al rival, no a durar.

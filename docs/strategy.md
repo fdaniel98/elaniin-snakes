@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 12831
+size_bytes: 12492
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -192,19 +192,14 @@ campo que nos saca distancia (ver docs/experimentos-duelo.md#s-campo-duelo).
 
 ### S-UMBRAL-SUPERVIVENCIA Hipotesis: v15 servia, pero no siempre {#s-umbral-supervivencia}
 
-**Hipotesis falsable:** encender el termino de supervivencia de v15 **solo** cuando el
-espacio alcanzable baja de 1.6 veces nuestra longitud gana su A/B contra `gauntlet-v2`.
+v18: el termino de supervivencia de v15 encendido solo cuando el espacio baja de 1.6 veces
+la longitud. **Medido contra `gauntlet-v2`: +0.0901 del lado malo, IC95 [-0.057, +0.237]. No
+entra**, apagado en `duel.survival_below_ratio`.
 
-**Dos medidas que encajan:** sobre las 48 posiciones donde la derrota ya era irreversible,
-v15 aguanta 27.0 turnos y sobrevive en 10, contra 17.8 y 3 de v5; pero su A/B contra Tree
-dio +0.050, del lado malo. Un termino que ayuda en el final apretado y estorba en el resto da
-exactamente ese par (ver docs/experimentos-duelo.md#s-derrumbe).
-
-**Que se mide:** `snake/config/v18-umbral16.json` (y `v18-umbral25.json`, umbral 2.5). Con
-`duel.survival_below_ratio` a 0 el arbol es identico a v15 y un test lo exige; otro exige que
-en tablero abierto decida como v5. En el banco, v18 da 28.2 turnos y 11 supervivencias: el
-umbral no quita nada donde el termino sirve. Si deja de estorbar en el resto lo dice el
-torneo, no el banco.
+Lo que dejo claro vale mas que el veredicto, y esta contado con sus numeros en
+ver docs/experimentos-duelo.md#s-umbral-supervivencia-r: premiar la supervivencia alarga las
+partidas y baja las victorias, y el banco de posiciones criticas esta sesgado por
+construccion, asi que sirve de diagnostico y no de criterio de aceptacion.
 
 ## S-V4 Paralelismo {#s-v4}
 

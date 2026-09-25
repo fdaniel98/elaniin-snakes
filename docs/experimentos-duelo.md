@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 15699
+size_bytes: 16982
 ---
 
 # Experimentos del duelo
@@ -307,4 +307,29 @@ el cuerpo mide 28 y la busqueda llega a 17 niveles
 **Lo que la sonda NO es:** aqui la rival la juega nuestro propio cerebro, no Tree, y la
 posicion de partida ya esta perdida. Mide salir de estas posiciones, no ganar el torneo. El
 veredicto sigue saliendo del torneo contra `gauntlet-v2`.
+
+### S-UMBRAL-SUPERVIVENCIA-R Resultado: sobrevive 44 turnos mas y gana un 11% menos {#s-umbral-supervivencia-r}
+
+Torneo contra `gauntlet-v2` en standard con `v18-umbral16`, 172 partidas de 200.
+
+| | v5 (200) | v18 (172) |
+|---|---:|---:|
+| puesto medio | **1.802** | 1.890 |
+| ganamos | **44%** | 33% |
+| encerrados | 39% | **52%** |
+| turno de muerte (mediana) | 334 | **378** |
+
+Diferencia pareada sobre los 43 bloques comunes **+0.0901**, IC95 [-0.0569, +0.2372]: NO
+CONCLUYENTE y del lado malo. **v18 no entra**; queda apagada en `duel.survival_below_ratio`.
+
+**El mecanismo funciono y por eso perdimos.** v18 aguanta 44 turnos mas y gana menos: en un
+final de dos gana quien hace morir al otro, no quien muere mas tarde. Premiar la
+supervivencia hace jugar a la defensiva y cede la iniciativa.
+
+**Y la leccion de instrumento, que es la que hay que recordar:** el banco de 48 posiciones
+esta **sesgado por construccion** -son exactamente las posiciones donde v5 murio-, asi que
+puntuar mejor en el no implica ser mejor. v18 escapa de mas de esas y pierde mas en todas
+las demas. Un banco hecho con los fallos de A mide "ser distinto de A", no "ser mejor que
+A". Sigue sirviendo como diagnostico -las 41 muertes por cuerpo propio son reales- pero no
+como criterio de aceptacion.
 
