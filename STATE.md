@@ -83,7 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Consultar a `snork-tree` las posiciones de 40 y 60 turnos antes de morir
-(`posiciones.py --antes-de-morir`), que es donde la partida todavia esta abierta: en el
-punto del derrumbe elige lo mismo que nosotros en 39 de 48
+Consultar a Tree las posiciones de 40 y 60 turnos antes de morir
+(`posiciones.py --antes-de-morir`): en el derrumbe elige lo mismo que nosotros en 39 de 48
 (ver docs/experimentos-duelo.md#s-consulta-r), asi que la diferencia esta antes.
