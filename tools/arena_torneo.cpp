@@ -2,7 +2,7 @@
 /// A/B en la arena: dos configuraciones contra el mismo campo, sobre los mismos bloques.
 ///
 ///     arena_torneo --a <config> [--b <config>] --campo <config> --bloques N
-///                  [--semilla-base S] [--hilos T] [--nodos N]
+///                  [--semilla-base S] [--hilos T] [--nodos N] [--nodos-a N]
 ///                  [--serpientes 2..4] [--mapa royale|standard]
 ///
 /// `--hilos` por defecto deja DOS nucleos libres: estas corridas duran horas y la maquina
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
     if (ruta_a.empty() || ruta_campo.empty()) {
         std::fprintf(stderr,
                      "uso: arena_torneo --a <config> [--b <config>] --campo <config> "
-                     "--bloques N [--semilla-base S] [--hilos T] [--nodos N]\n");
+                     "--bloques N [--semilla-base S] [--hilos T] [--nodos N] [--nodos-a N]\n");
         return 2;
     }
     const bool hay_b = !ruta_b.empty();
@@ -156,9 +156,21 @@ int main(int argc, char** argv) {
     // El presupuesto por nodos lo fija el torneo, no el config: las dos ramas tienen que
     // pensar lo mismo o la comparacion mide el presupuesto.
     // ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0302
-    pa.search.budget_nodes = nodos;
+    //
+    // `--nodos-a` es la excepcion declarada: da a la rama A un presupuesto distinto, que es
+    // la unica forma de medir QUE COMPRA el computo. Se usa a proposito, y por eso se
+    // imprime bien visible: una corrida con presupuestos distintos no compara estrategias.
+    const int nodos_a = std::atoi(arg(argc, argv, "--nodos-a", std::to_string(nodos)).c_str());
+    pa.search.budget_nodes = nodos_a;
     pb.search.budget_nodes = nodos;
     pc.search.budget_nodes = nodos;
+    if (nodos_a != nodos) {
+        std::fprintf(stderr,
+                     "AVISO la rama A piensa con %d nodos y el resto con %d: esta corrida "
+                     "mide el PRESUPUESTO, no la estrategia\n",
+                     nodos_a,
+                     nodos);
+    }
 
     std::vector<Encargo> encargos;
     encargos.reserve(static_cast<std::size_t>(bloques) * static_cast<std::size_t>(serpientes) * 2);
