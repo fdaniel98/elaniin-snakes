@@ -13,15 +13,15 @@ Proceso, pautas, algoritmos y herramientas, tal como se usaron en `elaniin-snake
 
 ## Índice
 
-1. [La idea central](#1-la-idea-central)
-2. [El proceso](#2-el-proceso)
-3. [Pautas: lo que se aprendió midiendo](#3-pautas-lo-que-se-aprendió-midiendo)
-4. [Arquitectura y algoritmos](#4-arquitectura-y-algoritmos)
-5. [Historia de versiones](#5-historia-de-versiones)
-6. [Herramientas](#6-herramientas)
-7. [Despliegue](#7-despliegue)
-8. [Qué queda por hacer](#8-qué-queda-por-hacer)
-9. [Checklist para empezar de cero](#9-checklist-para-empezar-de-cero)
+1. La idea central
+2. El proceso
+3. Pautas: lo que se aprendió midiendo
+4. Arquitectura y algoritmos
+5. Historia de versiones
+6. Herramientas
+7. Despliegue
+8. Qué queda por hacer
+9. Checklist para empezar de cero
 
 ---
 
@@ -51,8 +51,8 @@ Las reglas de Royale se derivaron del código Go de `BattlesnakeOfficial/rules`,
 commit fijado (`87e094e2`) y cada afirmación citada como `archivo.go:línea`. Varias cosas
 que "todo el mundo sabe" resultaron distintas al leer el código:
 
-- **Los segmentos nacen apilados.** En el turno 0 los tres segmentos están en la misma
-  casilla, así que la cola no se libera en los primeros turnos aunque nadie haya comido.
+- **Los segmentos nacen apilados.** Al empezar, los tres segmentos comparten casilla:
+  durante los primeros turnos la cola sigue ocupada aunque nadie haya comido.
 - **La casilla de cola está libre si y solo si no hay segmentos duplicados al final**
   (`body[n-1] == body[n-2]`). Nunca se deriva de un flag del tipo "comió el turno anterior".
 - **El lado del *shrink* de Royale es aleatorio y con repetición.** Lo decide un RNG
@@ -155,7 +155,7 @@ De las muertes de v5, 27 de 34 fueron por hambre o por hazard con poca vida. v6 
 directamente, midiendo la salud en turnos de vida, y funcionó: las muertes por falta de
 vida bajaron de 27 a 19. **Pero el puesto medio empeoró**, porque las otras causas subieron
 de 6 a 12. La snake no muere de hambre: muere de estar en el sitio donde solo quedaba comer
-mal. Atacar la causa más frecuente redistribuye las muertes sin mover el puesto. v10 repitió
+mal. Tapar la causa de muerte dominante solo cambia de qué se muere, no el puesto. v10 repitió
 el mismo patrón.
 
 ### Una correlación dentro de una versión no es una palanca
@@ -407,8 +407,8 @@ Cloud Run en `us-east1`:
 `GET /` devuelve la versión desplegada (`_version` del config) para comprobar que un
 redespliegue aterrizó. `GET /health` responde sin invocar al cerebro.
 
-**Un riesgo que no es de latencia.** El árbitro pide `GET /` antes del primer turno, con el
-mismo timeout de 500 ms y con una conexión nueva, así que esa petición paga el handshake TLS
+**Un riesgo que no es de latencia.** Antes de arrancar la partida el árbitro hace un `GET /`
+con los mismos 500 ms de límite y por una conexión nueva, así que esa petición paga el handshake TLS
 completo. Si falla, la partida no empieza. Lo mitiga tener las instancias calientes.
 
 ---

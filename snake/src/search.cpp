@@ -383,7 +383,7 @@ double negamax(State s, int depth, double alpha, double beta, Contexto& ctx) noe
 
     const double alpha_inicial = alpha;
     std::array<Direction, engine::direction_count> mios{};
-    int n = ordered_moves(s, ctx.us, mios, ctx.params->search.order_version);
+    const int n = ordered_moves(s, ctx.us, mios, ctx.params->search.order_version);
     // El mejor movimiento que la tabla ya conoce se prueba PRIMERO: es lo que hace que la
     // poda corte arriba en vez de abajo.
     if (hay_mejor) {
@@ -620,10 +620,10 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
         // nada que empuje hacia el rival desde lejos. Solo siendo estrictamente mas
         // largos, que es cuando el cabezazo lo ganamos por regla.
         if (duelo && mas_corto && p.duel.pressure_weight > 0.0) {
-            constexpr double kMaxManhattan =
+            constexpr double k_max_manhattan =
                 static_cast<double>(State::width - 1) + static_cast<double>(State::height - 1);
-            const double d = std::min(static_cast<double>(distancia), kMaxManhattan);
-            score += p.duel.pressure_weight * (1.0 - d / kMaxManhattan);
+            const double d = std::min(static_cast<double>(distancia), k_max_manhattan);
+            score += p.duel.pressure_weight * (1.0 - d / k_max_manhattan);
         }
     }
     score -= p.head.avoid_equal_or_longer * 0.25 * mas_largos;
