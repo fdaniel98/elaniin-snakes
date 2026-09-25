@@ -26,6 +26,9 @@
 /// jugada de la ultima profundidad COMPLETADA-, y nunca lanza.
 /// ver docs/invariants.md#inv-10 y docs/invariants.md#inv-11
 
+#include <array>
+#include <limits>
+
 #include <engine/state.hpp>
 #include <engine/types.hpp>
 
@@ -55,6 +58,13 @@ struct SearchResult {
     /// de la carga de la maquina: la arena aborta.
     /// ver docs/decisions/ADR-0030-presupuesto-por-nodos.md#d-0301
     bool corto_el_reloj{false};
+    /// Valor de cada movimiento de raiz en la ultima profundidad COMPLETADA, indexado por
+    /// `Direction`. El del mejor es exacto; los demas son cotas superiores por la poda
+    /// alfa. NaN = no legal o no mirado. Solo diagnostico: nada decide con esto.
+    std::array<double, 4> root_values{{std::numeric_limits<double>::quiet_NaN(),
+                                       std::numeric_limits<double>::quiet_NaN(),
+                                       std::numeric_limits<double>::quiet_NaN(),
+                                       std::numeric_limits<double>::quiet_NaN()}};
 };
 
 /// Evalua una posicion entera desde el punto de vista de `us`. Es la evaluacion de v0

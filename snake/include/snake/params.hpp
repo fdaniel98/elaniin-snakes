@@ -65,6 +65,11 @@ struct SpaceParams {
     double worst_case_weight = 0.0;
     /// Casillas candidatas a cuello que se prueban como maximo, por movimiento.
     std::int32_t worst_case_max_cuellos = 24;
+    /// [v19] 1 = si el flood fill congelado dice que no cabemos, mirar el espacio con
+    /// reloj. ver docs/strategy.md#s-reloj
+    std::int32_t timed_version = 0;
+    /// % del castigo de espacio que queda cuando el reloj dice que se sale.
+    std::int32_t timed_escape_pct = 25;
 };
 
 /// Zona de cabeza: casillas adyacentes a cabezas rivales.

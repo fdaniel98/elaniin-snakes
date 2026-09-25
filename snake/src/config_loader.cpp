@@ -154,6 +154,9 @@ Params parse_params(const json& doc) {
         read_double(space, "worst_case_weight", params.space.worst_case_weight);
     params.space.worst_case_max_cuellos =
         read_plain_int(space, "worst_case_max_cuellos", params.space.worst_case_max_cuellos);
+    params.space.timed_version = read_plain_int(space, "timed_version", params.space.timed_version);
+    params.space.timed_escape_pct =
+        read_plain_int(space, "timed_escape_pct", params.space.timed_escape_pct);
 
     const json& head = child(doc, "head");
     params.head.avoid_equal_or_longer =
@@ -251,7 +254,9 @@ std::vector<std::string> unknown_keys(const std::string& path) {
           "weight",
           "tail_escape",
           "worst_case_weight",
-          "worst_case_max_cuellos"}},
+          "worst_case_max_cuellos",
+          "timed_version",
+          "timed_escape_pct"}},
         {"head", {"avoid_equal_or_longer", "prefer_shorter"}},
         {"hazard",
          {"weight",

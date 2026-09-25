@@ -12,6 +12,7 @@
 #include <engine/rules.hpp>
 
 #include <snake/eval/floodfill.hpp>
+#include <snake/eval/timed.hpp>
 #include <snake/eval/voronoi.hpp>
 #include <snake/search.hpp>
 
@@ -480,7 +481,22 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
         score += p.space.weight * static_cast<double>(espacio) / static_cast<double>(State::cells);
     }
     if (espacio < mi_largo) {
-        score -= p.space.weight;
+        if (p.space.timed_version >= 1) {
+            // [v19] El congelado dice que no cabemos; el reloj dice si los cuerpos se
+            // retiran antes de que nos quedemos sin casillas. Solo se paga aqui, donde
+            // el congelado ya fallo: en tablero abierto no cuesta nada.
+            // ver docs/strategy.md#s-reloj
+            const int reloj = eval::timed_space_here(s, us);
+            if (reloj >= mi_largo) {
+                score -= p.space.weight * static_cast<double>(p.space.timed_escape_pct) / 100.0;
+            } else {
+                const double falta = static_cast<double>(mi_largo - std::max(reloj, 0)) /
+                                     static_cast<double>(mi_largo);
+                score -= p.space.weight * (1.0 + falta);
+            }
+        } else {
+            score -= p.space.weight;
+        }
     }
 
     // 1a. [v15] Supervivencia en vez de superficie, solo con un rival vivo.
@@ -848,6 +864,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
         Direction mejor_dir = mios[0];
         double mejor_val = -std::numeric_limits<double>::infinity();
         bool completa = true;
+        std::array<double, 4> valores = out.root_values;
 
         for (int i = 0; i < n_mios; ++i) {
             const double v =
@@ -856,6 +873,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
                 completa = false;
                 break;
             }
+            valores[static_cast<std::size_t>(mios[static_cast<unsigned>(i)])] = v;
             if (v > mejor_val) {
                 mejor_val = v;
                 mejor_dir = mios[static_cast<unsigned>(i)];
@@ -873,6 +891,7 @@ SearchResult search(const State& state, Deadline deadline, const Params& params)
         }
         out.best = mejor_dir;
         out.score = mejor_val;
+        out.root_values = valores;
         out.depth = depth;
         if (ctx.agotado) {
             break;

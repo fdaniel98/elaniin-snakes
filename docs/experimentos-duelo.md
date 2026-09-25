@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 18152
+size_bytes: 20943
 ---
 
 # Experimentos del duelo
@@ -357,3 +357,52 @@ mal el final apretado: perdemos por LLEGAR a el. La diferencia con Tree esta ant
 tablero todavia abierto, y ahi es donde hay que mirar -`posiciones.py --antes-de-morir N`
 saca esas posiciones-.
 
+
+### S-LIGA-0925 Siete derrotas del leaderboard: rendicion y hojas ciegas al reloj {#s-liga-0925}
+
+Siete partidas reales de Makarov en el leaderboard standard (2026-09-25), contra
+`chikorita`, `NMC²` y `Kaizen`. Las siete acaban igual: **choca consigo misma** con salud
+83-99, sin salida, cinco de ellas en el 1v1. Latencia ~170 ms hasta pocos turnos antes: no
+es hambre ni timeout. Posiciones en `tests/posiciones-liga/`, sacadas de
+`matches/liga-0925/posiciones.txt` con `training-room/liga_posiciones.py`; el cerebro de
+este arbol repite las 11 jugadas (`bin/sonda_liga`).
+
+| posicion | eligio | espacio con reloj | alternativa | lo que hizo el rival |
+|---|---|---:|---|---|
+| `6bed3999` t225 | up, raiz -100180 | 6 | down: 121 | no tapo `down` |
+| `a84b9a76` t155 | up, raiz -100000 | 3 | left: 121 | no tapo `left` |
+| `2f48018e` t284 | left, raiz -101650 | 8 | right: 121 | SI entro en `right` |
+| `ffecd357` t379 | down, raiz -67 | 15 (cuerpo 29) | up: 121 | — |
+
+Dos defectos distintos:
+
+1. **Rendicion** (4 de 11): todas las raices a muerte bajo el supuesto paranoico y se elige
+   la muerte mas lenta, un bolsillo seguro. Es S-DESESPERACION, pero aqui el rival NO es el
+   adversario perfecto contra el que v11 salio neutra: en 2 de 4 la salida estaba libre.
+2. **Hojas ciegas al reloj**: la guarda "no cabe mi cuerpo" usa el flood fill congelado, y
+   un bolsillo cerrado por el cuello puntua igual que un pasillo que acaba en la cola que se
+   retira. `ffecd357` t379 elige el bolsillo de 15 por -67 contra -70.
+
+Hipotesis: ver docs/strategy.md#s-reloj
+
+### S-RELOJ-R Resultado en arena 1v1: menos muertes propias, efecto por debajo del delta {#s-reloj-r}
+
+Arena, 1v1 standard contra v5, 80 bloques, 2 000 nodos, contenedor de 2 nucleos.
+
+| | v5 | v19b (solo reloj) | v19 (reloj + desesperacion) |
+|---|---:|---:|---:|
+| puesto medio | 1.500 | 1.456 | **1.450** |
+| diferencia pareada | | -0.044 [-0.087, -0.000] | **-0.050 [-0.091, -0.009]** |
+| partidas vivas al final (de 160) | 80 | 87 | **88** |
+| cuerpo propio / cabezazo | 53 / 23 | 52 / 19 | **19 / 51** |
+
+El IC95 no cruza el cero, pero el efecto (-0.05) no
+llega al delta util de 0.1: **NO CONCLUYENTE** por protocolo. La ganancia la trae el reloj;
+la desesperacion convierte muertes propias en cabezazos, como en v11. Contra v5 el rival
+castiga cada apuesta; el leaderboard no, y ahi es donde se espera la diferencia. El veredicto
+sale del torneo HTTP contra `gauntlet-v2` en la maquina de referencia.
+
+**Cuatro vivas** (standard, 30 bloques, mismo campo): -0.017, IC95 [-0.108, +0.074], y
+muertes propias 42 -> 14. No estorba donde no apunta. **Coste:** profundidad media a 150 ms
+identica (32.4 / 32.3 en las 48 criticas, 13.8 / 13.9 en las 11 de la liga): el reloj solo
+se calcula cuando el congelado ya fallo.

@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 12492
+size_bytes: 12818
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -111,6 +111,12 @@ Con una sola rival viva, `duel.version` 1 (prefer_shorter 40 y gradiente de pres
 Cuando la busqueda devuelve puntuacion de muerte en la raiz, decidir con v0 en vez de con
 la rama que muere mas tarde. **Cerrada: neutra** en los dos formatos del torneo; codigo
 conservado y apagado en `search.despair_version` (ver docs/experimentos-duelo.md#s-desesperacion-r).
+
+### S-RELOJ Hipotesis: la hoja no distingue bolsillo de pasillo {#s-reloj}
+
+v19: si el flood fill congelado dice que no cabemos, mirar el espacio con reloj
+(`space.timed_version`), mas `search.despair_version` 1. Falsable: diferencia pareada < 0
+contra v5 y contra `gauntlet-v2` (ver docs/experimentos-duelo.md#s-liga-0925).
 
 ### S-LONGITUD-DUELO Hipotesis: en el duelo, cazar longitud {#s-longitud-duelo}
 
