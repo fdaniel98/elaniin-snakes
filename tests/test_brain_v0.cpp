@@ -1707,3 +1707,42 @@ TEST_CASE("shrink: en royale y con el shrink cerca, cambia la decision", "[searc
     INFO("posiciones en que cambio: " << distintos << " de 30");
     REQUIRE(distintos > 0);
 }
+
+TEST_CASE("umbral de supervivencia: con ratio 0 es exactamente v15", "[search][duelo]") {
+    engine::Rng rng(20260938);
+    snake::Params v15 = params_con_nodos(20000);
+    v15.duel.survival_version = 1;
+    snake::Params v18 = v15;
+    v18.duel.survival_below_ratio = 0.0; // 0 = sin umbral
+    for (int caso = 0; caso < 12; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 8000 + static_cast<std::uint64_t>(rng.next() % 500));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), v15);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), v18);
+        INFO("caso " << caso);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.score == b.score);
+        REQUIRE(a.nodes == b.nodes);
+    }
+}
+
+TEST_CASE("umbral de supervivencia: en tablero abierto apaga el termino", "[search][duelo]") {
+    // El tablero recien abierto tiene espacio de sobra, asi que con umbral el arbol tiene
+    // que decidir como v5 -termino apagado- y no como v15.
+    engine::Rng rng(20260939);
+    snake::Params v5 = params_con_nodos(20000);
+    snake::Params v18 = v5;
+    v18.duel.survival_version = 1;
+    v18.duel.survival_below_ratio = 1.6;
+    v18.duel.survival_weight = 9999.0;
+    v18.duel.tail_loop_weight = 9999.0;
+    for (int caso = 0; caso < 12; ++caso) {
+        const engine::State11 s = engine::start_board<11, 11, 4>(
+            2, engine::Ruleset{}, 9000 + static_cast<std::uint64_t>(rng.next() % 500));
+        const snake::SearchResult a = snake::search(s, inalcanzable(), v5);
+        const snake::SearchResult b = snake::search(s, inalcanzable(), v18);
+        INFO("caso " << caso);
+        REQUIRE(a.best == b.best);
+        REQUIRE(a.score == b.score);
+    }
+}

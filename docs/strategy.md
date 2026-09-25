@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 13855
+size_bytes: 12831
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -46,37 +46,9 @@ como ruido sumado al espacio (ver docs/experimentos.md#s-cuellos-r). Apagada en
 
 ### S-BUSQ Busqueda paranoica: la primera vez que miramos hacia delante {#s-busq}
 
-**El numero que la justifica:** `brain_v0` decide en ~100 us sobre 350 ms. Gasta el
-**0.03%** del presupuesto. Las dos heuristicas que probamos -Voronoi y cuellos- dieron NO
-CONCLUYENTE contra rivales que simulan. Lo que falta no es evaluacion, es profundidad.
-
-**Que es:** busqueda paranoica con profundizacion iterativa sobre la evaluacion de v0.
-Detalle y sesgos declarados en ver docs/decisions/ADR-0022-busqueda-paranoica.md.
-
-**Capacidad medida** (`tools/sonda_busqueda.cpp`, 15 fixtures, 350 ms):
-
-| | |
-|---|---|
-| profundidad media | 7.7 |
-| profundidad minima | 4 (spawn con 4 serpientes, ~600 000 nodos) |
-| tiempo medio / peor | 41.9 ms / 348 ms |
-
-Compara eso con el turno unico de v0. Es la diferencia entre ver el movimiento y ver la
-partida.
-
-**Hipotesis falsable:** la busqueda sube el puesto medio contra `gauntlet-v1` por encima
-del delta de 0.10, medido con el mismo protocolo pareado de
-ver docs/experimentos.md#s-cuellos-r.
-
-**Estado: NO MEDIDA EN PARTIDA.** Pasa los 98 tests, respeta el deadline a presupuestos de
-1 a 350 ms y nunca devuelve un movimiento ilegal, pero eso solo dice que no rompe nada.
-Hasta que gane su A/B, `search.version` sigue en **0** en `default.json` y la snake que se
-despliega es v0. Se enciende con `snake/config/v3-busqueda.json`.
-
-Si tambien sale NO CONCLUYENTE, lo que falla no es la profundidad sino la evaluacion en
-las hojas, y eso cambia por completo donde hay que mirar despues.
-
-Resultado medido: ver docs/experimentos.md#s-busq-r
+v3: alpha-beta con profundizacion iterativa y los rivales como minimizadores simultaneos, en
+vez de decidir un turno. **Medida: ayuda (-0.28), y la profundidad no es el techo** -6 contra
+12 niveles no se distingue- (ver docs/experimentos.md#s-busq-r). Esta en v5.
 
 ### S-HOJAS Hipotesis: la evaluacion buena va en las hojas {#s-hojas}
 
@@ -94,32 +66,20 @@ se midio que no vale nada. **Medida: MEJORA** y esta en v5
 ### S-FORMATO El torneo es STANDARD, no royale {#s-formato}
 
 Verificado en la partida real del torneo (`tests/fixtures-reales/dee2b0c8-*.json`):
-`ruleset.name` y `map` son **standard** y el tablero no trae un solo hazard. El proyecto se
-escribio entero apuntando a Royale, y eso invalida de raiz varias cosas:
+`ruleset.name` y `map` son **standard** y no hay un solo hazard. El proyecto apuntaba a
+Royale, y eso invalida de raiz:
 
-- **v17 no puede entrar:** sin hazard no hay shrink que anticipar
-  (ver docs/strategy.md#s-shrink).
-- **El diagnostico de royale describe otro juego:** las 27 muertes por salud de 34 y la
-  brecha de territorio del turno 100 son de un tablero que se encoge
-  (ver docs/experimentos.md#s-shrink-r).
-- **v5 gano su A/B en royale.** El control de longitud -la unica mejora grande del
-  proyecto, -0.6917 contra v4- se midio donde el tablero se encoge y obliga a crecer. En
-  standard ese coste es otro, asi que la superioridad de v5 sobre v4 **no esta medida en el
-  formato que se juega**. Se re-mide con `snake/config/exp-sin-longitud.json`, que es
-  default con `length.version` a 0 y nada mas.
-- **Lo que si vale:** los duelos contra el zoo se jugaron en standard 1v1
+- **v17 no puede entrar:** sin hazard no hay shrink (ver docs/strategy.md#s-shrink).
+- **El diagnostico de royale describe otro juego** (ver docs/experimentos.md#s-shrink-r).
+- **v5 gano su A/B en royale**, pero **re-medido en standard aguanta**: apagar el control de
+  longitud da 2.917 de puesto medio contra el 2.500 del neutro
+  (ver docs/experimentos.md#s-formato-r).
+- **Lo que si valia:** los duelos contra el zoo se jugaron en standard
   (ver docs/experimentos-duelo.md#s-campo-duelo).
 
-Royale sigue soportado y el cerebro lee la variante del request, asi que esto no es un
-cambio de codigo: es un cambio de que campo decide. El campo nuevo es `gauntlet-v2`
--standard, tres motores distintos, cuatro composiciones-, y se congela en la maquina que
-corre el torneo con `./scripts/congelar-gauntlet.sh`.
-
-**Lo primero re-medido, y sale bien:** apagar el control de longitud en standard de cuatro
-da puesto medio **2.917**, IC95 [2.563, 3.270], contra el 2.500 del neutro (cuatro
-serpientes identicas). El intervalo no cruza el neutro: **el control de longitud de v5
-tambien funciona en standard**, no era un artefacto del hazard
-(ver docs/experimentos.md#s-formato-r).
+El cerebro lee la variante del request y juega las dos, asi que esto no es codigo: es que el
+campo que decide es `gauntlet-v2` -standard, tres motores, cuatro composiciones-, congelado
+con `./scripts/congelar-gauntlet.sh` en la maquina que corre el torneo.
 
 ## S-V2 Busqueda multijugador {#s-v2}
 
@@ -229,6 +189,22 @@ campo que nos saca distancia (ver docs/experimentos-duelo.md#s-campo-duelo).
    campo de copias de uno mismo no dice como se juega contra otros motores.
 3. **Combinar solo lo que gano, y volver a medir.** Dos terminos que ganan por separado no
    ganan juntos por definicion: la combinacion es una candidata nueva y necesita su A/B.
+
+### S-UMBRAL-SUPERVIVENCIA Hipotesis: v15 servia, pero no siempre {#s-umbral-supervivencia}
+
+**Hipotesis falsable:** encender el termino de supervivencia de v15 **solo** cuando el
+espacio alcanzable baja de 1.6 veces nuestra longitud gana su A/B contra `gauntlet-v2`.
+
+**Dos medidas que encajan:** sobre las 48 posiciones donde la derrota ya era irreversible,
+v15 aguanta 27.0 turnos y sobrevive en 10, contra 17.8 y 3 de v5; pero su A/B contra Tree
+dio +0.050, del lado malo. Un termino que ayuda en el final apretado y estorba en el resto da
+exactamente ese par (ver docs/experimentos-duelo.md#s-derrumbe).
+
+**Que se mide:** `snake/config/v18-umbral16.json` (y `v18-umbral25.json`, umbral 2.5). Con
+`duel.survival_below_ratio` a 0 el arbol es identico a v15 y un test lo exige; otro exige que
+en tablero abierto decida como v5. En el banco, v18 da 28.2 turnos y 11 supervivencias: el
+umbral no quita nada donde el termino sirve. Si deja de estorbar en el resto lo dice el
+torneo, no el banco.
 
 ## S-V4 Paralelismo {#s-v4}
 

@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 13303
+size_bytes: 15699
 ---
 
 # Experimentos del duelo
@@ -255,4 +255,56 @@ Consecuencias, y la primera es de metodo:
    Tree- y dejan de valer como «no mejoran el duelo».
 3. Tree es un arbol minimax con su propia evaluacion; Flood es la misma base con un cerebro
    de flood fill y contra el vamos parejos. La distancia no es "snork", es el arbol.
+
+### S-DERRUMBE Donde se pierde de verdad: 41 de 48 muertes son contra nuestro propio cuerpo {#s-derrumbe}
+
+Los 56 duelos 1v1 perdidos contra `snork-tree` en el torneo de standard
+(ver docs/experimentos.md#s-standard-r), mirados turno a turno.
+
+**Como mueren:** longitud 28.5 contra 27.0 de Tree -somos mas largos-, **salud 90**,
+**espacio libre 0** mientras Tree tiene 48. No es hambre ni cabezazo: nos quedamos sin
+sitio con la salud intacta.
+
+**No es el reparto del tablero.** En el primer turno en que las dos regiones dejan de
+tocarse, las partidas ganadas y las perdidas son indistinguibles: region nuestra 50 contra
+52, la de Tree 30 contra 28, y nos toca la MENOR en el 43% de las perdidas y el 41% de las
+ganadas. El lado que nos toca no decide.
+
+**Es un derrumbe de 20 turnos.** Espacio libre por turnos que faltan para el final:
+
+| faltan | ganadas | perdidas | espacio/longitud (gan / per) |
+|---:|---:|---:|---|
+| 60 | 64 | 66 | 2.00 / **2.50** |
+| 40 | 50 | 57 | 2.13 / 1.83 |
+| 20 | 54 | 39 | 1.92 / 1.33 |
+| 10 | 49 | 32 | 1.48 / **0.89** |
+| 5 | 48 | 5 | 1.38 / 0.21 |
+| 0 | 48 | 0 | 1.42 / 0.00 |
+
+A 60 turnos del final **estamos mejor en las que perdemos**. El desplome pasa en los ultimos
+20 turnos, cuando espacio/longitud cruza el 1.
+
+**El banco de 48 posiciones** (`tests/posiciones-criticas`, extraidas con
+`training-room/posiciones.py`) es el primer turno en que ese ratio baja de 1.2 y ya no se
+recupera. Jugadas hasta el final con `bin/sonda_posiciones`:
+
+| config | turnos de media | sobrevive |
+|---|---:|---:|
+| **v18, umbral 1.6** | **28.2** | **11 de 48** |
+| v15 (supervivencia) | 27.0 | 10 |
+| v16 (tabla) | 19.2 | 6 |
+| v14 (trampa) | 18.0 | 4 |
+| v5 (desplegada) | 17.8 | 3 |
+| v13 (territorio duelo) | 17.6 | 4 |
+| v11 (desesperacion) | 17.2 | 3 |
+
+**Y la causa: 41 de las 48 muertes de v5 son `cuerpo_propio`.** Con la region libre del
+tamaño del cuerpo, sobrevivir es recorrerla sin dejar huecos, y una evaluacion que cuenta
+AREA no distingue una region recorrible de una que no lo es. La profundidad no lo arregla:
+el cuerpo mide 28 y la busqueda llega a 17 niveles
+(ver docs/experimentos-duelo.md#s-tabla-duelo-r).
+
+**Lo que la sonda NO es:** aqui la rival la juega nuestro propio cerebro, no Tree, y la
+posicion de partida ya esta perdida. Mide salir de estas posiciones, no ganar el torneo. El
+veredicto sigue saliendo del torneo contra `gauntlet-v2`.
 

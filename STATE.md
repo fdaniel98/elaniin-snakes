@@ -83,6 +83,7 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Correr el barrido de candidatos en standard (ver docs/strategy.md#s-barrido). La linea base
-contra el campo real ya esta, con 200 partidas: 1.802 de puesto medio, y 71 de las 112
-derrotas son en el 1v1 (ver docs/experimentos.md#s-standard-r).
+A/B de `v18-umbral16.json` contra `gauntlet-v2` en standard: en el banco de las 48
+posiciones donde la derrota ya era irreversible aguanta 28.2 turnos y sobrevive en 11, contra
+17.8 y 3 de v5, y 41 de esas 48 muertes son contra nuestro propio cuerpo
+(ver docs/experimentos-duelo.md#s-derrumbe).

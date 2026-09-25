@@ -242,6 +242,16 @@ struct DuelParams {
     /// Puntos por tener la cola dentro de la region propia mientras las dos regiones
     /// todavia se tocan. Es la version continua de lo mismo.
     double tail_loop_weight = 80.0;
+    /// [v18] Umbral que enciende lo de arriba: solo se aplica si el espacio alcanzable es
+    /// menor que `survival_below_ratio` veces nuestra longitud. 0 = siempre (v15).
+    ///
+    /// Por que: sobre las 48 posiciones donde la derrota ya era irreversible
+    /// (`tests/posiciones-criticas`, ver docs/experimentos-duelo.md#s-derrumbe) v15 aguanta
+    /// 27.0 turnos de media y sobrevive en 10, contra 17.8 y 3 de v5. Pero su A/B contra
+    /// Tree salio +0.050, del lado malo. Las dos cosas encajan si ayuda en el final
+    /// apretado y estorba en el resto: el umbral lo deja actuar solo donde se midio que
+    /// sirve. 41 de esas 48 muertes son contra nuestro propio cuerpo.
+    double survival_below_ratio = 0.0;
 };
 
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md

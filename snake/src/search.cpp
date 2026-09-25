@@ -493,7 +493,13 @@ double evaluate(const State& s, SnakeId us, const Params& p) noexcept {
     //       - si las dos regiones ya no se tocan, el duelo son dos solitarios y gana quien
     //         aguante mas turnos: eso es una cuenta, no una heuristica.
     //     ver docs/strategy.md#s-supervivencia-duelo
-    if (p.duel.survival_version >= 1) {
+    // [v18] El umbral: con `survival_below_ratio` a 0 esto no filtra nada y el termino es
+    //       el de v15. Por encima de 0 solo se aplica en el final apretado, que es donde se
+    //       midio que sirve. ver docs/strategy.md#s-umbral-supervivencia
+    const bool duelo_apretado =
+        p.duel.survival_below_ratio <= 0.0 ||
+        static_cast<double>(espacio) < p.duel.survival_below_ratio * static_cast<double>(mi_largo);
+    if (p.duel.survival_version >= 1 && duelo_apretado) {
         int rival = -1;
         int vivos_rival = 0;
         for (int i = 0; i < s.count(); ++i) {
