@@ -306,7 +306,7 @@ std::vector<std::string> unknown_keys(const std::string& path) {
         return fuera;
     }
     for (const auto& [grupo, valor] : doc.items()) {
-        if (grupo.rfind('_', 0) == 0) {
+        if (grupo.starts_with('_')) {
             continue; // comentarios y metadatos: _comment, _version
         }
         const auto g = std::find_if(conocidas.begin(), conocidas.end(), [&](const auto& par) {
@@ -322,7 +322,10 @@ std::vector<std::string> unknown_keys(const std::string& path) {
         for (const auto& [clave, v] : valor.items()) {
             (void)v;
             if (std::find(g->second.begin(), g->second.end(), clave) == g->second.end()) {
-                fuera.push_back(grupo + "." + clave);
+                std::string nombre = grupo;
+                nombre += '.';
+                nombre += clave;
+                fuera.push_back(std::move(nombre));
             }
         }
     }
