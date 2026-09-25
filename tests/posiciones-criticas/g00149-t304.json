@@ -1,0 +1,351 @@
+{
+ "game": {
+  "id": "f25e2dfd-e27c-4112-8c03-4802aa8a1603",
+  "ruleset": {
+   "name": "standard",
+   "version": "cli",
+   "settings": {
+    "foodSpawnChance": 15,
+    "minimumFood": 1,
+    "hazardDamagePerTurn": 14,
+    "hazardMap": "",
+    "hazardMapAuthor": "",
+    "royale": {
+     "shrinkEveryNTurns": 25
+    },
+    "squad": {
+     "allowBodyCollisions": false,
+     "sharedElimination": false,
+     "sharedHealth": false,
+     "sharedLength": false
+    }
+   }
+  },
+  "map": "standard",
+  "timeout": 500,
+  "source": ""
+ },
+ "turn": 304,
+ "board": {
+  "height": 11,
+  "width": 11,
+  "snakes": [
+   {
+    "id": "41067d95-db56-4714-9195-20d12d4ac937",
+    "name": "snork-tree",
+    "latency": "1",
+    "health": 75,
+    "body": [
+     {
+      "x": 9,
+      "y": 7
+     },
+     {
+      "x": 9,
+      "y": 8
+     },
+     {
+      "x": 8,
+      "y": 8
+     },
+     {
+      "x": 7,
+      "y": 8
+     },
+     {
+      "x": 6,
+      "y": 8
+     },
+     {
+      "x": 6,
+      "y": 7
+     },
+     {
+      "x": 5,
+      "y": 7
+     },
+     {
+      "x": 4,
+      "y": 7
+     },
+     {
+      "x": 3,
+      "y": 7
+     },
+     {
+      "x": 3,
+      "y": 6
+     },
+     {
+      "x": 3,
+      "y": 5
+     },
+     {
+      "x": 3,
+      "y": 4
+     },
+     {
+      "x": 4,
+      "y": 4
+     },
+     {
+      "x": 4,
+      "y": 3
+     },
+     {
+      "x": 4,
+      "y": 2
+     },
+     {
+      "x": 4,
+      "y": 1
+     },
+     {
+      "x": 5,
+      "y": 1
+     },
+     {
+      "x": 6,
+      "y": 1
+     },
+     {
+      "x": 6,
+      "y": 2
+     },
+     {
+      "x": 5,
+      "y": 2
+     },
+     {
+      "x": 5,
+      "y": 3
+     },
+     {
+      "x": 5,
+      "y": 4
+     }
+    ],
+    "head": {
+     "x": 9,
+     "y": 7
+    },
+    "length": 22,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#FF7043",
+     "head": "sand-worm",
+     "tail": "pixel"
+    }
+   },
+   {
+    "id": "0c1081a1-6c63-42e0-9fcf-c0064c076642",
+    "name": "v5-longitud",
+    "latency": "148",
+    "health": 94,
+    "body": [
+     {
+      "x": 10,
+      "y": 10
+     },
+     {
+      "x": 10,
+      "y": 9
+     },
+     {
+      "x": 9,
+      "y": 9
+     },
+     {
+      "x": 8,
+      "y": 9
+     },
+     {
+      "x": 7,
+      "y": 9
+     },
+     {
+      "x": 6,
+      "y": 9
+     },
+     {
+      "x": 6,
+      "y": 10
+     },
+     {
+      "x": 5,
+      "y": 10
+     },
+     {
+      "x": 4,
+      "y": 10
+     },
+     {
+      "x": 3,
+      "y": 10
+     },
+     {
+      "x": 2,
+      "y": 10
+     },
+     {
+      "x": 1,
+      "y": 10
+     },
+     {
+      "x": 1,
+      "y": 9
+     },
+     {
+      "x": 1,
+      "y": 8
+     },
+     {
+      "x": 0,
+      "y": 8
+     },
+     {
+      "x": 0,
+      "y": 7
+     },
+     {
+      "x": 0,
+      "y": 6
+     },
+     {
+      "x": 0,
+      "y": 5
+     },
+     {
+      "x": 0,
+      "y": 4
+     },
+     {
+      "x": 0,
+      "y": 3
+     }
+    ],
+    "head": {
+     "x": 10,
+     "y": 10
+    },
+    "length": 20,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#98eb34",
+     "head": "nr-rocket",
+     "tail": "nr-booster"
+    }
+   }
+  ],
+  "food": [
+   {
+    "x": 5,
+    "y": 0
+   }
+  ],
+  "hazards": []
+ },
+ "you": {
+  "id": "0c1081a1-6c63-42e0-9fcf-c0064c076642",
+  "name": "v5-longitud",
+  "latency": "148",
+  "health": 94,
+  "body": [
+   {
+    "x": 10,
+    "y": 10
+   },
+   {
+    "x": 10,
+    "y": 9
+   },
+   {
+    "x": 9,
+    "y": 9
+   },
+   {
+    "x": 8,
+    "y": 9
+   },
+   {
+    "x": 7,
+    "y": 9
+   },
+   {
+    "x": 6,
+    "y": 9
+   },
+   {
+    "x": 6,
+    "y": 10
+   },
+   {
+    "x": 5,
+    "y": 10
+   },
+   {
+    "x": 4,
+    "y": 10
+   },
+   {
+    "x": 3,
+    "y": 10
+   },
+   {
+    "x": 2,
+    "y": 10
+   },
+   {
+    "x": 1,
+    "y": 10
+   },
+   {
+    "x": 1,
+    "y": 9
+   },
+   {
+    "x": 1,
+    "y": 8
+   },
+   {
+    "x": 0,
+    "y": 8
+   },
+   {
+    "x": 0,
+    "y": 7
+   },
+   {
+    "x": 0,
+    "y": 6
+   },
+   {
+    "x": 0,
+    "y": 5
+   },
+   {
+    "x": 0,
+    "y": 4
+   },
+   {
+    "x": 0,
+    "y": 3
+   }
+  ],
+  "head": {
+   "x": 10,
+   "y": 10
+  },
+  "length": 20,
+  "shout": "",
+  "squad": "",
+  "customizations": {
+   "color": "#98eb34",
+   "head": "nr-rocket",
+   "tail": "nr-booster"
+  }
+ },
+ "_comment": "Turno 304 de g00149: aqui el espacio alcanzable cae por debajo de 1.2 veces nuestro cuerpo y la derrota ya no se revierte. Extraida por posiciones.py."
+}

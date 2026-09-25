@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Torneo gauntlet-v1</title>
+<style>
+:root { color-scheme: light;
+  --surface: #fcfcfb; --texto: #0b0b0b; --texto2: #52514e; --linea: #e3e2dd; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) {
+  color-scheme: dark; --surface:#1a1a19; --texto:#fff; --texto2:#c3c2b7; --linea:#35342f; } }
+:root[data-theme="dark"] { color-scheme: dark;
+  --surface:#1a1a19; --texto:#fff; --texto2:#c3c2b7; --linea:#35342f; }
+body { background: var(--surface); color: var(--texto); margin: 0;
+  font: 15px/1.55 ui-sans-serif, system-ui, sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+h2 { font-size: 1.05rem; margin: 40px 0 12px; }
+p.sub { color: var(--texto2); margin: 0 0 8px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--linea); }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--texto2); font-weight: 500; }
+.fila { display: grid; grid-template-columns: 9.5rem 1fr 8rem; gap: 10px;
+  align-items: center; margin-bottom: 8px; }
+.pista { display: flex; align-items: center; gap: 8px; }
+.barra { height: 14px; background: var(--c); border-radius: 0 4px 4px 0; min-width: 2px; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .barra {
+  background: var(--cd); } }
+:root[data-theme="dark"] .barra { background: var(--cd); }
+.valor { font-variant-numeric: tabular-nums; }
+.nota, .etiqueta { color: var(--texto2); }
+.etiqueta { color: var(--texto); }
+</style></head><body><main>
+<h1>Torneo gauntlet-v1</h1>
+<p class="sub">200 partidas &middot; 50 bloques &middot;
+commit <code>a74c2090a42a</code> &middot; 8 nucleos,
+governor desconocido</p>
+
+<h2>Puesto medio (menor es mejor)</h2>
+<div class="fila"><div class="etiqueta">hovering-hobbs</div><div class="pista"><div class="barra" style="--c:#2a78d6;--cd:#3987e5;width:34.2%"></div><span class="valor">1.29</span></div><div class="nota">161 de 200 ganadas</div></div><div class="fila"><div class="etiqueta">devious-devin</div><div class="pista"><div class="barra" style="--c:#eb6834;--cd:#d95926;width:56.9%"></div><span class="valor">2.15</span></div><div class="nota">32 de 200 ganadas</div></div><div class="fila"><div class="etiqueta">v0-baseline</div><div class="pista"><div class="barra" style="--c:#1baf7a;--cd:#199e70;width:73.2%"></div><span class="valor">2.77</span></div><div class="nota">6 de 200 ganadas</div></div><div class="fila"><div class="etiqueta">eremetic-eric</div><div class="pista"><div class="barra" style="--c:#eda100;--cd:#c98500;width:100.0%"></div><span class="valor">3.78</span></div><div class="nota">1 de 200 ganadas</div></div>
+
+<h2>Latencia y timeouts</h2>
+<table><thead><tr><th>snake</th><th>p50 ms</th><th>p99 ms</th><th>max ms</th>
+<th>timeouts</th><th>movimientos</th></tr></thead><tbody><tr><td>devious-devin</td><td>406.7</td><td>449.0</td><td>2321</td><td>192</td><td>32545</td></tr><tr><td>hovering-hobbs</td><td>362.4</td><td>404.1</td><td>2321</td><td>172</td><td>34449</td></tr><tr><td>eremetic-eric</td><td>0.0</td><td>28.1</td><td>501</td><td>12</td><td>11675</td></tr><tr><td>v0-baseline</td><td>0.0</td><td>10.5</td><td>501</td><td>8</td><td>23831</td></tr></tbody></table>
+
+<h2>Lo que este reporte no dice</h2>
+<p class="sub">Todo lo de arriba es descriptivo: sin p-valores y sin veredicto. Las tres
+rivales salen del mismo binario, asi que sus errores estan correlacionados y el campo mide
+menos de lo que parece. No hay reproducibilidad bit a bit: se persisten la semilla y el
+JSONL de cada partida.</p>
+<p class="sub">El documento es <code>reporte.md</code>; esto solo es para mirarlo.</p>
+</main></body></html>

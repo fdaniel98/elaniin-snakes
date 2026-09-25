@@ -1,0 +1,299 @@
+{
+ "game": {
+  "id": "abc4cafc-6543-4ea4-b0b6-88c794e0e0c3",
+  "ruleset": {
+   "name": "standard",
+   "version": "cli",
+   "settings": {
+    "foodSpawnChance": 15,
+    "minimumFood": 1,
+    "hazardDamagePerTurn": 14,
+    "hazardMap": "",
+    "hazardMapAuthor": "",
+    "royale": {
+     "shrinkEveryNTurns": 25
+    },
+    "squad": {
+     "allowBodyCollisions": false,
+     "sharedElimination": false,
+     "sharedHealth": false,
+     "sharedLength": false
+    }
+   }
+  },
+  "map": "standard",
+  "timeout": 500,
+  "source": ""
+ },
+ "turn": 241,
+ "board": {
+  "height": 11,
+  "width": 11,
+  "snakes": [
+   {
+    "id": "466da545-ab35-4c04-8cc6-073cdd49fcff",
+    "name": "v5-longitud",
+    "latency": "148",
+    "health": 69,
+    "body": [
+     {
+      "x": 10,
+      "y": 1
+     },
+     {
+      "x": 9,
+      "y": 1
+     },
+     {
+      "x": 9,
+      "y": 2
+     },
+     {
+      "x": 8,
+      "y": 2
+     },
+     {
+      "x": 8,
+      "y": 1
+     },
+     {
+      "x": 7,
+      "y": 1
+     },
+     {
+      "x": 7,
+      "y": 0
+     },
+     {
+      "x": 6,
+      "y": 0
+     },
+     {
+      "x": 5,
+      "y": 0
+     },
+     {
+      "x": 4,
+      "y": 0
+     },
+     {
+      "x": 3,
+      "y": 0
+     },
+     {
+      "x": 3,
+      "y": 1
+     },
+     {
+      "x": 4,
+      "y": 1
+     },
+     {
+      "x": 4,
+      "y": 2
+     },
+     {
+      "x": 5,
+      "y": 2
+     }
+    ],
+    "head": {
+     "x": 10,
+     "y": 1
+    },
+    "length": 15,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#98eb34",
+     "head": "nr-rocket",
+     "tail": "nr-booster"
+    }
+   },
+   {
+    "id": "8f0d2f48-ede5-40ff-804a-3ea50f45da18",
+    "name": "snork-tree",
+    "latency": "2",
+    "health": 73,
+    "body": [
+     {
+      "x": 10,
+      "y": 3
+     },
+     {
+      "x": 9,
+      "y": 3
+     },
+     {
+      "x": 8,
+      "y": 3
+     },
+     {
+      "x": 7,
+      "y": 3
+     },
+     {
+      "x": 7,
+      "y": 4
+     },
+     {
+      "x": 7,
+      "y": 5
+     },
+     {
+      "x": 7,
+      "y": 6
+     },
+     {
+      "x": 6,
+      "y": 6
+     },
+     {
+      "x": 5,
+      "y": 6
+     },
+     {
+      "x": 4,
+      "y": 6
+     },
+     {
+      "x": 4,
+      "y": 5
+     },
+     {
+      "x": 4,
+      "y": 4
+     },
+     {
+      "x": 5,
+      "y": 4
+     },
+     {
+      "x": 5,
+      "y": 5
+     },
+     {
+      "x": 6,
+      "y": 5
+     },
+     {
+      "x": 6,
+      "y": 4
+     },
+     {
+      "x": 6,
+      "y": 3
+     },
+     {
+      "x": 5,
+      "y": 3
+     }
+    ],
+    "head": {
+     "x": 10,
+     "y": 3
+    },
+    "length": 18,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#FF7043",
+     "head": "sand-worm",
+     "tail": "pixel"
+    }
+   }
+  ],
+  "food": [
+   {
+    "x": 9,
+    "y": 9
+   },
+   {
+    "x": 2,
+    "y": 6
+   }
+  ],
+  "hazards": []
+ },
+ "you": {
+  "id": "466da545-ab35-4c04-8cc6-073cdd49fcff",
+  "name": "v5-longitud",
+  "latency": "148",
+  "health": 69,
+  "body": [
+   {
+    "x": 10,
+    "y": 1
+   },
+   {
+    "x": 9,
+    "y": 1
+   },
+   {
+    "x": 9,
+    "y": 2
+   },
+   {
+    "x": 8,
+    "y": 2
+   },
+   {
+    "x": 8,
+    "y": 1
+   },
+   {
+    "x": 7,
+    "y": 1
+   },
+   {
+    "x": 7,
+    "y": 0
+   },
+   {
+    "x": 6,
+    "y": 0
+   },
+   {
+    "x": 5,
+    "y": 0
+   },
+   {
+    "x": 4,
+    "y": 0
+   },
+   {
+    "x": 3,
+    "y": 0
+   },
+   {
+    "x": 3,
+    "y": 1
+   },
+   {
+    "x": 4,
+    "y": 1
+   },
+   {
+    "x": 4,
+    "y": 2
+   },
+   {
+    "x": 5,
+    "y": 2
+   }
+  ],
+  "head": {
+   "x": 10,
+   "y": 1
+  },
+  "length": 15,
+  "shout": "",
+  "squad": "",
+  "customizations": {
+   "color": "#98eb34",
+   "head": "nr-rocket",
+   "tail": "nr-booster"
+  }
+ },
+ "_comment": "Turno 241 de g00073: aqui el espacio alcanzable cae por debajo de 1.2 veces nuestro cuerpo y la derrota ya no se revierte. Extraida por posiciones.py."
+}

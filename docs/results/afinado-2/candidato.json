@@ -1,0 +1,59 @@
+{
+  "_comment": "v5: busqueda + territorio en las hojas + control de longitud. Es la que se despliega. Gano su A/B contra v4 por -0.6917 (IC95 [-1.012, -0.371]) y contra v0 por -1.0583: 26 primeros puestos de 60 y NINGUN cuarto. v0 se conserva entero en v0-baseline.json como referencia fija. ver docs/experimentos.md#s-longitud-r",
+  "time": {
+    "network_margin_ms": 100,
+    "safety_margin_ms": 50,
+    "max_compute_ms": 200
+  },
+  "food": {
+    "seek_below": 42,
+    "seek_below_in_hazard": 64,
+    "free_food_distance": 2,
+    "weight": 6.9
+  },
+  "space": {
+    "min_space_ratio": 1.0,
+    "weight": 100.0,
+    "tail_escape": true,
+    "worst_case_weight": 0.0,
+    "worst_case_max_cuellos": 24
+  },
+  "head": {
+    "avoid_equal_or_longer": 68.0,
+    "prefer_shorter": 6.8
+  },
+  "hazard": {
+    "weight": 23.0,
+    "low_health_multiplier": 3.4
+  },
+  "territory": {
+    "version": 1,
+    "weight": 102.0,
+    "contested_weight": 0.0,
+    "hazard_value_pct": 42
+  },
+  "search": {
+    "version": 1,
+    "max_depth": 64,
+    "max_rivals": 2,
+    "death_value": -100000.0,
+    "win_value": 100000.0,
+    "survival_bonus": 25.5,
+    "reserve_us": 2000,
+    "budget_nodes": 0
+  },
+  "length": {
+    "version": 1,
+    "advantage_weight": 69.0,
+    "target_lead": 3,
+    "hunt_weight": 8.5
+  },
+  "survival": {
+    "version": 0,
+    "safe_turns": 25,
+    "weight": 25.0,
+    "seek_below_turns": 15,
+    "critical_turns": 5,
+    "panic_weight": 120.0
+  }
+}

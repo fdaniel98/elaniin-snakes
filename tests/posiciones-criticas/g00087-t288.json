@@ -1,0 +1,299 @@
+{
+ "game": {
+  "id": "b3a9823a-f033-4ac2-b544-71301f37865b",
+  "ruleset": {
+   "name": "standard",
+   "version": "cli",
+   "settings": {
+    "foodSpawnChance": 15,
+    "minimumFood": 1,
+    "hazardDamagePerTurn": 14,
+    "hazardMap": "",
+    "hazardMapAuthor": "",
+    "royale": {
+     "shrinkEveryNTurns": 25
+    },
+    "squad": {
+     "allowBodyCollisions": false,
+     "sharedElimination": false,
+     "sharedHealth": false,
+     "sharedLength": false
+    }
+   }
+  },
+  "map": "standard",
+  "timeout": 500,
+  "source": ""
+ },
+ "turn": 288,
+ "board": {
+  "height": 11,
+  "width": 11,
+  "snakes": [
+   {
+    "id": "a12c4374-4c54-45ae-9e17-b17740c035a0",
+    "name": "snork-tree",
+    "latency": "3",
+    "health": 71,
+    "body": [
+     {
+      "x": 7,
+      "y": 9
+     },
+     {
+      "x": 8,
+      "y": 9
+     },
+     {
+      "x": 8,
+      "y": 8
+     },
+     {
+      "x": 8,
+      "y": 7
+     },
+     {
+      "x": 8,
+      "y": 6
+     },
+     {
+      "x": 8,
+      "y": 5
+     },
+     {
+      "x": 7,
+      "y": 5
+     },
+     {
+      "x": 6,
+      "y": 5
+     },
+     {
+      "x": 6,
+      "y": 6
+     },
+     {
+      "x": 5,
+      "y": 6
+     },
+     {
+      "x": 5,
+      "y": 5
+     },
+     {
+      "x": 5,
+      "y": 4
+     },
+     {
+      "x": 6,
+      "y": 4
+     },
+     {
+      "x": 6,
+      "y": 3
+     },
+     {
+      "x": 5,
+      "y": 3
+     },
+     {
+      "x": 4,
+      "y": 3
+     },
+     {
+      "x": 4,
+      "y": 4
+     },
+     {
+      "x": 4,
+      "y": 5
+     }
+    ],
+    "head": {
+     "x": 7,
+     "y": 9
+    },
+    "length": 18,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#FF7043",
+     "head": "sand-worm",
+     "tail": "pixel"
+    }
+   },
+   {
+    "id": "fb85c867-511f-45c5-b762-e7affabbb4f4",
+    "name": "v5-longitud",
+    "latency": "148",
+    "health": 86,
+    "body": [
+     {
+      "x": 10,
+      "y": 10
+     },
+     {
+      "x": 9,
+      "y": 10
+     },
+     {
+      "x": 9,
+      "y": 9
+     },
+     {
+      "x": 9,
+      "y": 8
+     },
+     {
+      "x": 9,
+      "y": 7
+     },
+     {
+      "x": 9,
+      "y": 6
+     },
+     {
+      "x": 9,
+      "y": 5
+     },
+     {
+      "x": 10,
+      "y": 5
+     },
+     {
+      "x": 10,
+      "y": 4
+     },
+     {
+      "x": 9,
+      "y": 4
+     },
+     {
+      "x": 9,
+      "y": 3
+     },
+     {
+      "x": 9,
+      "y": 2
+     },
+     {
+      "x": 9,
+      "y": 1
+     },
+     {
+      "x": 8,
+      "y": 1
+     },
+     {
+      "x": 8,
+      "y": 0
+     }
+    ],
+    "head": {
+     "x": 10,
+     "y": 10
+    },
+    "length": 15,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#98eb34",
+     "head": "nr-rocket",
+     "tail": "nr-booster"
+    }
+   }
+  ],
+  "food": [
+   {
+    "x": 2,
+    "y": 10
+   },
+   {
+    "x": 4,
+    "y": 10
+   }
+  ],
+  "hazards": []
+ },
+ "you": {
+  "id": "fb85c867-511f-45c5-b762-e7affabbb4f4",
+  "name": "v5-longitud",
+  "latency": "148",
+  "health": 86,
+  "body": [
+   {
+    "x": 10,
+    "y": 10
+   },
+   {
+    "x": 9,
+    "y": 10
+   },
+   {
+    "x": 9,
+    "y": 9
+   },
+   {
+    "x": 9,
+    "y": 8
+   },
+   {
+    "x": 9,
+    "y": 7
+   },
+   {
+    "x": 9,
+    "y": 6
+   },
+   {
+    "x": 9,
+    "y": 5
+   },
+   {
+    "x": 10,
+    "y": 5
+   },
+   {
+    "x": 10,
+    "y": 4
+   },
+   {
+    "x": 9,
+    "y": 4
+   },
+   {
+    "x": 9,
+    "y": 3
+   },
+   {
+    "x": 9,
+    "y": 2
+   },
+   {
+    "x": 9,
+    "y": 1
+   },
+   {
+    "x": 8,
+    "y": 1
+   },
+   {
+    "x": 8,
+    "y": 0
+   }
+  ],
+  "head": {
+   "x": 10,
+   "y": 10
+  },
+  "length": 15,
+  "shout": "",
+  "squad": "",
+  "customizations": {
+   "color": "#98eb34",
+   "head": "nr-rocket",
+   "tail": "nr-booster"
+  }
+ },
+ "_comment": "Turno 288 de g00087: aqui el espacio alcanzable cae por debajo de 1.2 veces nuestro cuerpo y la derrota ya no se revierte. Extraida por posiciones.py."
+}

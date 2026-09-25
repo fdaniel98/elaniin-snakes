@@ -14,6 +14,7 @@ docs/results/*.db
 # commitearon, pero sin estas lineas un `git add -A` los mete enteros en la historia.
 # Los .md de reporte SI se versionan.
 docs/results/*/*.jsonl
+docs/results/*/partidas/
 docs/results/*/*.sqlite
 docs/results/*/*.sqlite-journal
 docs/results/*/*.ref.log

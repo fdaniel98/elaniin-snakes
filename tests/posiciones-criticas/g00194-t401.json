@@ -1,0 +1,451 @@
+{
+ "game": {
+  "id": "931cb030-15eb-4223-a6e6-c8573c8d1422",
+  "ruleset": {
+   "name": "standard",
+   "version": "cli",
+   "settings": {
+    "foodSpawnChance": 15,
+    "minimumFood": 1,
+    "hazardDamagePerTurn": 14,
+    "hazardMap": "",
+    "hazardMapAuthor": "",
+    "royale": {
+     "shrinkEveryNTurns": 25
+    },
+    "squad": {
+     "allowBodyCollisions": false,
+     "sharedElimination": false,
+     "sharedHealth": false,
+     "sharedLength": false
+    }
+   }
+  },
+  "map": "standard",
+  "timeout": 500,
+  "source": ""
+ },
+ "turn": 401,
+ "board": {
+  "height": 11,
+  "width": 11,
+  "snakes": [
+   {
+    "id": "d7218716-5e6d-4adf-9e78-f384674ef438",
+    "name": "v5-longitud",
+    "latency": "148",
+    "health": 88,
+    "body": [
+     {
+      "x": 10,
+      "y": 1
+     },
+     {
+      "x": 10,
+      "y": 2
+     },
+     {
+      "x": 9,
+      "y": 2
+     },
+     {
+      "x": 8,
+      "y": 2
+     },
+     {
+      "x": 7,
+      "y": 2
+     },
+     {
+      "x": 6,
+      "y": 2
+     },
+     {
+      "x": 6,
+      "y": 1
+     },
+     {
+      "x": 6,
+      "y": 0
+     },
+     {
+      "x": 5,
+      "y": 0
+     },
+     {
+      "x": 5,
+      "y": 1
+     },
+     {
+      "x": 4,
+      "y": 1
+     },
+     {
+      "x": 4,
+      "y": 0
+     },
+     {
+      "x": 3,
+      "y": 0
+     },
+     {
+      "x": 2,
+      "y": 0
+     },
+     {
+      "x": 1,
+      "y": 0
+     },
+     {
+      "x": 0,
+      "y": 0
+     },
+     {
+      "x": 0,
+      "y": 1
+     },
+     {
+      "x": 0,
+      "y": 2
+     },
+     {
+      "x": 0,
+      "y": 3
+     },
+     {
+      "x": 1,
+      "y": 3
+     },
+     {
+      "x": 2,
+      "y": 3
+     },
+     {
+      "x": 2,
+      "y": 4
+     },
+     {
+      "x": 2,
+      "y": 5
+     },
+     {
+      "x": 3,
+      "y": 5
+     },
+     {
+      "x": 4,
+      "y": 5
+     },
+     {
+      "x": 4,
+      "y": 4
+     },
+     {
+      "x": 4,
+      "y": 3
+     }
+    ],
+    "head": {
+     "x": 10,
+     "y": 1
+    },
+    "length": 27,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#98eb34",
+     "head": "nr-rocket",
+     "tail": "nr-booster"
+    }
+   },
+   {
+    "id": "bcc53c46-79d0-492f-8673-732d0bc089d9",
+    "name": "snork-tree",
+    "latency": "401",
+    "health": 95,
+    "body": [
+     {
+      "x": 9,
+      "y": 4
+     },
+     {
+      "x": 9,
+      "y": 3
+     },
+     {
+      "x": 8,
+      "y": 3
+     },
+     {
+      "x": 7,
+      "y": 3
+     },
+     {
+      "x": 7,
+      "y": 4
+     },
+     {
+      "x": 7,
+      "y": 5
+     },
+     {
+      "x": 7,
+      "y": 6
+     },
+     {
+      "x": 6,
+      "y": 6
+     },
+     {
+      "x": 6,
+      "y": 5
+     },
+     {
+      "x": 5,
+      "y": 5
+     },
+     {
+      "x": 5,
+      "y": 6
+     },
+     {
+      "x": 4,
+      "y": 6
+     },
+     {
+      "x": 3,
+      "y": 6
+     },
+     {
+      "x": 2,
+      "y": 6
+     },
+     {
+      "x": 1,
+      "y": 6
+     },
+     {
+      "x": 1,
+      "y": 5
+     },
+     {
+      "x": 1,
+      "y": 4
+     },
+     {
+      "x": 0,
+      "y": 4
+     },
+     {
+      "x": 0,
+      "y": 5
+     },
+     {
+      "x": 0,
+      "y": 6
+     },
+     {
+      "x": 0,
+      "y": 7
+     },
+     {
+      "x": 0,
+      "y": 8
+     },
+     {
+      "x": 0,
+      "y": 9
+     },
+     {
+      "x": 0,
+      "y": 10
+     },
+     {
+      "x": 1,
+      "y": 10
+     },
+     {
+      "x": 1,
+      "y": 9
+     },
+     {
+      "x": 2,
+      "y": 9
+     },
+     {
+      "x": 3,
+      "y": 9
+     },
+     {
+      "x": 4,
+      "y": 9
+     }
+    ],
+    "head": {
+     "x": 9,
+     "y": 4
+    },
+    "length": 29,
+    "shout": "",
+    "squad": "",
+    "customizations": {
+     "color": "#FF7043",
+     "head": "sand-worm",
+     "tail": "pixel"
+    }
+   }
+  ],
+  "food": [
+   {
+    "x": 9,
+    "y": 10
+   },
+   {
+    "x": 10,
+    "y": 0
+   },
+   {
+    "x": 10,
+    "y": 8
+   },
+   {
+    "x": 9,
+    "y": 5
+   },
+   {
+    "x": 5,
+    "y": 4
+   }
+  ],
+  "hazards": []
+ },
+ "you": {
+  "id": "d7218716-5e6d-4adf-9e78-f384674ef438",
+  "name": "v5-longitud",
+  "latency": "148",
+  "health": 88,
+  "body": [
+   {
+    "x": 10,
+    "y": 1
+   },
+   {
+    "x": 10,
+    "y": 2
+   },
+   {
+    "x": 9,
+    "y": 2
+   },
+   {
+    "x": 8,
+    "y": 2
+   },
+   {
+    "x": 7,
+    "y": 2
+   },
+   {
+    "x": 6,
+    "y": 2
+   },
+   {
+    "x": 6,
+    "y": 1
+   },
+   {
+    "x": 6,
+    "y": 0
+   },
+   {
+    "x": 5,
+    "y": 0
+   },
+   {
+    "x": 5,
+    "y": 1
+   },
+   {
+    "x": 4,
+    "y": 1
+   },
+   {
+    "x": 4,
+    "y": 0
+   },
+   {
+    "x": 3,
+    "y": 0
+   },
+   {
+    "x": 2,
+    "y": 0
+   },
+   {
+    "x": 1,
+    "y": 0
+   },
+   {
+    "x": 0,
+    "y": 0
+   },
+   {
+    "x": 0,
+    "y": 1
+   },
+   {
+    "x": 0,
+    "y": 2
+   },
+   {
+    "x": 0,
+    "y": 3
+   },
+   {
+    "x": 1,
+    "y": 3
+   },
+   {
+    "x": 2,
+    "y": 3
+   },
+   {
+    "x": 2,
+    "y": 4
+   },
+   {
+    "x": 2,
+    "y": 5
+   },
+   {
+    "x": 3,
+    "y": 5
+   },
+   {
+    "x": 4,
+    "y": 5
+   },
+   {
+    "x": 4,
+    "y": 4
+   },
+   {
+    "x": 4,
+    "y": 3
+   }
+  ],
+  "head": {
+   "x": 10,
+   "y": 1
+  },
+  "length": 27,
+  "shout": "",
+  "squad": "",
+  "customizations": {
+   "color": "#98eb34",
+   "head": "nr-rocket",
+   "tail": "nr-booster"
+  }
+ },
+ "_comment": "Turno 401 de g00194: aqui el espacio alcanzable cae por debajo de 1.2 veces nuestro cuerpo y la derrota ya no se revierte. Extraida por posiciones.py."
+}
