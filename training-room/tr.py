@@ -603,6 +603,13 @@ def cmd_match(args):
     # El digest congelado es el contrato del campo: si la imagen local no es esa, lo que
     # se mediria no es este gauntlet. Aborta, no avisa.
     if not args.dry_run:
+        # Un gauntlet sin congelar no tiene contrato: el bucle de abajo no comprobaba nada
+        # y el torneo moria en la primera partida con un IndexError sin explicacion. Es lo
+        # que pasa cuando el fichero versionado sustituye a la copia congelada local.
+        if not gauntlet.get("congelado") or not gauntlet["imagenes"]:
+            muere(f"{gauntlet['nombre']} no esta congelado en esta maquina (sin digests). "
+                  f"Corre ./scripts/congelar-gauntlet.sh {args.gauntlet} y commitea el "
+                  "resultado: sin eso el campo no es el mismo de una corrida a otra.")
         for imagen, digest_esperado in gauntlet["imagenes"].items():
             r = corre([docker, "image", "inspect", "--format", "{{.Id}}", imagen])
             if r.returncode != 0:
