@@ -12,6 +12,7 @@ add_executable(unit_tests
   test_voronoi.cpp
   test_arena.cpp
   test_timed.cpp
+  test_modo_duelo.cpp
 )
 
 target_link_libraries(unit_tests PRIVATE engine snake_brain arena bsr_warnings Catch2::Catch2WithMain)
@@ -22,6 +23,7 @@ target_compile_definitions(unit_tests PRIVATE
   BSR_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus"
   BSR_FIXTURES_REALES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures-reales"
   BSR_POSICIONES_LIGA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/posiciones-liga"
+  BSR_POSICIONES_CRITICAS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/posiciones-criticas"
 )
 
 # Los tests [.pending] quedan registrados y visibles, pero no corren por defecto.

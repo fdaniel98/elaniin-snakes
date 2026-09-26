@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -126,7 +127,10 @@ engine::Ruleset parse_ruleset(const json& game) {
     return rules;
 }
 
-Params parse_params(const json& doc) {
+namespace {
+
+/// Todo menos el parche de duelo. Separado para que `parse_params` no se llame a si mismo.
+Params parse_base(const json& doc) {
     Params params;
 
     const json& time = child(doc, "time");
@@ -243,6 +247,21 @@ Params parse_params(const json& doc) {
     return params;
 }
 
+} // namespace
+
+Params parse_params(const json& doc) {
+    Params params = parse_base(doc);
+    // [v20] Modo duelo: el JSON base con el parche de `duelo` encima. Lo que el parche no
+    // dice se hereda. ver docs/strategy.md#s-modo-duelo
+    if (doc.is_object() && doc.contains("duelo") && doc["duelo"].is_object()) {
+        json fusion = doc;
+        fusion.erase("duelo");
+        fusion.merge_patch(doc["duelo"]);
+        params.duelo = std::make_shared<const Params>(parse_base(fusion));
+    }
+    return params;
+}
+
 std::vector<std::string> unknown_keys(const std::string& path) {
     // Una sola lista de lo que el cargador lee: si alguien añade un campo a parse_params y
     // no aqui, el test 1:1 de test_ruleset_parse.cpp lo caza por el otro lado.
@@ -305,27 +324,37 @@ std::vector<std::string> unknown_keys(const std::string& path) {
     if (doc.is_discarded() || !doc.is_object()) {
         return fuera;
     }
-    for (const auto& [grupo, valor] : doc.items()) {
-        if (grupo.starts_with('_')) {
-            continue; // comentarios y metadatos: _comment, _version
-        }
-        const auto g = std::find_if(conocidas.begin(), conocidas.end(), [&](const auto& par) {
-            return par.first == grupo;
-        });
-        if (g == conocidas.end()) {
-            fuera.push_back(grupo);
-            continue;
-        }
-        if (!valor.is_object()) {
-            continue;
-        }
-        for (const auto& [clave, v] : valor.items()) {
-            (void)v;
-            if (std::find(g->second.begin(), g->second.end(), clave) == g->second.end()) {
-                std::string nombre = grupo;
-                nombre += '.';
-                nombre += clave;
+    // El parche de duelo lleva los mismos grupos, y se valida igual con prefijo.
+    std::vector<std::pair<std::string, const json*>> nodos{{"", &doc}};
+    if (doc.contains("duelo") && doc["duelo"].is_object()) {
+        nodos.emplace_back("duelo.", &doc["duelo"]);
+    }
+    for (const auto& [prefijo, nodo] : nodos) {
+        for (const auto& [grupo, valor] : nodo->items()) {
+            if (grupo.starts_with('_') || (prefijo.empty() && grupo == "duelo")) {
+                continue; // comentarios y metadatos: _comment, _version; y el propio parche
+            }
+            const auto g = std::find_if(conocidas.begin(), conocidas.end(), [&](const auto& par) {
+                return par.first == grupo;
+            });
+            if (g == conocidas.end()) {
+                std::string nombre = prefijo;
+                nombre += grupo;
                 fuera.push_back(std::move(nombre));
+                continue;
+            }
+            if (!valor.is_object()) {
+                continue;
+            }
+            for (const auto& [clave, v] : valor.items()) {
+                (void)v;
+                if (std::find(g->second.begin(), g->second.end(), clave) == g->second.end()) {
+                    std::string nombre = prefijo;
+                    nombre += grupo;
+                    nombre += '.';
+                    nombre += clave;
+                    fuera.push_back(std::move(nombre));
+                }
             }
         }
     }

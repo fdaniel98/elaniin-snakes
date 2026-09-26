@@ -223,8 +223,10 @@ int main() {
                 variant = rules.variant;
                 turn = state.turn;
                 degraded = !engine::is_supported(variant);
-                const auto deadline =
-                    snake::Deadline::from_timeout(rules.timeout_ms, params.time, started);
+                // [v20] En un duelo el presupuesto de tiempo puede ser otro: lo decide el
+                // parche `duelo` del config. ver docs/strategy.md#s-modo-duelo
+                const auto deadline = snake::Deadline::from_timeout(
+                    rules.timeout_ms, snake::params_para(state, params).time, started);
                 move = degraded ? snake::decide_degraded(state, deadline, params)
                                 : snake::decide(state, deadline, params);
             } else {

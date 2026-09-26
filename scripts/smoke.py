@@ -250,6 +250,17 @@ def main():
     # check dejaria de poder fallar. ver docs/rules-parametros.md
     tope_duro = 500.0 - float(snake_cfg["time"]["network_margin_ms"]) \
                       - float(snake_cfg["time"]["safety_margin_ms"])
+    # [v20] Con modo duelo, cada peticion se mide contra el presupuesto que rige ESA
+    # posicion: el del parche en un 1v1, el base en las demas. El techo duro vale para
+    # los dos. ver docs/strategy.md#s-modo-duelo
+    duelo_cfg = snake_cfg.get("duelo") if isinstance(snake_cfg.get("duelo"), dict) else None
+    presupuesto_duelo = float(((duelo_cfg or {}).get("time") or {}).get(
+        "max_compute_ms", presupuesto))
+    max_budget_duelo = presupuesto_duelo + float(perf["max_move_overhead_ms_max"])
+    if duelo_cfg is not None and args.max_ms is None and max_budget_duelo > tope_duro:
+        print(f"FAIL el umbral del modo duelo ({max_budget_duelo:.0f}ms) supera el techo "
+              f"duro de {tope_duro:.0f}ms. duelo.time.max_compute_ms esta demasiado alto.")
+        return 1
     if max_budget > tope_duro:
         print(f"FAIL el umbral derivado ({max_budget:.0f}ms) supera el techo duro de "
               f"{tope_duro:.0f}ms (500 - margen de red - margen de seguridad). "
@@ -262,7 +273,15 @@ def main():
         return 1
 
     latencies = []
+    # Latencia menos el presupuesto de la posicion: lo que se compara con el sobrecoste.
+    excesos = []
     failures = []
+
+    def es_duelo(req):
+        you = (req.get("you") or {}).get("id")
+        vivas = [s for s in (req.get("board") or {}).get("snakes", [])
+                 if isinstance(s, dict) and s.get("id") != you]
+        return duelo_cfg is not None and len(vivas) == 1
 
     # Calentamiento: una peticion real, con su movimiento comprobado igual que las demas,
     # cuya latencia se contabiliza como arranque en frio y NO entra en la muestra. Lo que
@@ -292,6 +311,7 @@ def main():
                 failures.append(f"{path.name}: sin respuesta ({exc})")
                 break
             latencies.append(millis)
+            excesos.append(millis - (presupuesto_duelo if es_duelo(request) else presupuesto))
             move = body.get("move")
             if move not in DIRECTIONS:
                 failures.append(f"{path.name}: movimiento invalido '{move}'")
@@ -339,12 +359,23 @@ def main():
         print(f"FAIL {failure}")
     if failures:
         return 1
-    if p99 > p99_budget:
+    excesos.sort()
+    p99_exceso = excesos[min(len(excesos) - 1, int(len(excesos) * 0.99))]
+    peor_exceso = excesos[-1]
+    if args.p99_ms is None and p99_exceso > float(perf["p99_move_overhead_ms_max"]):
+        print(f"FAIL p99 del sobrecoste {p99_exceso:.2f}ms > "
+              f"{perf['p99_move_overhead_ms_max']}ms sobre el presupuesto de cada posicion")
+        return 1
+    if args.max_ms is None and peor_exceso > float(perf["max_move_overhead_ms_max"]):
+        print(f"FAIL peor sobrecoste {peor_exceso:.2f}ms > "
+              f"{perf['max_move_overhead_ms_max']}ms sobre el presupuesto de cada posicion")
+        return 1
+    if args.p99_ms is not None and p99 > p99_budget:
         print(f"FAIL p99 {p99:.2f}ms > {p99_budget:.0f}ms "
               f"(presupuesto {presupuesto:.0f} + {perf['p99_move_overhead_ms_max']} de "
               f"sobrecoste)")
         return 1
-    if worst > max_budget:
+    if args.max_ms is not None and worst > max_budget:
         print(f"FAIL maximo {worst:.2f}ms > {max_budget:.0f}ms "
               f"(presupuesto {presupuesto:.0f} + {perf['max_move_overhead_ms_max']} de "
               f"sobrecoste)")

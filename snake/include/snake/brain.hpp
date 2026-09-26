@@ -38,6 +38,15 @@ struct Move {
 /// ver docs/invariants.md#inv-10 y docs/invariants.md#inv-11
 Move decide(const engine::State11& state, Deadline deadline, const Params& params) noexcept;
 
+/// [v20] Cierto si `state.you` sigue viva y queda exactamente UNA rival viva.
+[[nodiscard]] bool es_duelo(const engine::State11& state) noexcept;
+
+/// [v20] Los parametros que rigen esta posicion: `*params.duelo` en un duelo si el config
+/// trae modo duelo, y `params` en cualquier otro caso. El servidor lo usa para el
+/// deadline; `decide()` para todo lo demas. ver docs/strategy.md#s-modo-duelo
+[[nodiscard]] const Params& params_para(const engine::State11& state,
+                                        const Params& params) noexcept;
+
 /// Version degradada segura para variantes no soportadas (wrapped, constrictor):
 /// sin tail-escape ni modelo de hazards, solo filtro duro y flood fill conservador.
 /// ver docs/rules-parametros.md#r-13

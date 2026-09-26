@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <exception>
 
@@ -397,7 +398,50 @@ Move decide_impl(const State& state,
 
 } // namespace
 
+bool es_duelo(const State& state) noexcept {
+    const auto yo = static_cast<int>(state.you);
+    if (yo >= state.count() || !engine::is_alive(state.snake(state.you).status)) {
+        return false;
+    }
+    int rivales = 0;
+    for (int i = 0; i < state.count(); ++i) {
+        if (i != yo && engine::is_alive(state.snakes[static_cast<unsigned>(i)].status)) {
+            ++rivales;
+        }
+    }
+    return rivales == 1;
+}
+
+const Params& params_para(const State& state, const Params& params) noexcept {
+    return params.duelo != nullptr && es_duelo(state) ? *params.duelo : params;
+}
+
+namespace {
+Move decide_base(const State& state, Deadline deadline, const Params& params) noexcept;
+} // namespace
+
 Move decide(const State& state, Deadline deadline, const Params& params) noexcept {
+    if (params.duelo == nullptr || !es_duelo(state)) {
+        return decide_base(state, deadline, params);
+    }
+    // En la arena el presupuesto es por NODOS y lo pone el llamante sobre el config base,
+    // no sobre el parche. Se traslada al duelo escalado por la razon de computo: si el
+    // parche da el doble de milisegundos, el duelo recibe el doble de nodos. Sin nodos
+    // (servidor) manda el deadline, que el servidor ya calculo con `params_para`.
+    const Params& duelo = *params.duelo;
+    if (params.search.budget_nodes > 0 && duelo.search.budget_nodes == 0) {
+        Params escalado = duelo;
+        const double razon = static_cast<double>(std::max(1, duelo.time.max_compute_ms)) /
+                             static_cast<double>(std::max(1, params.time.max_compute_ms));
+        escalado.search.budget_nodes = static_cast<std::int32_t>(
+            std::lround(static_cast<double>(params.search.budget_nodes) * razon));
+        return decide_base(state, deadline, escalado);
+    }
+    return decide_base(state, deadline, duelo);
+}
+
+namespace {
+Move decide_base(const State& state, Deadline deadline, const Params& params) noexcept {
     try {
         const bool degraded = !engine::is_supported(state.rules.variant);
         // [v2] La busqueda solo entra en royale y con tiempo por delante. En modo
@@ -443,6 +487,8 @@ Move decide(const State& state, Deadline deadline, const Params& params) noexcep
         return Move{Direction::up, 3, 0.0, 0};
     }
 }
+
+} // namespace
 
 Move decide_degraded(const State& state, Deadline deadline, const Params& params) noexcept {
     try {

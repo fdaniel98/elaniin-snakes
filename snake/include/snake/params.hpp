@@ -8,6 +8,7 @@
 /// ver docs/performance.md#p-01
 
 #include <cstdint>
+#include <memory>
 
 namespace snake {
 
@@ -356,6 +357,9 @@ struct Params {
     DuelParams duel{};
     LengthParams length{};
     SurvivalParams survival{};
+    /// [v20] Parche que rige SOLO con una rival viva; nulo = v5 en todas partes.
+    /// ver docs/strategy.md#s-modo-duelo
+    std::shared_ptr<const Params> duelo;
 };
 
 } // namespace snake
