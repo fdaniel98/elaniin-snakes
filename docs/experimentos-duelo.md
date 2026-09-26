@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 21485
+size_bytes: 21811
 ---
 
 # Experimentos del duelo
@@ -409,8 +409,13 @@ se calcula cuando el congelado ya fallo.
 
 **Torneo HTTP contra `gauntlet-v2`** (192 partidas, 48 bloques pareados con v5): puesto
 medio 1.810 -> **1.862**, diferencia **+0.052**, IC95 [-0.112, +0.216]: NO CONCLUYENTE y del
-lado malo. Turnos vividos 357.7 -> 305.9. El campo de B no estaba sano: los rivales
-fallaron 6.5 veces mas peticiones (371 timeouts contra 40), lo que regala puestos a B, y
-aun asi B sale peor. **v19 no entra**; queda apagada en `space.timed_version` y
-`search.despair_version`. La ganancia de arena contra v5 no transfiere al campo real, igual
-que v11 y v18.
+lado malo. **La corrida esta sucia por la maquina, no por los rivales:** fallaron las cinco
+snakes a la vez, la nuestra incluida (130 timeouts contra 5; `jaxhodg`, que responde en
+87 ms, llego a 1 760), maximos de 1.6 a 3.4 s y el 95% de los fallos en los tres primeros
+cuartos de la noche. Son paradas del anfitrion.
+
+Descriptivo, sin veredicto: en las 109 partidas sin un solo timeout en ninguna de las dos
+corridas, v19 saca 1.972 contra 1.794 de v5 (+0.18). En las sucias gana v19, porque los
+rivales mueren por movimiento por defecto. Las dos lecturas apuntan igual: **v19 no
+entra**, queda apagada, y la ganancia de arena contra v5 no transfiere al campo real, como
+en v11 y v18.

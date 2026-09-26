@@ -83,6 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-v19 no entra: +0.052 contra `gauntlet-v2` con el campo enfermo (371 timeouts de rivales
-contra 40; ver docs/experimentos-duelo.md#s-reloj-r). Antes del proximo torneo, averiguar
-por que los rivales fallaron 6.5 veces mas en esa corrida.
+v19 no entra (ver docs/experimentos-duelo.md#s-reloj-r). Antes del proximo torneo: que
+`tr.py` aborte si NUESTRA snake acumula timeouts, porque eso solo pasa con el anfitrion
+parado y la corrida de v19 perdio 130 movimientos asi sin avisar.
