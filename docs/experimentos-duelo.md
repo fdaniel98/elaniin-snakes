@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 21811
+size_bytes: 23219
 ---
 
 # Experimentos del duelo
@@ -419,3 +419,28 @@ corridas, v19 saca 1.972 contra 1.794 de v5 (+0.18). En las sucias gana v19, por
 rivales mueren por movimiento por defecto. Las dos lecturas apuntan igual: **v19 no
 entra**, queda apagada, y la ganancia de arena contra v5 no transfiere al campo real, como
 en v11 y v18.
+
+### S-MODO-DUELO-R Resultado: calcular mas en el duelo es lo unico que mueve la aguja {#s-modo-duelo-r}
+
+Origen: 13 derrotas del leaderboard en partidas largas (2026-09-26). En 8 el duelo empieza
+antes del turno 10; morimos entre el 172 y el 527, 9 contra el propio cuerpo, con los
+cuerpos ocupando 40-69 de 121 casillas. Territorio a medias (48%). En 5 de 9 bolsillos la
+busqueda ya se habia rendido (`matches/liga-0926/posiciones.txt`).
+
+Arena, 1v1 standard contra v5, 60 bloques, 4 000 nodos (el parche escala los nodos con su
+computo). Solo cambia el duelo; fuera, v5 exacta (`tests/test_modo_duelo.cpp`).
+
+| candidata (solo en el duelo) | diferencia | IC95 | ganadas de 120 |
+|---|---:|---|---:|
+| v20b ventaja objetivo 1 | +0.092 | [+0.009, +0.174] | 49 |
+| v20c espacio con reloj | 0.000 | [-0.052, +0.052] | 60 |
+| v20d rendicion decide v0 | +0.008 | [-0.020, +0.037] | 59 |
+| v20a 300 ms | -0.075 | [-0.162, +0.012] | 69 |
+| **v20a 250 ms** | **-0.092** | **[-0.177, -0.006]** | **71** |
+
+Crecer menos empeora; reloj y rendicion son neutros contra v5. **Calcular mas es lo
+unico que mejora**, y 250 ms es el techo que admite el gate (250 + 120 de sobrecoste =
+370 = 500 - 80 - 50). NO CONCLUYENTE por 0.008 del delta. Candidata para `gauntlet-v2`:
+`v20a-duelo-tiempo`. `scripts/smoke.py` mide cada fixture contra el presupuesto de SU
+posicion, asi que el gate sigue valiendo con el parche puesto.
+

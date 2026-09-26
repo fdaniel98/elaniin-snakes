@@ -1,0 +1,76 @@
+{
+  "_comment": "v20a: v5 fuera del duelo; en el duelo, 250 ms de computo en vez de 150. Es el maximo que admite el techo duro del gate (250 + 120 de sobrecoste = 370 = 500 - 80 - 50). ver docs/strategy.md#s-modo-duelo",
+  "_version": "v20a-duelo-tiempo",
+  "time": {
+    "network_margin_ms": 80,
+    "safety_margin_ms": 50,
+    "max_compute_ms": 150
+  },
+  "food": {
+    "seek_below": 50,
+    "seek_below_in_hazard": 75,
+    "free_food_distance": 2,
+    "weight": 6.0
+  },
+  "space": {
+    "min_space_ratio": 1.0,
+    "weight": 100.0,
+    "tail_escape": true,
+    "worst_case_weight": 0.0,
+    "worst_case_max_cuellos": 24
+  },
+  "head": {
+    "avoid_equal_or_longer": 80.0,
+    "prefer_shorter": 8.0
+  },
+  "hazard": {
+    "weight": 20.0,
+    "low_health_multiplier": 4.0
+  },
+  "territory": {
+    "version": 1,
+    "weight": 120.0,
+    "contested_weight": 0.0,
+    "hazard_value_pct": 50
+  },
+  "search": {
+    "version": 1,
+    "max_depth": 64,
+    "max_rivals": 2,
+    "death_value": -100000.0,
+    "win_value": 100000.0,
+    "survival_bonus": 30.0,
+    "reserve_us": 2000,
+    "budget_nodes": 0,
+    "despair_version": 0
+  },
+  "duel": {
+    "version": 0,
+    "prefer_shorter": 40.0,
+    "pressure_weight": 25.0,
+    "length_version": 0,
+    "length_weight": 40.0,
+    "hunt_weight": 30.0,
+    "territory_version": 0,
+    "territory_scale": 2.0
+  },
+  "length": {
+    "version": 1,
+    "advantage_weight": 60.0,
+    "target_lead": 3,
+    "hunt_weight": 10.0
+  },
+  "survival": {
+    "version": 0,
+    "safe_turns": 25,
+    "weight": 25.0,
+    "seek_below_turns": 15,
+    "critical_turns": 5,
+    "panic_weight": 120.0
+  },
+  "duelo": {
+    "time": {
+      "max_compute_ms": 250
+    }
+  }
+}

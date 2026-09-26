@@ -83,6 +83,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Buscar donde se decide la partida ANTES del final apretado, 40 a 60 turnos antes de morir
-(`posiciones.py --antes-de-morir`): v19 arreglo el final y no movio el puesto
-(ver docs/experimentos-duelo.md#s-reloj-r). `tr.py` ya aborta si el anfitrion se para.
+Torneo de `v20a-duelo-tiempo` contra `gauntlet-v2` y comparar con v5: en arena 1v1 salio
+-0.092, IC95 [-0.177, -0.006] (ver docs/experimentos-duelo.md#s-modo-duelo-r).

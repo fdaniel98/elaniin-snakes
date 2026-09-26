@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 12818
+size_bytes: 12648
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -114,9 +114,14 @@ conservado y apagado en `search.despair_version` (ver docs/experimentos-duelo.md
 
 ### S-RELOJ Hipotesis: la hoja no distingue bolsillo de pasillo {#s-reloj}
 
-v19: si el flood fill congelado dice que no cabemos, mirar el espacio con reloj
-(`space.timed_version`), mas `search.despair_version` 1. Falsable: diferencia pareada < 0
-contra v5 y contra `gauntlet-v2` (ver docs/experimentos-duelo.md#s-liga-0925).
+v19, espacio con reloj y desesperacion. **Cerrada: no entra**
+(ver docs/experimentos-duelo.md#s-reloj-r).
+
+### S-MODO-DUELO Hipotesis: un modo propio para el 1v1, aditivo {#s-modo-duelo}
+
+v20: el config trae un parche `duelo` que solo rige con una rival viva; fuera, v5 exacta
+(`tests/test_modo_duelo.cpp`). Candidatas: 300 ms, ventaja objetivo 1, reloj. Falsable en
+arena 1v1 y contra `gauntlet-v2` (ver docs/experimentos-duelo.md#s-modo-duelo-r).
 
 ### S-LONGITUD-DUELO Hipotesis: en el duelo, cazar longitud {#s-longitud-duelo}
 
@@ -167,13 +172,8 @@ este juego casi no hay transposiciones, porque el cuerpo ES el historial de movi
 
 ### S-SHRINK Hipotesis: anticipar el proximo shrink {#s-shrink}
 
-v17: penalizar las casillas que el proximo shrink puede convertir en hazard, con el riesgo
-repartido entre los cuatro bordes (el lado no es conocible: el payload no trae la semilla).
-El mecanismo es real -`royale_hazards()` solo lo usa la arena, asi que la busqueda ve el
-hazard congelado- y el diagnostico tambien
-(ver docs/experimentos.md#s-shrink-r). **Pero el torneo es standard y ahi no hay hazard**,
-asi que v17 no puede entrar (ver docs/strategy.md#s-formato). Queda apagada en
-`hazard.shrink_version`, util solo si algun dia se juega royale.
+v17: el riesgo del proximo shrink repartido entre los cuatro bordes. Real en royale
+(ver docs/experimentos.md#s-shrink-r) e inutil en standard: apagada en `hazard.shrink_version`.
 
 ### S-BARRIDO La snake mas fuerte en standard se construye tamizando, no apilando {#s-barrido}
 
