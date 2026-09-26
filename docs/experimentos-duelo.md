@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 20943
+size_bytes: 21485
 ---
 
 # Experimentos del duelo
@@ -406,3 +406,11 @@ sale del torneo HTTP contra `gauntlet-v2` en la maquina de referencia.
 muertes propias 42 -> 14. No estorba donde no apunta. **Coste:** profundidad media a 150 ms
 identica (32.4 / 32.3 en las 48 criticas, 13.8 / 13.9 en las 11 de la liga): el reloj solo
 se calcula cuando el congelado ya fallo.
+
+**Torneo HTTP contra `gauntlet-v2`** (192 partidas, 48 bloques pareados con v5): puesto
+medio 1.810 -> **1.862**, diferencia **+0.052**, IC95 [-0.112, +0.216]: NO CONCLUYENTE y del
+lado malo. Turnos vividos 357.7 -> 305.9. El campo de B no estaba sano: los rivales
+fallaron 6.5 veces mas peticiones (371 timeouts contra 40), lo que regala puestos a B, y
+aun asi B sale peor. **v19 no entra**; queda apagada en `space.timed_version` y
+`search.despair_version`. La ganancia de arena contra v5 no transfiere al campo real, igual
+que v11 y v18.

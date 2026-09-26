@@ -83,6 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Torneo HTTP de `v19-reloj` contra `gauntlet-v2` (200 partidas) y comparar con
-`torneo-standard-v5`: en arena 1v1 salio -0.050, IC95 [-0.091, -0.009], bajo el delta
-(ver docs/experimentos-duelo.md#s-reloj-r).
+v19 no entra: +0.052 contra `gauntlet-v2` con el campo enfermo (371 timeouts de rivales
+contra 40; ver docs/experimentos-duelo.md#s-reloj-r). Antes del proximo torneo, averiguar
+por que los rivales fallaron 6.5 veces mas en esa corrida.
