@@ -83,6 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-v19 no entra (ver docs/experimentos-duelo.md#s-reloj-r). Antes del proximo torneo: que
-`tr.py` aborte si NUESTRA snake acumula timeouts, porque eso solo pasa con el anfitrion
-parado y la corrida de v19 perdio 130 movimientos asi sin avisar.
+Buscar donde se decide la partida ANTES del final apretado, 40 a 60 turnos antes de morir
+(`posiciones.py --antes-de-morir`): v19 arreglo el final y no movio el puesto
+(ver docs/experimentos-duelo.md#s-reloj-r). `tr.py` ya aborta si el anfitrion se para.

@@ -713,6 +713,15 @@ comprueba(sorted(tr.slugs_de(COMPS)) == ["a", "b", "c", "d"],
 comprueba(tr.slugs_de([["x", "y", "z"]]) == ["x", "y", "z"],
           "con una sola composicion la union es ella misma")
 
+# Vigilancia del anfitrion: la corrida de v19 perdio 130 movimientos sin avisar.
+acc, abortar = tr.vigila_anfitrion(0, 5, 10)
+comprueba(acc == 5 and not abortar, "5 timeouts nuestros con limite 10 no abortan")
+acc, abortar = tr.vigila_anfitrion(acc, 6, 10)
+comprueba(acc == 11 and abortar, "pasar el limite aborta")
+comprueba(tr.vigila_anfitrion(10, 0, 10) == (10, False), "llegar justo al limite no aborta")
+comprueba(tr.vigila_anfitrion(0, 500, -1) == (500, False), "con -1 la vigilancia esta apagada")
+comprueba(tr.vigila_anfitrion(3, -2, 10) == (3, False), "un conteo negativo no resta")
+
 print()
 if fallos:
     print(f"{len(fallos)} fallos")

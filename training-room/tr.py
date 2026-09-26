@@ -534,6 +534,20 @@ def slugs_de(composiciones):
     return union
 
 
+def vigila_anfitrion(acumulados, nuevos, limite):
+    """Timeouts de NUESTRA snake acumulados en la corrida, y si hay que abortar.
+
+    Nuestra snake responde en ~150 ms de 500: si falla, no es la estrategia, es la maquina
+    parada (suspension, WSL congelado, carga de fondo). En la corrida de v19 fallaron las
+    cinco snakes a la vez -la nuestra 130 veces contra 5 de v5- y el torneo siguio de
+    noche sin avisar, con 200 partidas que no median nada.
+    ver docs/experimentos-duelo.md#s-reloj-r
+
+    `limite` < 0 lo apaga. Devuelve (acumulados, abortar)."""
+    acumulados += max(0, nuevos)
+    return acumulados, limite >= 0 and acumulados > limite
+
+
 def plan_de(composiciones, jugadores, games, seed_base):
     """Que composicion, que asiento y que semilla le toca a cada partida.
 
@@ -705,6 +719,10 @@ def cmd_match(args):
         # resumen decia "jugadas 200 partidas" contando las que nadie jugo. Ahora la
         # excepcion se guarda y el resumen falla con ella delante.
         reventones = []
+        # Vigilancia del anfitrion. ver vigila_anfitrion()
+        timeouts_nuestros = 0
+        sucias = []
+        abortada = []
 
         def trabaja(suite):
             try:
@@ -714,7 +732,7 @@ def cmd_match(args):
                     reventones.append(f"{type(e).__name__}: {e}")
 
         def trabaja_real(suite):
-            nonlocal fallos, hechas
+            nonlocal fallos, hechas, timeouts_nuestros
             while True:
                 with candado:
                     if not cola:
@@ -749,6 +767,22 @@ def cmd_match(args):
                     guarda(db, gauntlet, p, jsonl, reflog, rc, urls_partida, orden, topo,
                            commit, nuestro_hash, img_nuestra, gauntlet["imagenes"],
                            nuestro_slug)
+                    nuevos = incidencias_de(reflog, urls_w[nuestro_slug])["timeout"]
+                    if nuevos:
+                        sucias.append(p["id"])
+                    timeouts_nuestros, abortar = vigila_anfitrion(
+                        timeouts_nuestros, nuevos, args.max_timeouts_nuestros)
+                    if abortar:
+                        # Las partidas donde fallamos se borran de la base: al reanudar
+                        # con el mismo --out se vuelven a jugar, con la maquina sana. Con
+                        # --paralelo pueden acabar mas despues del corte: tambien se borran.
+                        for pid in [x for x in sucias if x not in abortada]:
+                            for tabla, col in (("latencias", "partida_id"),
+                                               ("participantes", "partida_id"),
+                                               ("partidas", "id")):
+                                db.execute(f"DELETE FROM {tabla} WHERE {col} = ?", (pid,))
+                            abortada.append(pid)
+                        cola.clear()
                     # Commit por partida, no al final: lo que ya se jugo no se pierde
                     # porque la 190 falle.
                     db.commit()
@@ -774,6 +808,15 @@ def cmd_match(args):
     print(f"jugadas {hechas} de {len(plan)} partidas en {minutos:.1f} min "
           f"({hechas / max(minutos, 1e-9):.1f} partidas/min)")
     print(f"resultados en {salida}/torneo.sqlite")
+    if abortada:
+        print(f"FAIL ABORTADA: nuestra snake acumulo {timeouts_nuestros} timeouts "
+              f"(limite {args.max_timeouts_nuestros}). Eso es el anfitrion parado, no la "
+              "estrategia: suspension, WSL congelado o carga de fondo.", file=sys.stderr)
+        print(f"     borradas de la base para rejugarlas: {', '.join(abortada)}",
+              file=sys.stderr)
+        print("     arregla la maquina y relanza el MISMO comando: se reanuda.",
+              file=sys.stderr)
+        return 1
     if reventones:
         for r in reventones:
             print(f"FAIL un hilo del torneo murio: {r}", file=sys.stderr)
@@ -904,6 +947,9 @@ def main():
     m.add_argument("--config", default=None,
                    help="estrategia a meter en la imagen: nombre (cuellos) o ruta "
                         "(snake/config/cuellos.json). Por defecto, el default del repo")
+    m.add_argument("--max-timeouts-nuestros", type=int, default=10,
+                   help="aborta si NUESTRA snake acumula mas timeouts que esto en la corrida "
+                        "(v5 hizo 5 en 200 partidas); -1 lo apaga")
     m.add_argument("--dry-run", action="store_true")
     m.set_defaults(func=cmd_match)
     r = sub.add_parser("reanaliza", help="recalcula lo derivado de una corrida ya jugada")
