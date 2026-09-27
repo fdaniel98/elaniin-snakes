@@ -176,6 +176,12 @@ TEST_CASE("params: default.json es 1:1 con snake::Params", "[params]") {
         if (group.rfind('_', 0) == 0) {
             continue; // comentarios
         }
+        if (group == "duelo") {
+            // [v20] El parche del duelo no es un grupo de Params: se valida en
+            // test_modo_duelo.cpp. Aqui solo se exige que se haya cargado.
+            REQUIRE(from_json.duelo != nullptr);
+            continue;
+        }
         REQUIRE(expected_keys.contains(group));
         for (const auto& [key, value] : keys.items()) {
             const bool known =

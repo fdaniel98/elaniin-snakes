@@ -1316,7 +1316,7 @@ engine::State11 estado_real(const char* nombre) {
 }
 
 snake::Params params_torneo(int despair) {
-    snake::Params p = snake::load_params(std::string(BSR_CONFIG_DIR) + "/default.json");
+    snake::Params p = snake::load_params(std::string(BSR_CONFIG_DIR) + "/v5-desplegada.json");
     p.search.budget_nodes = 20000; // determinista: la misma decision en cualquier maquina
     p.search.despair_version = despair;
     return p;

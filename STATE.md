@@ -5,10 +5,10 @@
 Fase: 4 (Arena in-process + A/B) — EN CURSO. La 3 quedo COMPLETA.
 Gate: PASS 14/14 en la de referencia (2026-09-19, 2f06c27); la fase 4 aun sin gate completo.
 Loop: fase 3 CLOSED en `.loop/3/`; la 4 abre cuando este el driver de A/B.
-Snake activa: **v5** (busqueda + territorio en hojas + control de longitud). Gano su A/B
-contra v4 por -0.6917 y contra v0 por -1.0583 (ver docs/experimentos.md#s-longitud-r); v0
-sigue entero en `v0-baseline.json` y v6 no entra (ver docs/experimentos.md#s-supervivencia-r).
-Desplegada en Cloud Run `us-east1`: 0 timeouts, maximo 207 ms de 500
+Snake activa: **v21** = v5 + guardia contra el suicidio solo en el 1v1 (decision humana tras
+salir neutra contra v5, ver docs/experimentos-duelo.md#s-guardia-r). v5 queda en
+`v5-desplegada.json`.
+Con v5 en Cloud Run `us-east1`: 0 timeouts, maximo 207 ms de 500
 (ver docs/performance.md#p-09) con margenes medidos
 (ver docs/decisions/ADR-0037-margenes-medidos.md#d-0376). En 1v1 contra el zoo gana el 100%
 a `jaxhodg`, 56% a `hovering-hobbs`, 54% a `snork-flood` y **25% a `snork-tree`**
@@ -83,5 +83,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Decidir si v21 (guardia contra el suicidio en el 1v1, neutra contra v5 con IC95
-[-0.025, +0.008]) sustituye a v5 en el leaderboard (ver docs/experimentos-duelo.md#s-guardia-r).
+v21 desplegada (servicio `makarov`, `us-east1`) y jugando el leaderboard: revisar sus
+duelos largos en unos dias y ver si dejaron de acabar contra el propio cuerpo.

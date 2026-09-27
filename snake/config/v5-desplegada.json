@@ -1,6 +1,6 @@
 {
-  "_comment": "v21: v5 exacta fuera del duelo; en el duelo, v5 con una guardia: si el movimiento elegido entra en un bolsillo donde no cabe el cuerpo y hay otro con salida, se cambia. ver docs/strategy.md#s-guardia",
-  "_version": "v21-duelo-guardia",
+  "_comment": "v5 tal como estuvo desplegada hasta el 2026-09-27 (busqueda + territorio en hojas + control de longitud). default.json paso a v21, que es esta misma snake con la guardia contra el suicidio en el duelo. Base de los tests de 'fuera del duelo, identica a v5'. ver docs/experimentos-duelo.md#s-guardia-r",
+  "_version": "v5-desplegada",
   "time": {
     "network_margin_ms": 80,
     "safety_margin_ms": 50,
@@ -67,10 +67,5 @@
     "seek_below_turns": 15,
     "critical_turns": 5,
     "panic_weight": 120.0
-  },
-  "duelo": {
-    "duel": {
-      "pocket_guard_version": 1
-    }
   }
 }

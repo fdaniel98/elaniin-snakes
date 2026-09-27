@@ -61,12 +61,12 @@ std::vector<engine::State11> posiciones() {
 } // namespace
 
 TEST_CASE("modo duelo: sin parche no hay modo duelo", "[duelo]") {
-    const auto p = snake::load_params(config("default"));
+    const auto p = snake::load_params(config("v5-desplegada"));
     CHECK(p.duelo == nullptr);
 }
 
 TEST_CASE("modo duelo: el parche cambia solo lo que dice y hereda el resto", "[duelo]") {
-    const auto base = snake::load_params(config("default"));
+    const auto base = snake::load_params(config("v5-desplegada"));
     const auto p = snake::load_params(config("v20-duelo"));
     REQUIRE(p.duelo != nullptr);
     CHECK(p.duelo->duelo == nullptr);
@@ -82,7 +82,7 @@ TEST_CASE("modo duelo: el parche cambia solo lo que dice y hereda el resto", "[d
 }
 
 TEST_CASE("modo duelo: fuera del 1v1 decide exactamente lo mismo que v5", "[duelo][aditivo]") {
-    auto base = snake::load_params(config("default"));
+    auto base = snake::load_params(config("v5-desplegada"));
     auto v20 = snake::load_params(config("v20-duelo"));
     base.search.budget_nodes = 3000;
     v20.search.budget_nodes = 3000;
@@ -107,8 +107,8 @@ TEST_CASE("modo duelo: fuera del 1v1 decide exactamente lo mismo que v5", "[duel
 }
 
 TEST_CASE("modo duelo: un parche vacio no cambia nada ni en el duelo", "[duelo][aditivo]") {
-    auto base = snake::load_params(config("default"));
-    std::ifstream in(config("default"));
+    auto base = snake::load_params(config("v5-desplegada"));
+    std::ifstream in(config("v5-desplegada"));
     auto doc = nlohmann::json::parse(in);
     doc["duelo"] = nlohmann::json::object();
     auto vacio = snake::parse_params(doc);
@@ -155,7 +155,7 @@ TEST_CASE("modo duelo: las claves desconocidas del parche se avisan con prefijo"
 
 TEST_CASE("guardia: fuera del 1v1 decide exactamente lo mismo que v5",
           "[duelo][aditivo][guardia]") {
-    auto base = snake::load_params(config("default"));
+    auto base = snake::load_params(config("v5-desplegada"));
     auto v21 = snake::load_params(config("v21-duelo-guardia"));
     base.search.budget_nodes = 3000;
     v21.search.budget_nodes = 3000;
@@ -173,7 +173,7 @@ TEST_CASE("guardia: fuera del 1v1 decide exactamente lo mismo que v5",
 
 TEST_CASE("guardia: en el duelo solo cambia los movimientos que entran en un bolsillo",
           "[duelo][guardia]") {
-    auto base = snake::load_params(config("default"));
+    auto base = snake::load_params(config("v5-desplegada"));
     auto v21 = snake::load_params(config("v21-duelo-guardia"));
     base.search.budget_nodes = 3000;
     v21.search.budget_nodes = 3000;
