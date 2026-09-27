@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 23679
+size_bytes: 24874
 ---
 
 # Experimentos del duelo
@@ -450,4 +450,22 @@ Esta vez el campo estaba sano (62 timeouts de rivales contra 40, y `tr.py` no ab
 los nuestros). **v20a no entra.** Es la cuarta vez que una mejora medida en arena contra
 v5 no transfiere al campo real (v11, v18, v19, v20a): el defecto esta en el instrumento,
 no en la maquina.
+
+### S-GUARDIA-R Resultado: la guardia quita el suicidio y no cuesta nada contra v5 {#s-guardia-r}
+
+v21: v5 exacta salvo en el duelo, y en el duelo v5 salvo un veto. Si el movimiento
+elegido entra en un bolsillo donde el cuerpo no cabe (espacio con reloj menor que la
+longitud) y existe otro legal con salida, se cambia; primero los que no quedan pegados a
+una cabeza igual o mas larga. No actua si la rival esta encerrada en algo aun menor
+(aguantar gana). Fuera del duelo, identica a v5 (`tests/test_modo_duelo.cpp`).
+
+**En las 20 posiciones reales** (liga 0925 y 0926) cambia 6 decisiones, todas de un
+bolsillo a una salida. Con el movimiento real del rival en el turno siguiente: en 3 la
+salida estaba libre (`6bed3999` t225, `ffecd357` t379, `c21c8135` t279) y en 3 el rival,
+mas largo, entro en ella. En esas 3 el bolsillo tambien era muerte segura.
+
+**Arena 1v1 contra v5**, 60 bloques, 4 000 nodos: **-0.008, IC95 [-0.025, +0.008]**.
+Muertes contra el propio cuerpo **39 -> 13**; cabezazos 18 -> 42. Contra v5, que busca, la
+posicion ya estaba perdida y cambia como se pierde; el intervalo acota el coste a casi
+cero. Contra rivales reales, la mitad de las veces la salida estaba libre.
 

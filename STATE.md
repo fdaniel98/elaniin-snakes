@@ -83,6 +83,5 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-v20a no entra (+0.128 contra `gauntlet-v2`, ver docs/experimentos-duelo.md#s-modo-duelo-r).
-La arena contra v5 ya fallo cuatro veces como filtro: decidir con que se mide antes de
-probar otra candidata.
+Decidir si v21 (guardia contra el suicidio en el 1v1, neutra contra v5 con IC95
+[-0.025, +0.008]) sustituye a v5 en el leaderboard (ver docs/experimentos-duelo.md#s-guardia-r).

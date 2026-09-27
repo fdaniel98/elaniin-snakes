@@ -3,7 +3,7 @@ title: Roadmap de estrategia v0 a v5
 read_when: "al proponer una version nueva del cerebro o al discutir que medir"
 authority: speculative
 last_verified: 2026-09-15
-size_bytes: 12648
+size_bytes: 12679
 ---
 
 Cada version entra **solo** si gana su A/B contra el campo congelado y no aumenta los
@@ -119,9 +119,12 @@ v19, espacio con reloj y desesperacion. **Cerrada: no entra**
 
 ### S-MODO-DUELO Hipotesis: un modo propio para el 1v1, aditivo {#s-modo-duelo}
 
-v20: el config trae un parche `duelo` que solo rige con una rival viva; fuera, v5 exacta
-(`tests/test_modo_duelo.cpp`). Candidatas: 300 ms, ventaja objetivo 1, reloj. Falsable en
-arena 1v1 y contra `gauntlet-v2` (ver docs/experimentos-duelo.md#s-modo-duelo-r).
+v20: parche `duelo` del config, solo con una rival viva. **v20a no entra**
+(ver docs/experimentos-duelo.md#s-modo-duelo-r).
+
+### S-GUARDIA Hipotesis: vetar el suicidio en el duelo, y nada mas {#s-guardia}
+
+v21: v5 intacta salvo un veto en el 1v1 (ver docs/experimentos-duelo.md#s-guardia-r).
 
 ### S-LONGITUD-DUELO Hipotesis: en el duelo, cazar longitud {#s-longitud-duelo}
 
