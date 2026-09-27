@@ -9,12 +9,14 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <exception>
 
 #include <engine/rules.hpp>
 
 #include <snake/brain.hpp>
 #include <snake/eval/floodfill.hpp>
+#include <snake/eval/timed.hpp>
 #include <snake/eval/voronoi.hpp>
 #include <snake/search.hpp>
 
@@ -418,10 +420,90 @@ const Params& params_para(const State& state, const Params& params) noexcept {
 
 namespace {
 Move decide_base(const State& state, Deadline deadline, const Params& params) noexcept;
+
+/// [v21] Guardia contra el suicidio en el duelo. Solo actua cuando el movimiento elegido
+/// entra en un bolsillo donde no cabe nuestro cuerpo -espacio con reloj menor que la
+/// longitud: muerte segura contra nosotros mismos, haga lo que haga el rival- y existe
+/// otro movimiento legal con salida. Entre los que tienen salida prefiere los que no
+/// quedan pegados a la cabeza de una rival igual o mas larga, y dentro de cada grupo el
+/// de mas espacio. Si no hay alternativa con salida, no toca nada.
+/// ver docs/strategy.md#s-guardia
+Move guardia_bolsillo(const State& state, Move elegido) noexcept {
+    const auto& yo = state.snake(state.you);
+    const int largo = static_cast<int>(yo.length);
+    const int bolsillo = eval::timed_space(state, state.you, elegido.direction);
+    if (bolsillo >= largo) {
+        return elegido;
+    }
+    // Si la rival esta encerrada en algo aun mas pequeño que nuestro bolsillo, se muere
+    // antes que nosotras: aguantar ahi GANA el duelo, y la guardia no lo estropea.
+    for (int i = 0; i < state.count(); ++i) {
+        const auto& otro = state.snakes[static_cast<unsigned>(i)];
+        if (i == static_cast<int>(state.you) || !engine::is_alive(otro.status)) {
+            continue;
+        }
+        const int suyo = eval::timed_space_here(state, static_cast<engine::SnakeId>(i));
+        if (suyo < static_cast<int>(otro.length) && suyo < bolsillo) {
+            return elegido;
+        }
+    }
+    const engine::MoveMask legales = engine::legal_moves(state, state.you);
+    int mejor_espacio = -1;
+    int mejor_riesgo = 2;
+    Direction mejor = elegido.direction;
+    for (int d = 0; d < engine::direction_count; ++d) {
+        const auto dir = static_cast<Direction>(d);
+        if (!engine::mask_has(legales, dir) || dir == elegido.direction) {
+            continue;
+        }
+        const int espacio = eval::timed_space(state, state.you, dir);
+        if (espacio < largo) {
+            continue;
+        }
+        const auto destino = engine::step(Board::coord_of(yo.head()), dir);
+        int riesgo = 0;
+        for (int i = 0; i < state.count(); ++i) {
+            const auto& otro = state.snakes[static_cast<unsigned>(i)];
+            if (i == static_cast<int>(state.you) || !engine::is_alive(otro.status) ||
+                otro.length < yo.length) {
+                continue;
+            }
+            const auto cab = Board::coord_of(otro.head());
+            if (std::abs(cab.x - destino.x) + std::abs(cab.y - destino.y) == 1) {
+                riesgo = 1;
+            }
+        }
+        if (riesgo < mejor_riesgo || (riesgo == mejor_riesgo && espacio > mejor_espacio)) {
+            mejor_riesgo = riesgo;
+            mejor_espacio = espacio;
+            mejor = dir;
+        }
+    }
+    if (mejor_espacio < 0) {
+        return elegido;
+    }
+    elegido.direction = mejor;
+    return elegido;
+}
+} // namespace
+
+namespace {
+Move decide_duelo(const State& state, Deadline deadline, const Params& params) noexcept;
 } // namespace
 
 Move decide(const State& state, Deadline deadline, const Params& params) noexcept {
-    if (params.duelo == nullptr || !es_duelo(state)) {
+    if (!es_duelo(state)) {
+        return decide_base(state, deadline, params);
+    }
+    const Move m = decide_duelo(state, deadline, params);
+    // La guardia mira el movimiento FINAL, venga de la busqueda o de v0.
+    return params_para(state, params).duel.pocket_guard_version >= 1 ? guardia_bolsillo(state, m)
+                                                                     : m;
+}
+
+namespace {
+Move decide_duelo(const State& state, Deadline deadline, const Params& params) noexcept {
+    if (params.duelo == nullptr) {
         return decide_base(state, deadline, params);
     }
     // En la arena el presupuesto es por NODOS y lo pone el llamante sobre el config base,
@@ -439,6 +521,8 @@ Move decide(const State& state, Deadline deadline, const Params& params) noexcep
     }
     return decide_base(state, deadline, duelo);
 }
+
+} // namespace
 
 namespace {
 Move decide_base(const State& state, Deadline deadline, const Params& params) noexcept {

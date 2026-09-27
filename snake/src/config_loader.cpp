@@ -225,6 +225,8 @@ Params parse_base(const json& doc) {
         read_double(duel, "tail_loop_weight", params.duel.tail_loop_weight);
     params.duel.survival_below_ratio =
         read_double(duel, "survival_below_ratio", params.duel.survival_below_ratio);
+    params.duel.pocket_guard_version =
+        read_plain_int(duel, "pocket_guard_version", params.duel.pocket_guard_version);
 
     const json& length = child(doc, "length");
     params.length.version = read_plain_int(length, "version", params.length.version);
@@ -313,7 +315,8 @@ std::vector<std::string> unknown_keys(const std::string& path) {
           "survival_version",
           "survival_weight",
           "tail_loop_weight",
-          "survival_below_ratio"}},
+          "survival_below_ratio",
+          "pocket_guard_version"}},
         {"length", {"version", "advantage_weight", "target_lead", "hunt_weight"}},
         {"survival",
          {"version", "safe_turns", "weight", "seek_below_turns", "critical_turns", "panic_weight"}},

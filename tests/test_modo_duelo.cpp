@@ -13,6 +13,7 @@
 
 #include <snake/brain.hpp>
 #include <snake/config_loader.hpp>
+#include <snake/eval/timed.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
@@ -150,4 +151,46 @@ TEST_CASE("modo duelo: las claves desconocidas del parche se avisan con prefijo"
     CHECK(std::find(fuera.begin(), fuera.end(), "duelo.nada") != fuera.end());
     CHECK(std::find(fuera.begin(), fuera.end(), "duelo") == fuera.end());
     std::filesystem::remove(ruta);
+}
+
+TEST_CASE("guardia: fuera del 1v1 decide exactamente lo mismo que v5",
+          "[duelo][aditivo][guardia]") {
+    auto base = snake::load_params(config("default"));
+    auto v21 = snake::load_params(config("v21-duelo-guardia"));
+    base.search.budget_nodes = 3000;
+    v21.search.budget_nodes = 3000;
+    int comparadas = 0;
+    for (const auto& s : posiciones()) {
+        if (snake::es_duelo(s)) {
+            continue;
+        }
+        CHECK(snake::decide(s, sin_reloj(), base).direction ==
+              snake::decide(s, sin_reloj(), v21).direction);
+        ++comparadas;
+    }
+    CHECK(comparadas >= 2);
+}
+
+TEST_CASE("guardia: en el duelo solo cambia los movimientos que entran en un bolsillo",
+          "[duelo][guardia]") {
+    auto base = snake::load_params(config("default"));
+    auto v21 = snake::load_params(config("v21-duelo-guardia"));
+    base.search.budget_nodes = 3000;
+    v21.search.budget_nodes = 3000;
+    int cambios = 0;
+    for (const auto& s : posiciones()) {
+        if (!snake::es_duelo(s)) {
+            continue;
+        }
+        const auto a = snake::decide(s, sin_reloj(), base).direction;
+        const auto b = snake::decide(s, sin_reloj(), v21).direction;
+        const int largo = static_cast<int>(s.snake(s.you).length);
+        if (a != b) {
+            ++cambios;
+            // Solo se cambia un bolsillo por una salida, nunca al reves.
+            CHECK(snake::eval::timed_space(s, s.you, a) < largo);
+            CHECK(snake::eval::timed_space(s, s.you, b) >= largo);
+        }
+    }
+    CHECK(cambios >= 1);
 }

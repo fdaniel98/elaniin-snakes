@@ -258,6 +258,8 @@ struct DuelParams {
     /// apretado y estorba en el resto: el umbral lo deja actuar solo donde se midio que
     /// sirve. 41 de esas 48 muertes son contra nuestro propio cuerpo.
     double survival_below_ratio = 0.0;
+    /// [v21] Veto al bolsillo en el duelo. ver docs/strategy.md#s-guardia
+    std::int32_t pocket_guard_version = 0;
 };
 
 /// [v2] Busqueda. ver docs/decisions/ADR-0022-busqueda-paranoica.md
