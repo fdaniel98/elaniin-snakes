@@ -4,7 +4,7 @@ read_when: "antes de proponer cualquier cambio que toque el final de dos, o de m
 authority: derived
 source: docs/results/duelo-snork-* y torneo-v5-longitud
 last_verified: 2026-09-24
-size_bytes: 23219
+size_bytes: 23679
 ---
 
 # Experimentos del duelo
@@ -443,4 +443,11 @@ unico que mejora**, y 250 ms es el techo que admite el gate (250 + 120 de sobrec
 370 = 500 - 80 - 50). NO CONCLUYENTE por 0.008 del delta. Candidata para `gauntlet-v2`:
 `v20a-duelo-tiempo`. `scripts/smoke.py` mide cada fixture contra el presupuesto de SU
 posicion, asi que el gate sigue valiendo con el parche puesto.
+
+**Torneo contra `gauntlet-v2`** (200 partidas, 50 bloques pareados con v5): 1.802 ->
+**1.930**, diferencia **+0.128**, IC95 [-0.043, +0.298]: NO CONCLUYENTE y del lado malo.
+Esta vez el campo estaba sano (62 timeouts de rivales contra 40, y `tr.py` no aborto por
+los nuestros). **v20a no entra.** Es la cuarta vez que una mejora medida en arena contra
+v5 no transfiere al campo real (v11, v18, v19, v20a): el defecto esta en el instrumento,
+no en la maquina.
 

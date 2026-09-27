@@ -83,5 +83,6 @@ Seis, todas menores y justificadas: ver docs/architecture.md#a-06.
 
 ## Siguiente accion concreta
 
-Torneo de `v20a-duelo-tiempo` contra `gauntlet-v2` y comparar con v5: en arena 1v1 salio
--0.092, IC95 [-0.177, -0.006] (ver docs/experimentos-duelo.md#s-modo-duelo-r).
+v20a no entra (+0.128 contra `gauntlet-v2`, ver docs/experimentos-duelo.md#s-modo-duelo-r).
+La arena contra v5 ya fallo cuatro veces como filtro: decidir con que se mide antes de
+probar otra candidata.
